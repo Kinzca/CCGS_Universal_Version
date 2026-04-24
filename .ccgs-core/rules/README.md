@@ -70,7 +70,7 @@ rules_mapping:
 | Cline (VS Code) | `.clinerules` | 编辑该目录文件时自动注入 |
 | Cursor | `.cursorrules` | 项目根或子目录级别 |
 | Continue.dev | 需手动配置 `contextProviders` | 参照 Continue 文档 |
-| Antigravity | `user_global` 中引用 | 全局加载（当前方案） |
+| Antigravity | `user_global` 中引用 | 全局加载 |
 
 ## 注意事项
 
