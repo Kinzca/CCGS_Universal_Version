@@ -1,0 +1,6 @@
+
+# 自动生成的 AI 工具桥接层（由 init.sh --gen-entry 生成）
+.claude/
+CLAUDE.md
+GEMINI.md
+.cursorrules

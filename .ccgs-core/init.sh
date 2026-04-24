@@ -164,6 +164,7 @@ cmd_gen_entry() {
 
     case "$TOOL" in
         claude)
+            # --- 生成 CLAUDE.md 入口文件 ---
             cat > "$PROJECT_ROOT/CLAUDE.md" << 'ENTRY_EOF'
 # CCGS Framework — Claude Code Configuration
 
@@ -184,7 +185,72 @@ cmd_gen_entry() {
 ## Context Management
 @.ccgs-core/docs/context-management.md
 ENTRY_EOF
-            echo "✅ 已生成 CLAUDE.md"
+            echo "  ✅ 已生成 CLAUDE.md"
+
+            # --- 生成 .claude/ 符号链接桥接层 ---
+            echo "  🔗 构建 .claude/ 符号链接桥接层..."
+
+            # 清理旧的桥接层（如果存在）
+            rm -rf "$PROJECT_ROOT/.claude"
+            mkdir -p "$PROJECT_ROOT/.claude"
+
+            # agents/ → 合并 Tier1 + Tier2 + Tier3（Claude Code 需要平铺）
+            mkdir -p "$PROJECT_ROOT/.claude/agents"
+            for tier_dir in Tier1-Directors Tier2-Leads Tier3-Specialists; do
+                if [ -d "$PROJECT_ROOT/$CORE_DIR/workflows/$tier_dir" ]; then
+                    for agent_file in "$PROJECT_ROOT/$CORE_DIR/workflows/$tier_dir"/*.md; do
+                        if [ -f "$agent_file" ]; then
+                            local basename=$(basename "$agent_file")
+                            ln -sf "../../$CORE_DIR/workflows/$tier_dir/$basename" "$PROJECT_ROOT/.claude/agents/$basename"
+                        fi
+                    done
+                fi
+            done
+            local AGENT_COUNT=$(ls "$PROJECT_ROOT/.claude/agents/" 2>/dev/null | wc -l | tr -d ' ')
+            echo "    → agents/: $AGENT_COUNT 个 Agent 已链接"
+
+            # skills/ → 符号链接整个 skills 目录下的每个 Skill
+            mkdir -p "$PROJECT_ROOT/.claude/skills"
+            if [ -d "$PROJECT_ROOT/$CORE_DIR/workflows/skills" ]; then
+                for skill_dir in "$PROJECT_ROOT/$CORE_DIR/workflows/skills"/*/; do
+                    if [ -d "$skill_dir" ]; then
+                        local skill_name=$(basename "$skill_dir")
+                        ln -sf "../../$CORE_DIR/workflows/skills/$skill_name" "$PROJECT_ROOT/.claude/skills/$skill_name"
+                    fi
+                done
+            fi
+            local SKILL_COUNT=$(ls -d "$PROJECT_ROOT/.claude/skills"/*/ 2>/dev/null | wc -l | tr -d ' ')
+            echo "    → skills/: $SKILL_COUNT 个 Skill 已链接"
+
+            # rules/ → 符号链接规则文件
+            mkdir -p "$PROJECT_ROOT/.claude/rules"
+            for rule_file in "$PROJECT_ROOT/$CORE_DIR/rules"/*.md; do
+                if [ -f "$rule_file" ]; then
+                    local basename=$(basename "$rule_file")
+                    if [ "$basename" != "README.md" ]; then
+                        ln -sf "../../$CORE_DIR/rules/$basename" "$PROJECT_ROOT/.claude/rules/$basename"
+                    fi
+                fi
+            done
+            local RULE_COUNT=$(ls "$PROJECT_ROOT/.claude/rules/" 2>/dev/null | wc -l | tr -d ' ')
+            echo "    → rules/: $RULE_COUNT 个规则已链接"
+
+            # hooks/ → 符号链接钩子脚本
+            mkdir -p "$PROJECT_ROOT/.claude/hooks"
+            for hook_file in "$PROJECT_ROOT/$CORE_DIR/hooks"/*.sh; do
+                if [ -f "$hook_file" ]; then
+                    local basename=$(basename "$hook_file")
+                    ln -sf "../../$CORE_DIR/hooks/$basename" "$PROJECT_ROOT/.claude/hooks/$basename"
+                fi
+            done
+            local HOOK_COUNT=$(ls "$PROJECT_ROOT/.claude/hooks/" 2>/dev/null | wc -l | tr -d ' ')
+            echo "    → hooks/: $HOOK_COUNT 个钩子已链接"
+
+            # docs/ → 符号链接文档目录
+            ln -sf "../$CORE_DIR/docs" "$PROJECT_ROOT/.claude/docs"
+            echo "    → docs/: 已链接"
+
+            echo "  ✅ .claude/ 桥接层构建完成 — Claude Code 现在可以发现所有 Agent/Skill/Rule/Hook"
             ;;
         gemini)
             cat > "$PROJECT_ROOT/GEMINI.md" << 'ENTRY_EOF'
@@ -201,14 +267,15 @@ Read: `.ccgs-core/docs/technical-preferences.md`
 ## Coding Standards
 Read: `.ccgs-core/docs/coding-standards.md`
 ENTRY_EOF
-            echo "✅ 已生成 GEMINI.md"
+            echo "  ✅ 已生成 GEMINI.md"
             ;;
         cursor)
             cp "$PROJECT_ROOT/$CORE_DIR/workflows/pipeline-core.md" "$PROJECT_ROOT/.cursorrules"
-            echo "✅ 已生成 .cursorrules (pipeline-core 副本)"
+            echo "  ✅ 已生成 .cursorrules (pipeline-core 副本)"
             ;;
         all)
             cmd_gen_entry "claude"
+            echo ""
             cmd_gen_entry "gemini"
             cmd_gen_entry "cursor"
             ;;
