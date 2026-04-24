@@ -4,8 +4,8 @@
 # 所有校验脚本从此文件读取参数，脚本本身是通用引擎。
 # 更换项目时只需修改此文件，脚本零改动。
 #
-# 当前项目: 交错空间 (InterwovenSpace)
-# 引擎: Unity 2022.3 (C#)
+# 当前项目: [TO BE CONFIGURED — run /setup-engine]
+# 引擎: [TO BE CONFIGURED]
 # ============================================================================
 
 # --- Commit Message 格式校验 ---
@@ -42,8 +42,9 @@ data_files:
 # --- 资产命名规范校验 ---
 asset_naming:
   # 需要检查命名规范的资产目录（相对项目根目录）
+  # [TO BE CONFIGURED — 按引擎目录结构填写]
   paths:
-    - "Assets/"
+    - "assets/"
   # 合法命名正则：小写字母 + 数字 + 下划线 + 扩展名
   pattern: "^[a-z0-9_]+\\.[a-z]+$"
 
@@ -55,11 +56,12 @@ push_protection:
     - "develop"
 
 # --- 规则分发映射（供 distribute-rules.sh 使用）---
+# [TO BE CONFIGURED — 按项目实际代码目录结构填写]
 rules_mapping:
   - source: "gameplay-code.md"
-    target: "Assets/GameScripts/GameLogic"
+    target: "[TO BE CONFIGURED — e.g., src/gameplay/]"
   - source: "engine-code.md"
-    target: "Assets/GameScripts/Engine"
+    target: "[TO BE CONFIGURED — e.g., src/engine/]"
   - source: "design-docs.md"
     target: "CCGS-Data/design/gdd"
 

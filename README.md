@@ -1,9 +1,73 @@
 # CCGS Universal Version
 
-This is a universal, decoupled version of the Claude Code Game Studios framework. It has been extensively refactored to separate the core framework components (`.ccgs-core`) from project-specific implementation data (`CCGS-Data`), making it highly reusable across different game projects.
+基于 [Claude Code Game Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) 重构的**通用解耦版**游戏开发 AI 框架。
+
+核心设计：将框架引擎（`.ccgs-core`）与项目数据（`CCGS-Data`）彻底分离，实现跨项目、跨引擎、跨 AI 工具的即插即用。
+
+## 快速开始
+
+```bash
+# 1. 克隆框架
+git clone https://github.com/Kinzca/CCGS_Universal_Version.git my-game
+
+# 2. 校验目录骨架完整性
+bash .ccgs-core/init.sh
+
+# 3. 生成你使用的 AI 工具的入口文件
+bash .ccgs-core/init.sh --gen-entry claude   # Claude Code
+bash .ccgs-core/init.sh --gen-entry gemini   # Gemini / Antigravity
+bash .ccgs-core/init.sh --gen-entry cursor   # Cursor
+bash .ccgs-core/init.sh --gen-entry all      # 全部生成
+
+# 4. 配置引擎与技术栈
+# 编辑 .ccgs-core/docs/technical-preferences.md 填入你的引擎配置
+# 编辑 .ccgs-core/hooks/hooks-config.yaml 填入项目特定的校验规则
+
+# 5. （可选）重命名数据层目录
+bash .ccgs-core/init.sh --rename-data GameData  # 将 CCGS-Data 重命名为 GameData
+```
+
+## 架构总览
+
+```
+项目根目录/
+├── .ccgs-core/                    # 框架引擎（不含任何项目数据）
+│   ├── ccgs.env                   # 全局路径配置（唯一真源）
+│   ├── init.sh                    # 一键初始化工具
+│   ├── workflows/                 # Agent 工作流与 Skills
+│   │   ├── pipeline-core.md       # 全链路流水线总则
+│   │   ├── Tier1-Directors/       # 导演层（3 个）
+│   │   ├── Tier2-Leads/           # 主管层（8 个）
+│   │   ├── Tier3-Specialists/     # 专家层（38 个）
+│   │   └── skills/                # Skill 库（72 个）
+│   ├── rules/                     # 代码规则分发源（11 个）
+│   ├── hooks/                     # 自动化钩子脚本
+│   ├── docs/                      # 框架元文档与配置模板
+│   └── tests/                     # 框架自测套件
+│
+├── CCGS-Data/                     # 项目数据层（可重命名）
+│   ├── design/                    # 设计文档（GDD、UX、关卡等）
+│   ├── production/                # 生产管理（提案、QA、Sprint 等）
+│   └── project-docs/              # 技术文档（架构、ADR 等）
+│
+├── CLAUDE.md                      # Claude Code 入口（自动生成）
+├── GEMINI.md                      # Gemini 入口（自动生成）
+└── .cursorrules                   # Cursor 入口（自动生成）
+```
+
+## 与原版的核心差异
+
+| 维度 | 原版 (Donchitos) | 通用版 (本仓库) |
+|:---|:---|:---|
+| 目录结构 | `.claude/`（平铺） | `.ccgs-core/` + `CCGS-Data/`（双层解耦） |
+| Agent 组织 | 48 个平铺 | 三级分层（Tier1/2/3） |
+| AI 工具绑定 | 仅 Claude Code | 通用（Claude / Gemini / Cursor） |
+| 流水线 | 无统一定义 | `pipeline-core.md`（Phase 0→4） |
+| 数据层 | 与框架混杂 | 独立目录，可重命名 |
+| 路径配置 | 无 | `ccgs.env` + `init.sh` 一键管理 |
 
 ## Acknowledgments
 
-A special and heartfelt thanks to **[Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)**. 
+A special and heartfelt thanks to **[Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)**.
 
 While this universal version features a significantly diverged structure to support data-driven decoupling, the original repository served as the foundational inspiration and conceptual origin for this framework. We are deeply grateful for the groundbreaking work that made this possible.
