@@ -1,0 +1,77 @@
+# 游戏世界实体注册表 (Game World Entity Registry)
+#
+# 用途：跨 GDD 共享实体/物品/公式/常量的唯一真源。
+# 当一个实体出现在多个 GDD 中时（如 03 和 05 都引用的方块类型），在此注册避免冲突。
+#
+# 规则：
+#   - 仅注册跨系统边界的事实。仅在单个 GDD 内使用的内部事实不需要注册。
+#   - 不要删除条目——设置 status: deprecated 代替。
+#   - 值变更时：更新值，设置 revised: 为当天日期，注释旧值和修改来源。
+#   - source: 是权威 GDD——"拥有"此事实的文档。
+#     引用该事实的其他 GDD 将自身列在 referenced_by 中。
+#
+# 写入者：/design-system (GDD 审批后)
+#          /consistency-check (解决冲突时)
+# 读取者：/design-system (编写前冲突检查)
+#          /consistency-check (主要输入)
+#          /review-all-gdds (基线校验)
+#
+# 路径约定：本项目 GDD 位于 .agents/design/gdd/
+
+version: 1
+last_updated: ""
+
+# ─── 实体 ────────────────────────────────────────────────────────────────────
+# 命名的游戏世界对象：方块类型、塔层、NPC、特殊机关等。
+entities: []
+
+# 示例：
+# entities:
+#   - name: standard_block
+#     status: active
+#     source: .agents/design/gdd/05-block-traversal.md
+#     referenced_by:
+#       - .agents/design/gdd/03-tower-system.md
+#       - .agents/design/gdd/04-level-generation.md
+#     block_type: walkable
+#     added: 2026-04-23
+#     revised: ""
+
+# ─── 物品 ────────────────────────────────────────────────────────────────────
+items: []
+
+# ─── 公式 ────────────────────────────────────────────────────────────────────
+# 跨系统引用的计算公式。
+formulas: []
+
+# 示例：
+# formulas:
+#   - name: csr_formula
+#     status: active
+#     source: .agents/design/gdd/06-dda-flow-theory.md
+#     referenced_by:
+#       - .agents/design/gdd/04-level-generation.md
+#       - .agents/design/gdd/09-numerical-config.md
+#     variables: [player_skill, challenge_level]
+#     output_range: [0.8, 1.3]
+#     expression: "CSR = challenge_level / player_skill"
+#     notes: "目标 CSR ≈ 1.04，维持心流通道"
+#     added: 2026-04-23
+#     revised: ""
+
+# ─── 常量 ────────────────────────────────────────────────────────────────────
+# 跨多个系统引用的命名数值常量。
+constants: []
+
+# 示例：
+# constants:
+#   - name: max_layer_count
+#     status: active
+#     source: .agents/design/gdd/03-tower-system.md
+#     referenced_by:
+#       - .agents/design/gdd/04-level-generation.md
+#       - .agents/design/gdd/09-numerical-config.md
+#     value: 5
+#     unit: layers
+#     added: 2026-04-23
+#     revised: ""

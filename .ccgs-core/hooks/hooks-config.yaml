@@ -1,0 +1,73 @@
+# ============================================================================
+# hooks-config.yaml — CCGS 校验脚本配置源（唯一真源）
+# ============================================================================
+# 所有校验脚本从此文件读取参数，脚本本身是通用引擎。
+# 更换项目时只需修改此文件，脚本零改动。
+#
+# 当前项目: 交错空间 (InterwovenSpace)
+# 引擎: Unity 2022.3 (C#)
+# ============================================================================
+
+# --- Commit Message 格式校验 ---
+commit_message:
+  # 合法的 commit message 正则（POSIX Extended）
+  # 格式: type(scope): description
+  # 允许中文 scope 和 description
+  pattern: '^(feat|fix|docs|style|refactor|perf|test|chore|hotfix|epic)\(.+\): .+'
+
+# --- GDD 文档完整性校验 ---
+gdd_validation:
+  # GDD 文件所在路径（相对项目根目录）
+  path: "CCGS-Data/design/gdd/"
+  # 必要章节标题列表（可按项目增减）
+  required_sections:
+    - "Overview"
+    - "Player Fantasy"
+    - "Detailed"
+    - "Formulas"
+    - "Edge Cases"
+    - "Dependencies"
+    - "Tuning Knobs"
+    - "Acceptance Criteria"
+
+# --- 数据文件格式校验 ---
+data_files:
+  # 需要校验 JSON 格式合法性的路径通配符
+  json_patterns:
+    - "*.json"
+  # 需要校验 YAML 格式合法性的路径通配符
+  yaml_patterns:
+    - ".ccgs-core/**/*.yaml"
+
+# --- 资产命名规范校验 ---
+asset_naming:
+  # 需要检查命名规范的资产目录（相对项目根目录）
+  paths:
+    - "Assets/"
+  # 合法命名正则：小写字母 + 数字 + 下划线 + 扩展名
+  pattern: "^[a-z0-9_]+\\.[a-z]+$"
+
+# --- Push 安全校验 ---
+push_protection:
+  protected_branches:
+    - "main"
+    - "master"
+    - "develop"
+
+# --- 规则分发映射（供 distribute-rules.sh 使用）---
+rules_mapping:
+  - source: "gameplay-code.md"
+    target: "Assets/GameScripts/GameLogic"
+  - source: "engine-code.md"
+    target: "Assets/GameScripts/Engine"
+  - source: "design-docs.md"
+    target: "CCGS-Data/design/gdd"
+
+# --- Workspace Status 探针配置（供 workspace-status.sh 使用）---
+workspace_status:
+  bug_tracker: "CCGS-Data/production/tracking/bug-tracker.md"
+  tech_debt: "CCGS-Data/production/tracking/tech-debt.md"
+  sprint_glob: "CCGS-Data/production/sprints/sprint-*.md"
+  session_state: "CCGS-Data/production/session-state/active.md"
+  # Bug/债务计数时匹配的状态标记（emoji）
+  status_markers: "🔴|🟡"
