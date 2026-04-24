@@ -19,6 +19,12 @@ hooks-config.yaml           ← 映射配置（项目特定）
 |:---|:---|:---|
 | `gameplay-code.md` | 玩法代码 | 数值配置化、逻辑与表现分离 |
 | `engine-code.md` | 引擎/框架代码 | 禁止直接依赖业务层、接口隔离 |
+| `ai-code.md` | AI 行为代码 | 行为树/状态机、可调试性 |
+| `ui-code.md` | UI 代码 | 数据绑定分离、响应式布局 |
+| `shader-code.md` | 着色器代码 | 性能预算、跨平台兼容 |
+| `network-code.md` | 网络代码 | 权威服务器、带宽优化 |
+| `narrative.md` | 叙事文档 | 分支一致性、本地化就绪 |
+| `prototype-code.md` | 原型代码 | 隔离性、可丢弃性 |
 | `design-docs.md` | GDD 设计文档 | 章节完整性、交叉引用一致性 |
 | `data-files.md` | 配置/数据文件 | 格式合法性、版本号同步 |
 | `test-standards.md` | 测试代码 | 命名规范、断言覆盖率 |

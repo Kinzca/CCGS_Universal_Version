@@ -1,16 +1,42 @@
-# 测试代码标准模板 (Test Standards Template)
-
-> **适用路径**: [待补充: 例如 `Client/Assets/Tests/`]
-> **目标**: 确保自动化单元测试、集成测试的代码质量和覆盖率。
-
-## 核心指导原则
-- [待补充: 测试用例命名规范，如 `MethodName_StateUnderTest_ExpectedBehavior`]
-- [待补充: 必须采用的测试结构，如 Arrange-Act-Assert (AAA)]
-- [待补充: Mock 规范与边界依赖隔离策略]
-
-## 覆盖率与验收要求
-- [待补充: 核心模块的最低代码覆盖率要求]
-- [待补充: 性能、边界条件或内存泄漏的测试要求]
-
 ---
-*💡 **Agent 指令**: 请使用者指示 Agent，根据当前项目使用的具体测试框架（如 NUnit、PyTest、Jest 等），补齐并生成上述模板。*
+paths:
+  - "tests/**"
+---
+
+# Test Standards
+
+- Test naming: `test_[system]_[scenario]_[expected_result]` pattern
+- Every test must have a clear arrange/act/assert structure
+- Unit tests must not depend on external state (filesystem, network, database)
+- Integration tests must clean up after themselves
+- Performance tests must specify acceptable thresholds and fail if exceeded
+- Test data must be defined in the test or in dedicated fixtures, never shared mutable state
+- Mock external dependencies — tests should be fast and deterministic
+- Every bug fix must have a regression test that would have caught the original bug
+
+## Examples
+
+**Correct** (proper naming + Arrange/Act/Assert):
+
+```gdscript
+func test_health_system_take_damage_reduces_health() -> void:
+    # Arrange
+    var health := HealthComponent.new()
+    health.max_health = 100
+    health.current_health = 100
+
+    # Act
+    health.take_damage(25)
+
+    # Assert
+    assert_eq(health.current_health, 75)
+```
+
+**Incorrect**:
+
+```gdscript
+func test1() -> void:  # VIOLATION: no descriptive name
+    var h := HealthComponent.new()
+    h.take_damage(25)  # VIOLATION: no arrange step, no clear assert
+    assert_true(h.current_health < 100)  # VIOLATION: imprecise assertion
+```

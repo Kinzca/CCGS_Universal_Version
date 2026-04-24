@@ -1,19 +1,31 @@
-# 玩法代码规则模板 (Gameplay Code Rules Template)
-
-> **适用路径**: [待补充: 例如 `Client/Assets/GameLogic/`]
-> **目标**: 规范具体业务玩法逻辑的编写原则，保证可扩展性和数据驱动。
-
-## 核心指导原则
-- [待补充: 例如，逻辑与表现严格分离]
-- [待补充: 数据驱动原则，避免硬编码数值]
-- [待补充: 跨模块通信规范，如强制使用事件总线/消息队列]
-
-## 状态管理与生命周期
-- [待补充: 状态机规范或生命周期限制]
-- [待补充: 资源加载与释放的规范]
-
-## 常见模式反例 (Anti-patterns)
-- [待补充: 易导致高耦合的写法或单例滥用]
-
 ---
-*💡 **Agent 指令**: 请使用者指示 Agent，根据当前游戏类型（如 RPG、ACT、策略等）和具体使用的架构模式（如 ECS、MVC、MVVM），补齐并生成上述模板。*
+paths:
+  - "src/gameplay/**"
+---
+
+# Gameplay Code Rules
+
+- ALL gameplay values MUST come from external config/data files, NEVER hardcoded
+- Use delta time for ALL time-dependent calculations (frame-rate independence)
+- NO direct references to UI code — use events/signals for cross-system communication
+- Every gameplay system must implement a clear interface
+- State machines must have explicit transition tables with documented states
+- Write unit tests for all gameplay logic — separate logic from presentation
+- Document which design doc each feature implements in code comments
+- No static singletons for game state — use dependency injection
+
+## Examples
+
+**Correct** (data-driven):
+
+```gdscript
+var damage: float = config.get_value("combat", "base_damage", 10.0)
+var speed: float = stats_resource.movement_speed * delta
+```
+
+**Incorrect** (hardcoded):
+
+```gdscript
+var damage: float = 25.0   # VIOLATION: hardcoded gameplay value
+var speed: float = 5.0      # VIOLATION: not from config, not using delta
+```

@@ -1,16 +1,18 @@
-# 设计文档规范模板 (Design Docs Rules Template)
-
-> **适用路径**: `CCGS-Data/design/gdd/`, `CCGS-Data/design/quick-specs/` 等
-> **目标**: 确保系统文档格式统一、交叉引用准确，且符合认知负荷理论。
-
-## 核心指导原则
-- [待补充: 必填的章节定义，如《设计意图》、《状态机流转》、《边界条件》]
-- [待补充: 交叉引用与超链接的格式规范]
-- [待补充: 图表（如 Mermaid 状态图/时序图）的使用要求]
-
-## 文档完整性检查
-- [待补充: AI 生成或修改 GDD 时必须检查的上下游依赖]
-- [待补充: 数值公式或枚举的必填要求]
-
 ---
-*💡 **Agent 指令**: 请使用者指示 Agent，根据当前工作室的文档风格（如极简敏捷模式、重度系统策划模式）和工具链，补齐并生成上述模板。*
+paths:
+  - "design/gdd/**"
+---
+
+# Design Document Rules
+
+- Every design document MUST contain these 8 sections: Overview, Player Fantasy, Detailed Rules, Formulas, Edge Cases, Dependencies, Tuning Knobs, Acceptance Criteria
+- Formulas must include variable definitions, expected value ranges, and example calculations
+- Edge cases must explicitly state what happens, not just "handle gracefully"
+- Dependencies must be bidirectional — if system A depends on B, B's doc must mention A
+- Tuning knobs must specify safe ranges and what gameplay aspect they affect
+- Acceptance criteria must be testable — a QA tester must be able to verify pass/fail
+- No hand-waving: "the system should feel good" is not a valid specification
+- Balance values must link to their source formula or rationale
+- Design documents MUST be written incrementally: create skeleton first, then fill
+  each section one at a time with user approval between sections. Write each
+  approved section to the file immediately to persist decisions and manage context

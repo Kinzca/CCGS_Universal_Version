@@ -1,20 +1,37 @@
-# 引擎代码规则模板 (Engine Code Rules Template)
-
-> **适用路径**: [待补充: 例如 `Client/Assets/Engine/`]
-> **目标**: 规范底层引擎代码、框架层核心逻辑的编写原则。
-
-## 核心指导原则
-- [待补充: 例如，性能红线、内存分配限制]
-- [待补充: 例如，线程安全要求]
-- [待补充: 隔离性要求，如引擎代码严禁调用玩法逻辑]
-
-## 热路径禁忌清单 (Hot Path Anti-patterns)
-- [待补充: 具体引擎语言的禁忌，例如 Unity 中的 `GameObject.Find` 或 C++ 中的拷贝陷阱]
-- [待补充: GC/内存分配产生的高危操作]
-
-## API 设计规范
-- [待补充: 公共接口的命名、注释要求]
-- [待补充: 优雅降级与异常处理规范]
-
 ---
-*💡 **Agent 指令**: 请使用者指示 Agent，根据当前项目的具体技术栈（如 Unity/C#, Unreal/C++, Godot/GDScript 等）及性能指标，补齐并生成上述模板。*
+paths:
+  - "src/core/**"
+---
+
+# Engine Code Rules
+
+- ZERO allocations in hot paths (update loops, rendering, physics) — pre-allocate, pool, reuse
+- All engine APIs must be thread-safe OR explicitly documented as single-thread-only
+- Profile before AND after every optimization — document the measured numbers
+- Engine code must NEVER depend on gameplay code (strict dependency direction: engine <- gameplay)
+- Every public API must have usage examples in its doc comment
+- Changes to public interfaces require a deprecation period and migration guide
+- Use RAII / deterministic cleanup for all resources
+- All engine systems must support graceful degradation
+- Before writing engine API code, consult `docs/engine-reference/` for the current engine version and verify APIs against the reference docs
+
+## Examples
+
+**Correct** (zero-alloc hot path):
+
+```gdscript
+# Pre-allocated array reused each frame
+var _nearby_cache: Array[Node3D] = []
+
+func _physics_process(delta: float) -> void:
+    _nearby_cache.clear()  # Reuse, don't reallocate
+    _spatial_grid.query_radius(position, radius, _nearby_cache)
+```
+
+**Incorrect** (allocating in hot path):
+
+```gdscript
+func _physics_process(delta: float) -> void:
+    var nearby: Array[Node3D] = []  # VIOLATION: allocates every frame
+    nearby = get_tree().get_nodes_in_group("enemies")  # VIOLATION: tree query every frame
+```
