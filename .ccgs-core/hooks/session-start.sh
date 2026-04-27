@@ -29,6 +29,13 @@ if [ -n "$LATEST_SNAPSHOT" ]; then
     echo "============================================="
 fi
 
+# Domain Permissions Enforcement
+echo ""
+echo "=== DOMAIN PERMISSIONS ENFORCEMENT ==="
+echo "You MUST check .ccgs-core/docs/domain-permissions.json for your Agent role."
+echo "You are strictly FORBIDDEN from using Glob, Grep, or Read tools on paths outside your domain."
+echo "======================================"
+
 # Current sprint (find most recent sprint file)
 LATEST_SPRINT=$(ls -t CCGS-Data/production/sprints/sprint-*.md 2>/dev/null | head -1)
 if [ -n "$LATEST_SPRINT" ]; then
