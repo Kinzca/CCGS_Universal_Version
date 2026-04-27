@@ -1,0 +1,42 @@
+{
+  "domains": {
+    "global_directors": {
+      "agents": ["technical-director", "creative-director", "producer"],
+      "allowed_paths": ["CCGS-Data/"]
+    },
+    "gameplay": {
+      "agents": ["gameplay-programmer", "ai-programmer", "lead-programmer", "game-designer"],
+      "allowed_paths": [
+        "CCGS-Data/design/gdd/",
+        "CCGS-Data/production/epics/",
+        "CCGS-Data/project-docs/architecture/",
+        ".ccgs-core/rules/gameplay-code.md"
+      ]
+    },
+    "ui_ux": {
+      "agents": ["ui-programmer", "ux-designer", "art-director", "accessibility-specialist"],
+      "allowed_paths": [
+        "CCGS-Data/design/ux/",
+        "CCGS-Data/design/art/",
+        "CCGS-Data/production/epics/",
+        ".ccgs-core/rules/ui-code.md",
+        ".ccgs-core/rules/asset-pipeline.md"
+      ]
+    },
+    "backend_network": {
+      "agents": ["network-programmer", "devops-engineer", "security-engineer"],
+      "allowed_paths": [
+        "CCGS-Data/project-docs/architecture/",
+        ".ccgs-core/rules/network-code.md"
+      ]
+    },
+    "qa_testing": {
+      "agents": ["qa-lead", "qa-tester"],
+      "allowed_paths": [
+        "CCGS-Data/production/qa/",
+        "CCGS-Data/production/epics/",
+        "CCGS-Data/design/"
+      ]
+    }
+  }
+}

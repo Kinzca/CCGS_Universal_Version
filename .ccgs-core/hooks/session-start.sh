@@ -19,22 +19,32 @@ if [ -n "$BRANCH" ]; then
     done
 fi
 
+# Architecture Snapshot Detection (Memory Compression)
+LATEST_SNAPSHOT=$(ls -t CCGS-Data/project-docs/architecture/snapshots/architecture-snapshot-*.md 2>/dev/null | head -1)
+if [ -n "$LATEST_SNAPSHOT" ]; then
+    echo ""
+    echo "=== ACTIVE ARCHITECTURE SNAPSHOT DETECTED ==="
+    echo "Read $LATEST_SNAPSHOT to understand the current system state, APIs, and tech debt."
+    echo "Avoid reading older sprint files or epics directly unless specifically needed."
+    echo "============================================="
+fi
+
 # Current sprint (find most recent sprint file)
-LATEST_SPRINT=$(ls -t production/sprints/sprint-*.md 2>/dev/null | head -1)
+LATEST_SPRINT=$(ls -t CCGS-Data/production/sprints/sprint-*.md 2>/dev/null | head -1)
 if [ -n "$LATEST_SPRINT" ]; then
     echo ""
     echo "Active sprint: $(basename "$LATEST_SPRINT" .md)"
 fi
 
 # Current milestone
-LATEST_MILESTONE=$(ls -t production/milestones/*.md 2>/dev/null | head -1)
+LATEST_MILESTONE=$(ls -t CCGS-Data/production/milestones/*.md 2>/dev/null | head -1)
 if [ -n "$LATEST_MILESTONE" ]; then
     echo "Active milestone: $(basename "$LATEST_MILESTONE" .md)"
 fi
 
 # Open bug count
 BUG_COUNT=0
-for dir in tests/playtest production; do
+for dir in CCGS-Data/tests/playtest CCGS-Data/production; do
     if [ -d "$dir" ]; then
         count=$(find "$dir" -name "BUG-*.md" 2>/dev/null | wc -l)
         BUG_COUNT=$((BUG_COUNT + count))
@@ -55,7 +65,7 @@ if [ -d "src" ]; then
 fi
 
 # --- Active session state recovery ---
-STATE_FILE="production/session-state/active.md"
+STATE_FILE="CCGS-Data/production/session-state/active.md"
 if [ -f "$STATE_FILE" ]; then
     echo ""
     echo "=== ACTIVE SESSION STATE DETECTED ==="
