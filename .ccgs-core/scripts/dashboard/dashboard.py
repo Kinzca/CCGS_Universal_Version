@@ -15,7 +15,36 @@ if os.path.exists(os.path.join(CWD, "CCGS-Data")):
     PROJECT_ROOT = CWD
 else:
     PROJECT_ROOT = os.path.abspath(os.path.join(DIRECTORY, "../../../"))
-DATA_DIR = os.path.join(PROJECT_ROOT, "CCGS-Data")
+
+def parse_ccgs_env(project_root):
+    """解析 ccgs.env 文件，返回 {key: value} 字典
+    
+    按优先级依次查找:
+    1. {project_root}/.ccgs-core/ccgs.env
+    2. {project_root}/ccgs.env
+    找到第一个即停止。支持 # 注释行和引号值。
+    """
+    env = {}
+    for candidate in [
+        os.path.join(project_root, '.ccgs-core', 'ccgs.env'),
+        os.path.join(project_root, 'ccgs.env'),
+    ]:
+        if os.path.exists(candidate):
+            try:
+                with open(candidate, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            k, v = line.split('=', 1)
+                            env[k.strip()] = v.strip().strip('"').strip("'")
+            except (IOError, UnicodeDecodeError) as e:
+                print(f"Warning: 无法读取 {candidate}: {e}")
+            break
+    return env
+
+# 从 ccgs.env 读取 DATA_DIR，回退到硬编码 "CCGS-Data"
+_ccgs_env = parse_ccgs_env(PROJECT_ROOT)
+DATA_DIR = os.path.join(PROJECT_ROOT, _ccgs_env.get('DATA_DIR', 'CCGS-Data'))
 
 def extract_markdown_fields(filepath):
     result = {}
