@@ -188,6 +188,9 @@
         .view-section.active {
             display: grid;
         }
+        .view-section.bugs-grid.active {
+            display: flex;
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -338,7 +341,6 @@
 
         /* Active Bugs View specific */
         .bugs-grid {
-            display: flex;
             flex-direction: column;
             gap: 1.5rem;
             width: 100%;
