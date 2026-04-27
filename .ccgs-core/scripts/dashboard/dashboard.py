@@ -47,14 +47,29 @@ _ccgs_env = parse_ccgs_env(PROJECT_ROOT)
 DATA_DIR = os.path.join(PROJECT_ROOT, _ccgs_env.get('DATA_DIR', 'CCGS-Data'))
 
 def extract_markdown_fields(filepath):
+    """从 Markdown 文件中提取结构化字段
+    
+    支持的标题格式（按优先级）:
+    1. '# Story XXX: Title' — CCGS Story 标准格式
+    2. '# Bug Report: Title' — CCGS Bug 标准格式
+    3. '# 任意前缀: Title' — 冒号分割兜底
+    4. '# Title' — 纯标题兜底（仅在无冒号时触发）
+    支持的字段格式: '**Key**: Value' 或 '> **Key**: Value'
+    """
     result = {}
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             for line in lines:
-                # 解析 '# Story XXX: Title'
-                if line.startswith('# Story') and ':' in line:
-                    result['title'] = line.split(':', 1)[1].strip()
+                # 标题解析: 多级兜底
+                if line.startswith('# ') and 'title' not in result:
+                    heading = line[2:].strip()
+                    if ':' in heading:
+                        # '# Story XXX: Title' / '# Bug Report: Title' / '# 任意: Title'
+                        result['title'] = heading.split(':', 1)[1].strip()
+                    else:
+                        # 纯 '# Title'（无冒号）
+                        result['title'] = heading
                 # 解析 '**Key**: Value' 或 '> **Key**: Value'
                 match = re.search(r'\*\*(.*?)\*\*\s*:\s*(.*)', line)
                 if match:
@@ -115,8 +130,13 @@ def gather_data():
     print("CWD:", CWD)
     print("DATA_DIR:", DATA_DIR)
     
-    # 1. Parse Sprint Name
+    # 1. Parse Sprint Name — 排除 retrospective/review 等衍生文档
+    SPRINT_SUFFIX_BLACKLIST = ['-retrospective', '-review', '-retro', '-summary']
     sprint_files = glob.glob(os.path.join(DATA_DIR, "production/sprints/sprint-*.md"))
+    sprint_files = [
+        f for f in sprint_files
+        if not any(os.path.basename(f).replace('.md', '').endswith(suffix) for suffix in SPRINT_SUFFIX_BLACKLIST)
+    ]
     if sprint_files:
         latest = sorted(sprint_files)[-1]
         data["sprint"]["name"] = os.path.basename(latest).replace('.md', '')
