@@ -312,6 +312,51 @@
         .kb-footer { display: flex; justify-content: space-between; align-items: center; }
         .kb-pts { font-size: 0.75rem; font-weight: bold; color: var(--cyan); background: rgba(6, 182, 212, 0.1); padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(6, 182, 212, 0.2); }
 
+        /* Active Bugs View specific */
+        .bugs-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            height: calc(100vh - 120px);
+        }
+        .quality-health { padding: 1.5rem 2rem; }
+        .health-stats-row {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;
+        }
+        .health-stat-box {
+            background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); border-top: 3px solid var(--cyan);
+            border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        body.light-mode .health-stat-box { background: rgba(255,255,255,0.4); }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-num { font-size: 2rem; font-weight: bold; }
+        .cyan-text { color: var(--cyan); }
+        .red-text { color: #ef4444; }
+        .yellow-text { color: #eab308; }
+        .purple-text { color: var(--purple); }
+
+        .triage-list { flex-grow: 1; padding: 1.5rem 2rem; display: flex; flex-direction: column; overflow: hidden; }
+        .triage-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .triage-rows { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
+        .triage-row {
+            display: grid; grid-template-columns: 120px 100px 1fr 100px 50px; align-items: center; gap: 1rem;
+            background: var(--card-hover); border: 1px solid var(--glass-border); border-left: 4px solid var(--glass-border);
+            border-radius: 10px; padding: 1rem 1.5rem; transition: background 0.2s, transform 0.2s;
+            flex-shrink: 0;
+        }
+        .triage-row:hover { background: rgba(255,255,255,0.05); transform: translateX(4px); }
+        body.light-mode .triage-row:hover { background: rgba(0,0,0,0.03); }
+        
+        .triage-row.border-red { border-left-color: #ef4444; box-shadow: -4px 0 15px rgba(239,68,68,0.15); }
+        .triage-row.border-yellow { border-left-color: #eab308; box-shadow: -4px 0 15px rgba(234,179,8,0.15); }
+        .triage-row.border-purple { border-left-color: var(--purple); box-shadow: -4px 0 15px rgba(139,92,246,0.15); }
+        
+        .tr-id { font-size: 0.9rem; font-weight: bold; color: var(--text-muted); }
+        .tr-title { font-size: 1rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tr-status { padding: 4px 12px; background: rgba(255,255,255,0.1); border-radius: 12px; font-size: 0.8rem; text-align: center; color: var(--text-main); }
+        body.light-mode .tr-status { background: rgba(0,0,0,0.1); }
+
         /* Settings Grid */
         .settings-grid {
             grid-template-columns: 1fr;
@@ -406,7 +451,7 @@
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Sprints
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-target="bugs-view">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Active Bugs
             </li>
@@ -497,6 +542,40 @@
                 <div class="kanban-col">
                     <div class="col-header" style="border-top-color: #10B981;">DONE</div>
                     <div class="col-body" id="col-done"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIVE BUGS VIEW -->
+        <div class="view-section bugs-grid" id="bugs-view" style="display: none;">
+            <div class="card quality-health">
+                <h2 style="margin-bottom: 0;">Quality Health</h2>
+                <div class="health-stats-row">
+                    <div class="health-stat-box" style="border-top-color: var(--cyan)">
+                        <span class="stat-label">Total Bugs</span>
+                        <span class="stat-num cyan-text" id="qh-total">0</span>
+                    </div>
+                    <div class="health-stat-box" style="border-top-color: #ef4444">
+                        <span class="stat-label">Critical</span>
+                        <span class="stat-num red-text" id="qh-critical">0</span>
+                    </div>
+                    <div class="health-stat-box" style="border-top-color: #eab308">
+                        <span class="stat-label">Medium</span>
+                        <span class="stat-num yellow-text" id="qh-medium">0</span>
+                    </div>
+                    <div class="health-stat-box" style="border-top-color: var(--purple)">
+                        <span class="stat-label">Low</span>
+                        <span class="stat-num purple-text" id="qh-low">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card triage-list">
+                <div class="triage-header">
+                    <h2 style="margin-bottom: 0;">ACTIVE BUGS TRIAGE</h2>
+                </div>
+                <div class="triage-rows" id="triage-rows">
+                    <!-- Rows populated by JS -->
                 </div>
             </div>
         </div>
@@ -697,6 +776,49 @@
                             colTodo.appendChild(card);
                         }
                     });
+                }
+                
+                // Active Bugs Triage
+                const triageRows = document.getElementById('triage-rows');
+                let countCrit = 0, countMed = 0, countLow = 0;
+                
+                if (data.bugs) {
+                    document.getElementById('qh-total').textContent = data.bugs[0].id === 'CLEAN' ? 0 : data.bugs.length;
+                    
+                    data.bugs.forEach(bug => {
+                        if(bug.id === 'CLEAN') return;
+                        
+                        let borderClass = 'border-purple';
+                        let prioClass = 'priority-low';
+                        const p = bug.priority.toLowerCase();
+                        
+                        if (p === 'critical' || p === 'high') {
+                            borderClass = 'border-red';
+                            prioClass = 'priority-high';
+                            countCrit++;
+                        } else if (p === 'medium') {
+                            borderClass = 'border-yellow';
+                            prioClass = 'priority-low';
+                            countMed++;
+                        } else {
+                            countLow++;
+                        }
+
+                        const row = document.createElement('div');
+                        row.className = `triage-row ${borderClass}`;
+                        row.innerHTML = `
+                            <div class="tr-id">${bug.id}</div>
+                            <div><span class="bug-priority ${prioClass}">${bug.priority}</span></div>
+                            <div class="tr-title">${bug.title}</div>
+                            <div class="tr-status">${bug.status}</div>
+                            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">TD</div>
+                        `;
+                        triageRows.appendChild(row);
+                    });
+                    
+                    document.getElementById('qh-critical').textContent = countCrit;
+                    document.getElementById('qh-medium').textContent = countMed;
+                    document.getElementById('qh-low').textContent = countLow;
                 }
 
             }).catch(e => console.log('Data fetching skipped or failed.', e));
