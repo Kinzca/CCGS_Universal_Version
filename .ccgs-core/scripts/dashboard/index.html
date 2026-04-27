@@ -676,7 +676,8 @@
                 'flex': 'Flexible', 'std': 'Standard', 'strict': 'Strict',
                 'set_theme': 'Theme Accents', 'set_theme_desc': 'Select the global primary color accent for your project workspace.',
                 'btn_cancel': 'Cancel', 'btn_save': 'Save Changes',
-                'no_data': 'No Active Sprint Data', 'empty_bugs': 'All clear! No active bugs.', 'empty_kanban': 'Empty Column'
+                'no_data': 'No Active Sprint Data', 'empty_bugs': 'All clear! No active bugs.', 'empty_kanban': 'Empty Column',
+                'clean_bugs': '✅ All clear! No active bugs.'
             },
             'zh': {
                 'nav_dashboard': '大盘概览', 'nav_sprints': '敏捷冲刺', 'nav_bugs': '缺陷分诊', 'nav_settings': '系统设置',
@@ -692,7 +693,8 @@
                 'flex': '宽松', 'std': '标准', 'strict': '严格',
                 'set_theme': '强调色配置', 'set_theme_desc': '为当前的工作空间选择一个专属的霓虹强调色。',
                 'btn_cancel': '取消', 'btn_save': '保存配置',
-                'no_data': '当前无冲刺数据', 'empty_bugs': '完美！无任何待处理缺陷。', 'empty_kanban': '该列暂无任务'
+                'no_data': '当前无冲刺数据', 'empty_bugs': '完美！无任何待处理缺陷。', 'empty_kanban': '该列暂无任务',
+                'clean_bugs': '✅ 完美！当前无任何活跃缺陷。'
             }
         };
 
@@ -780,8 +782,8 @@
             });
         });
 
-        // Fetch Dashboard Data
-        fetch('data.json')
+        // Fetch Dashboard Data (prevent cache to ensure fresh state)
+        fetch('data.json', { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 // Populate Sidebar
@@ -811,7 +813,7 @@
                 // Bugs List (Dashboard)
                 const list = document.getElementById('bug-list');
                 if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
-                    list.innerHTML = `<div class="empty-state">${i18n[currentLang]['empty_bugs']}</div>`;
+                    list.innerHTML = `<div class="empty-state" data-i18n="empty_bugs">${i18n[currentLang]['empty_bugs']}</div>`;
                 } else {
                     data.bugs.forEach(bug => {
                         const li = document.createElement('div');
@@ -862,9 +864,9 @@
                         }
                     });
                 } else {
-                    colTodo.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;">${i18n[currentLang]['empty_kanban']}</div>`;
-                    colInProg.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;">${i18n[currentLang]['empty_kanban']}</div>`;
-                    colDone.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;">${i18n[currentLang]['empty_kanban']}</div>`;
+                    colTodo.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
+                    colInProg.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
+                    colDone.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
                 }
                 
                 // Active Bugs Triage
@@ -873,7 +875,7 @@
                 
                 if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
                     document.getElementById('qh-total').textContent = 0;
-                    triageRows.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:2rem; font-size:1.5rem; color: #10B981;">✅ ${i18n[currentLang]['empty_bugs']}</div>`;
+                    triageRows.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:2rem; font-size:1.5rem; color: #10B981;" data-i18n="clean_bugs">${i18n[currentLang]['clean_bugs']}</div>`;
                 } else {
                     document.getElementById('qh-total').textContent = data.bugs.length;
                     
