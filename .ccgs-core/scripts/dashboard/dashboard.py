@@ -168,22 +168,13 @@ def gather_data():
     data["sprint"]["total_points"] = total_pts
     data["sprint"]["completed_points"] = completed_pts
     
-    # Generate an adaptive Burn-down curve based on real remaining points
+    # Sprint Progress — 诚实的完成百分比（方案 A: 替代伪燃尽图）
+    # 不再生成伪历史趋势线，仅输出真实的当前完成率
     if total_pts > 0:
-        total = total_pts
-        remaining = total - completed_pts
-        step = completed_pts / 6 if completed_pts > 0 else (total * 0.1)
-        burn = []
-        current = total
-        for i in range(7):
-            burn.append(max(remaining, int(current)))
-            current -= step
-        # Ensure the last element matches exactly the remaining points
-        burn[-1] = remaining
-        # Convert points to percentages for the CSS height render
-        data["sprint"]["burn_data"] = [int((b / total) * 100) for b in burn]
+        data["sprint"]["progress_percent"] = round((completed_pts / total_pts) * 100)
     else:
-        data["sprint"]["burn_data"] = []
+        data["sprint"]["progress_percent"] = 0
+    data["sprint"]["burn_data"] = []  # 保留字段，向后兼容
         
     # 3. Parse Real Bug Data
     bug_files = glob.glob(os.path.join(DATA_DIR, "**", "BUG-*.md"), recursive=True)

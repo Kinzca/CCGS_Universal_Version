@@ -222,11 +222,10 @@
         }
 
         /* Dashboard specific */
-        .card-chart { grid-column: 1 / -1; height: 380px; }
+        .card-chart { grid-column: 1 / -1; min-height: 320px; }
         .chart-container {
-            flex-grow: 1; display: flex; align-items: flex-end; gap: 1.5rem;
-            height: calc(100% - 2rem); padding-bottom: 1rem;
-            border-bottom: 1px solid var(--glass-border);
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            height: calc(100% - 2rem); padding: 1rem 0;
             position: relative;
         }
         .empty-state {
@@ -234,12 +233,29 @@
             color: var(--text-muted); font-size: 1.2rem; font-weight: 500;
             text-align: center;
         }
-        .bar-wrapper { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
-        .bar {
-            background: linear-gradient(to top, rgba(139, 92, 246, 0.4), var(--cyan));
-            border-radius: 4px 4px 0 0; transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 2%; width: 100%; position: relative;
+        /* Sprint Progress 环形仪表 */
+        .progress-ring-wrap {
+            display: flex; flex-direction: column; align-items: center; gap: 1.5rem;
         }
+        .progress-ring-svg { width: 200px; height: 200px; transform: rotate(-90deg); }
+        .progress-ring-bg {
+            fill: none; stroke: var(--glass-border); stroke-width: 12;
+        }
+        .progress-ring-fg {
+            fill: none; stroke: url(#progressGrad); stroke-width: 12;
+            stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-ring-label {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%);
+            font-size: 2.8rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .progress-ring-container { position: relative; display: inline-flex; }
+        .progress-ring-meta {
+            font-size: 0.95rem; color: var(--text-muted); text-align: center;
+        }
+        .progress-ring-meta strong { color: var(--text-primary); }
         
         .card-bugs { grid-column: 1 / 2; }
         .bug-list { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; max-height: 400px; }
@@ -503,9 +519,25 @@
         <!-- DASHBOARD VIEW -->
         <div class="view-section dashboard-grid active" id="dashboard-view">
             <div class="card card-chart">
-                <h2 data-i18n="chart_title">Burn-down Chart (Velocity Tracking)</h2>
+                <h2 data-i18n="chart_title">Sprint Progress</h2>
                 <div class="chart-container" id="chart">
-                    <!-- Bars injected here -->
+                    <div class="progress-ring-wrap">
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring-svg" viewBox="0 0 200 200">
+                                <defs>
+                                    <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="var(--cyan)" />
+                                        <stop offset="100%" stop-color="var(--purple)" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="progress-ring-bg" cx="100" cy="100" r="85" />
+                                <circle class="progress-ring-fg" id="progress-ring" cx="100" cy="100" r="85"
+                                    stroke-dasharray="534" stroke-dashoffset="534" />
+                            </svg>
+                            <span class="progress-ring-label" id="progress-ring-val">0%</span>
+                        </div>
+                        <div class="progress-ring-meta" id="progress-ring-meta"></div>
+                    </div>
                 </div>
             </div>
             <div class="card card-bugs">
@@ -666,7 +698,7 @@
                 'nav_dashboard': 'Dashboard', 'nav_sprints': 'Sprints', 'nav_bugs': 'Active Bugs', 'nav_settings': 'Settings',
                 'title_workspace': 'Workspace Overview', 'role_td': 'Technical Director',
                 'side_project': 'Project Details', 'side_active': 'Active Sprint', 'side_completed': 'Completed Pts', 'side_total': 'Total Pts',
-                'chart_title': 'Burn-down Chart (Velocity Tracking)', 'bugs_title': 'Active Bugs', 'health_title': 'Code Debt Indicators',
+                'chart_title': 'Sprint Progress', 'bugs_title': 'Active Bugs', 'health_title': 'Code Debt Indicators',
                 'health_todo': 'Technical Debt (TODOs)', 'health_todo_desc': 'Pending architecture or code tasks.',
                 'health_fixme': 'Critical Issues (FIXMEs)', 'health_fixme_desc': 'Code that requires immediate attention.',
                 'qh_title': 'Quality Health', 'qh_total': 'Total Bugs', 'qh_crit': 'Critical', 'qh_med': 'Medium', 'qh_low': 'Low',
@@ -683,7 +715,7 @@
                 'nav_dashboard': '大盘概览', 'nav_sprints': '敏捷冲刺', 'nav_bugs': '缺陷分诊', 'nav_settings': '系统设置',
                 'title_workspace': '工作空间概览', 'role_td': '技术总监',
                 'side_project': '项目详情', 'side_active': '当前冲刺', 'side_completed': '已完成点数', 'side_total': '总点数',
-                'chart_title': '燃尽图 (进度追踪)', 'bugs_title': '活跃缺陷', 'health_title': '代码债务指标',
+                'chart_title': '冲刺进度', 'bugs_title': '活跃缺陷', 'health_title': '代码债务指标',
                 'health_todo': '技术债务 (TODOs)', 'health_todo_desc': '待处理的架构或普通代码逻辑。',
                 'health_fixme': '致命问题 (FIXMEs)', 'health_fixme_desc': '可能导致崩溃，需要立刻修复。',
                 'qh_title': '质量监控中心', 'qh_total': '缺陷总数', 'qh_crit': '致命缺陷', 'qh_med': '一般缺陷', 'qh_low': '低级缺陷',
@@ -825,20 +857,19 @@
                 const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
                 setTimeout(() => { document.getElementById('progress-bar').style.width = percent + '%'; }, 100);
                 
-                // Chart
-                const chart = document.getElementById('chart');
-                if (data.sprint.burn_data && data.sprint.burn_data.length > 0) {
-                    data.sprint.burn_data.forEach(val => {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'bar-wrapper';
-                        const bar = document.createElement('div');
-                        bar.className = 'bar';
-                        setTimeout(() => { bar.style.height = val + '%'; }, 100);
-                        wrapper.appendChild(bar);
-                        chart.appendChild(wrapper);
-                    });
-                } else {
-                    chart.innerHTML = `<div class="empty-state">${i18n[currentLang]['no_data']}</div>`;
+                // Sprint Progress Ring — 诚实的完成百分比
+                const progressPercent = data.sprint.progress_percent || 0;
+                const circumference = 2 * Math.PI * 85; // r=85
+                const ring = document.getElementById('progress-ring');
+                const ringVal = document.getElementById('progress-ring-val');
+                const ringMeta = document.getElementById('progress-ring-meta');
+                if (ring) {
+                    const offset = circumference - (progressPercent / 100) * circumference;
+                    setTimeout(() => {
+                        ring.style.strokeDashoffset = offset;
+                        ringVal.textContent = progressPercent + '%';
+                    }, 200);
+                    ringMeta.innerHTML = `<strong>${data.sprint.completed_points}</strong> / ${data.sprint.total_points} pts`;
                 }
 
                 // Bugs List (Dashboard)
