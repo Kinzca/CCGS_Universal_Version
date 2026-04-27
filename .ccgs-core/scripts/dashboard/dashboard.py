@@ -10,25 +10,31 @@ from threading import Timer
 
 PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(DIRECTORY, "../../../"))
+CWD = os.getcwd()
+if os.path.exists(os.path.join(CWD, "CCGS-Data")):
+    PROJECT_ROOT = CWD
+else:
+    PROJECT_ROOT = os.path.abspath(os.path.join(DIRECTORY, "../../../"))
 DATA_DIR = os.path.join(PROJECT_ROOT, "CCGS-Data")
 
-def extract_yaml_frontmatter(filepath):
+def extract_markdown_fields(filepath):
+    result = {}
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-            match = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
-            if match:
-                yaml_content = match.group(1)
-                result = {}
-                for line in yaml_content.split('\n'):
-                    if ':' in line:
-                        key, val = line.split(':', 1)
-                        result[key.strip()] = val.strip().strip('"\'')
-                return result
+            lines = f.readlines()
+            for line in lines:
+                # 解析 '# Story XXX: Title'
+                if line.startswith('# Story') and ':' in line:
+                    result['title'] = line.split(':', 1)[1].strip()
+                # 解析 '**Key**: Value' 或 '> **Key**: Value'
+                match = re.search(r'\*\*(.*?)\*\*\s*:\s*(.*)', line)
+                if match:
+                    key = match.group(1).strip().lower()
+                    val = match.group(2).strip().strip('"\'')
+                    result[key] = val
     except:
         pass
-    return {}
+    return result
 
 def gather_data():
     data = {
@@ -46,6 +52,10 @@ def gather_data():
         }
     }
     
+    print("Gathering data...")
+    print("CWD:", CWD)
+    print("DATA_DIR:", DATA_DIR)
+    
     # 1. Parse Sprint Name
     sprint_files = glob.glob(os.path.join(DATA_DIR, "production/sprints/sprint-*.md"))
     if sprint_files:
@@ -53,14 +63,14 @@ def gather_data():
         data["sprint"]["name"] = os.path.basename(latest).replace('.md', '')
     
     # 2. Parse Stories for Real Velocity and Kanban
-    story_files = glob.glob(os.path.join(DATA_DIR, "production/stories/*.md"))
+    story_files = glob.glob(os.path.join(DATA_DIR, "production", "epics", "**", "story-*.md"), recursive=True)
     data["stories"] = []
     total_pts = 0
     completed_pts = 0
     for sf in story_files:
-        fm = extract_yaml_frontmatter(sf)
-        pts_str = str(fm.get('points', '0'))
-        pts = int(pts_str) if pts_str.isdigit() else 0
+        fm = extract_markdown_fields(sf)
+        pts_str = str(fm.get('points', '1'))
+        pts = int(pts_str) if pts_str.isdigit() else 1
         status = fm.get('status', 'todo').lower()
         
         # Append story data for Kanban board
@@ -99,8 +109,9 @@ def gather_data():
     # 3. Parse Real Bug Data
     bug_files = glob.glob(os.path.join(DATA_DIR, "**", "BUG-*.md"), recursive=True)
     for bf in bug_files:
+        if 'triage' in bf.lower(): continue # skip bug-triage
         name = os.path.basename(bf).replace('.md', '')
-        fm = extract_yaml_frontmatter(bf)
+        fm = extract_markdown_fields(bf)
         title = fm.get('title', 'Untitled Bug Report')
         priority = fm.get('priority', 'Medium').capitalize()
         status = fm.get('status', 'Open')
