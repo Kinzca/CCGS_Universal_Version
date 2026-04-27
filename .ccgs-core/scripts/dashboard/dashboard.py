@@ -13,12 +13,29 @@ DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(DIRECTORY, "../../../"))
 DATA_DIR = os.path.join(PROJECT_ROOT, "CCGS-Data")
 
+def extract_yaml_frontmatter(filepath):
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+            match = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
+            if match:
+                yaml_content = match.group(1)
+                result = {}
+                for line in yaml_content.split('\n'):
+                    if ':' in line:
+                        key, val = line.split(':', 1)
+                        result[key.strip()] = val.strip().strip('"\'')
+                return result
+    except:
+        pass
+    return {}
+
 def gather_data():
     data = {
         "sprint": {
             "name": "N/A",
             "progress": 0,
-            "total_points": 100,
+            "total_points": 0,
             "completed_points": 0,
             "burn_data": []
         },
@@ -29,28 +46,71 @@ def gather_data():
         }
     }
     
-    # Basic parsing of CCGS-Data
+    # 1. Parse Sprint Name
     sprint_files = glob.glob(os.path.join(DATA_DIR, "production/sprints/sprint-*.md"))
     if sprint_files:
         latest = sorted(sprint_files)[-1]
         data["sprint"]["name"] = os.path.basename(latest).replace('.md', '')
-        # Simulated burn down data
-        data["sprint"]["burn_data"] = [100, 90, 85, 70, 55, 40, 25]
-        data["sprint"]["total_points"] = 100
-        data["sprint"]["completed_points"] = 75
+    
+    # 2. Parse Stories for Real Velocity
+    story_files = glob.glob(os.path.join(DATA_DIR, "production/stories/*.md"))
+    total_pts = 0
+    completed_pts = 0
+    for sf in story_files:
+        fm = extract_yaml_frontmatter(sf)
+        pts_str = str(fm.get('points', '0'))
+        pts = int(pts_str) if pts_str.isdigit() else 0
+        status = fm.get('status', '').lower()
         
-    # Find Bugs
+        total_pts += pts
+        if status in ['done', 'completed', 'closed', 'verified']:
+            completed_pts += pts
+            
+    data["sprint"]["total_points"] = total_pts if total_pts > 0 else 100
+    data["sprint"]["completed_points"] = completed_pts
+    
+    # Generate an adaptive Burn-down curve based on real remaining points
+    total = data["sprint"]["total_points"]
+    remaining = total - completed_pts
+    step = completed_pts / 6 if completed_pts > 0 else (total * 0.1)
+    burn = []
+    current = total
+    for i in range(7):
+        burn.append(max(remaining, int(current)))
+        current -= step
+    # Ensure the last element matches exactly the remaining points
+    burn[-1] = remaining
+    
+    # Convert points to percentages for the CSS height render
+    data["sprint"]["burn_data"] = [int((b / total) * 100) if total > 0 else 0 for b in burn]
+        
+    # 3. Parse Real Bug Data
     bug_files = glob.glob(os.path.join(DATA_DIR, "**", "BUG-*.md"), recursive=True)
     for bf in bug_files:
         name = os.path.basename(bf).replace('.md', '')
-        data["bugs"].append({"id": name, "title": "Auto-detected Bug", "priority": "High", "status": "Open"})
+        fm = extract_yaml_frontmatter(bf)
+        title = fm.get('title', 'Untitled Bug Report')
+        priority = fm.get('priority', 'Medium').capitalize()
+        status = fm.get('status', 'Open')
         
-    if not bug_files:
+        if status.lower() not in ['done', 'closed', 'resolved']:
+            data["bugs"].append({
+                "id": name, 
+                "title": title, 
+                "priority": priority, 
+                "status": status
+            })
+            
+    # Sort bugs by priority: Critical > High > Medium > Low
+    priority_map = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    data["bugs"].sort(key=lambda x: priority_map.get(x["priority"].lower(), 4))
+        
+    if not data["bugs"]:
         data["bugs"] = [
-            {"id": "BUG-001", "title": "Placeholder Bug (No bugs found)", "priority": "Low", "status": "Open"}
+            {"id": "CLEAN", "title": "Zero active bugs detected!", "priority": "Low", "status": "Clean"}
         ]
         
-    # Count TODO/FIXME
+    # 4. Count Technical Debt (TODO/FIXME)
     src_dir = os.path.join(PROJECT_ROOT, "src")
     if os.path.exists(src_dir):
         for root, dirs, files in os.walk(src_dir):
