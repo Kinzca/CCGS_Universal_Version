@@ -52,15 +52,25 @@ def gather_data():
         latest = sorted(sprint_files)[-1]
         data["sprint"]["name"] = os.path.basename(latest).replace('.md', '')
     
-    # 2. Parse Stories for Real Velocity
+    # 2. Parse Stories for Real Velocity and Kanban
     story_files = glob.glob(os.path.join(DATA_DIR, "production/stories/*.md"))
+    data["stories"] = []
     total_pts = 0
     completed_pts = 0
     for sf in story_files:
         fm = extract_yaml_frontmatter(sf)
         pts_str = str(fm.get('points', '0'))
         pts = int(pts_str) if pts_str.isdigit() else 0
-        status = fm.get('status', '').lower()
+        status = fm.get('status', 'todo').lower()
+        
+        # Append story data for Kanban board
+        data["stories"].append({
+            "id": os.path.basename(sf).replace('.md', ''),
+            "title": fm.get('title', 'Untitled Story'),
+            "points": pts,
+            "priority": fm.get('priority', 'Medium').capitalize(),
+            "status": status
+        })
         
         total_pts += pts
         if status in ['done', 'completed', 'closed', 'verified']:
