@@ -35,7 +35,7 @@
 ## 三、 视觉原型预览 (Visual Prototype)
 基于上述专家的联合构思，这是我们为你生成的大屏视觉概念原型图：
 
-![CCGS Dashboard Mockup](./assets/dashboard_mockup.png)
+![CCGS Dashboard Mockup 16:9](./assets/dashboard_mockup_16x9.png)
 ---
 
 ## 四、 实施路径规划 (Implementation Path)
