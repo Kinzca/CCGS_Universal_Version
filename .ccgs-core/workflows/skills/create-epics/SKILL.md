@@ -139,17 +139,19 @@ Present the producer's assessment. If UNREALISTIC, offer to revise epic boundari
 
 After approval, ask: "May I write the epic file to `CCGS-Data/production/epics/[epic-slug]/EPIC.md`?"
 
-After user confirms, write:
+After user confirms, write the files. After writing all epic files, you MUST run `.ccgs-core/hooks/verify-schema.sh CCGS-Data/production/epics/[epic-slug]/EPIC.md epic` for each epic. If the script fails, immediately fix the file based on the error.
 
 ### `CCGS-Data/production/epics/[epic-slug]/EPIC.md`
 
 Markdown 编号列表`markdown
+---
+layer: "[Foundation / Core / Feature / Presentation]"
+gdd: "CCGS-Data/design/gdd/[filename].md"
+architecture_module: "[module name]"
+status: "Ready"
+---
 # Epic: [System Name]
 
-> **Layer**: [Foundation / Core / Feature / Presentation]
-> **GDD**: CCGS-Data/design/gdd/[filename].md
-> **Architecture Module**: [module name]
-> **Status**: Ready
 > **Stories**: Not yet created — run `/create-stories [epic-slug]`
 
 ## Overview

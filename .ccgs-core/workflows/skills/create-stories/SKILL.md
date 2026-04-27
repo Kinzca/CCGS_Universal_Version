@@ -165,16 +165,18 @@ Markdown 编号列表`
 
 ## 6. Write Story Files
 
-For each story, write `CCGS-Data/production/epics/[epic-slug]/story-[NNN]-[slug].md`:
+For each story, write `CCGS-Data/production/epics/[epic-slug]/story-[NNN]-[slug].md`.
+After writing the story files, you MUST run `.ccgs-core/hooks/verify-schema.sh CCGS-Data/production/epics/[epic-slug]/story-[NNN]-[slug].md story` for each story. If the script fails, immediately fix the file based on the error.
 
 Markdown 编号列表`markdown
+---
+epic: "[epic name]"
+status: "Ready"
+layer: "[Foundation / Core / Feature / Presentation]"
+type: "[Logic | Integration | Visual/Feel | UI | Config/Data]"
+manifest_version: "[date from control-manifest.md header]"
+---
 # Story [NNN]: [title]
-
-> **Epic**: [epic name]
-> **Status**: Ready
-> **Layer**: [Foundation / Core / Feature / Presentation]
-> **Type**: [Logic | Integration | Visual/Feel | UI | Config/Data]
-> **Manifest Version**: [date from control-manifest.md header]
 
 ## Context
 
