@@ -77,17 +77,13 @@ def open_browser():
 if __name__ == "__main__":
     print("Gathering project data for Dashboard...")
     gather_data()
-    print(f"Starting Glassmorphism Dashboard on port {PORT}...")
+    print("Starting Glassmorphism Dashboard...")
     
-    Timer(1, open_browser).start()
-    
-    # Try multiple ports if 8080 is in use
-    global PORT
-    for port in range(8080, 8090):
-        PORT = port
+    for current_port in range(8080, 8090):
         try:
-            with socketserver.TCPServer(("", PORT), Handler) as httpd:
-                print(f"Serving at http://localhost:{PORT}")
+            with socketserver.TCPServer(("", current_port), Handler) as httpd:
+                print(f"Serving at http://localhost:{current_port}")
+                Timer(1, lambda p=current_port: webbrowser.open_new(f"http://localhost:{p}/")).start()
                 try:
                     httpd.serve_forever()
                 except KeyboardInterrupt:
