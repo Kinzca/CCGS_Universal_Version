@@ -698,16 +698,44 @@
             }
         };
 
-        let currentLang = 'en';
+        // ----------------- LOCAL STORAGE INIT -----------------
+        let currentLang = localStorage.getItem('ccgs_lang') || 'en';
+        let currentMode = localStorage.getItem('ccgs_mode') || 'dark';
+        let currentColor = localStorage.getItem('ccgs_color') || '#06B6D4';
+
+        if (currentMode === 'light') {
+            document.body.classList.add('light-mode');
+        }
+        document.documentElement.style.setProperty('--cyan', currentColor);
+        document.documentElement.style.setProperty('--cyan-glow', currentColor + '66');
+        
+        // Setup initial active states in Settings UI when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('#lang-toggle span').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.lang === currentLang) s.classList.add('active');
+            });
+            document.querySelectorAll('#theme-toggle span').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.mode === currentMode) s.classList.add('active');
+            });
+            document.querySelectorAll('.swatch').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.color === currentColor) s.classList.add('active');
+            });
+            
+            // Set initial language strings
+            setLang(currentLang);
+        });
+        // ------------------------------------------------------
+
         function setLang(lang) {
             currentLang = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const text = i18n[lang][el.dataset.i18n];
                 if(text) {
                     // Check if we need to preserve innerHTML structure (icons etc)
-                    // Currently no inline icons inside data-i18n elements, so textContent is fine
                     if(el.childNodes.length > 1) {
-                        // Just replace text node safely
                         for(let i=0; i<el.childNodes.length; i++) {
                             if(el.childNodes[i].nodeType === 3 && el.childNodes[i].textContent.trim().length > 0) {
                                 el.childNodes[i].textContent = text;
@@ -733,6 +761,7 @@
             btn.addEventListener('click', () => {
                 langBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                localStorage.setItem('ccgs_lang', btn.dataset.lang);
                 setLang(btn.dataset.lang);
             });
         });
@@ -762,6 +791,7 @@
             btn.addEventListener('click', () => {
                 themeBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                localStorage.setItem('ccgs_mode', btn.dataset.mode);
                 if(btn.dataset.mode === 'light') {
                     document.body.classList.add('light-mode');
                 } else {
@@ -777,6 +807,7 @@
                 swatches.forEach(s => s.classList.remove('active'));
                 swatch.classList.add('active');
                 const color = swatch.dataset.color;
+                localStorage.setItem('ccgs_color', color);
                 document.documentElement.style.setProperty('--cyan', color);
                 document.documentElement.style.setProperty('--cyan-glow', color + '66');
             });
