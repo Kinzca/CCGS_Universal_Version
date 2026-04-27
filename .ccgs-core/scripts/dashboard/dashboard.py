@@ -32,9 +32,39 @@ def extract_markdown_fields(filepath):
                     key = match.group(1).strip().lower()
                     val = match.group(2).strip().strip('"\'')
                     result[key] = val
-    except:
-        pass
+    except (IOError, UnicodeDecodeError) as e:
+        print(f"Warning: 无法解析 {filepath}: {e}")
     return result
+
+def normalize_status(raw):
+    """将任意 Markdown status 格式归一化为三态: todo / in_progress / done
+    
+    覆盖的格式方言：
+    - 大小写变体: complete / Complete / COMPLETE
+    - Emoji 前缀: ✅ complete / ✅ Complete  
+    - Checkbox 格式: [x] passed / [ ] not yet created
+    - 常见同义词: closed / verified / wip / doing / blocked
+    """
+    if not raw:
+        return 'todo'
+    # 未勾选的 checkbox 直接判定为 todo（优先于关键词匹配）
+    raw_str = str(raw).strip()
+    if raw_str.startswith('[ ]'):
+        return 'todo'
+    # 清除 emoji 和 checkbox 标记
+    cleaned = re.sub(r'[\u2705\u274c\u26a0\ufe0f\U0001f534\U0001f7e1\U0001f7e2]', '', raw_str)
+    cleaned = re.sub(r'\[.\]\s*', '', cleaned)
+    cleaned = cleaned.strip().lower()
+    
+    done_keywords = ['done', 'complete', 'completed', 'closed', 'verified', 'passed', 'resolved', 'created']
+    wip_keywords = ['in progress', 'in_progress', 'doing', 'wip', 'review', 'in review']
+    
+    if any(kw in cleaned for kw in done_keywords):
+        return 'done'
+    elif any(kw in cleaned for kw in wip_keywords):
+        return 'in_progress'
+    else:
+        return 'todo'
 
 def gather_data():
     data = {
@@ -71,7 +101,7 @@ def gather_data():
         fm = extract_markdown_fields(sf)
         pts_str = str(fm.get('points', '1'))
         pts = int(pts_str) if pts_str.isdigit() else 1
-        status = fm.get('status', 'todo').lower()
+        status = normalize_status(fm.get('status', 'todo'))
         
         # Append story data for Kanban board
         data["stories"].append({
@@ -83,7 +113,7 @@ def gather_data():
         })
         
         total_pts += pts
-        if status in ['done', 'completed', 'closed', 'verified']:
+        if status == 'done':
             completed_pts += pts
             
     data["sprint"]["total_points"] = total_pts
@@ -115,8 +145,9 @@ def gather_data():
         title = fm.get('title', 'Untitled Bug Report')
         priority = fm.get('priority', 'Medium').capitalize()
         status = fm.get('status', 'Open')
+        normalized_bug_status = normalize_status(status)
         
-        if status.lower() not in ['done', 'closed', 'resolved']:
+        if normalized_bug_status != 'done':
             data["bugs"].append({
                 "id": name, 
                 "title": title, 
