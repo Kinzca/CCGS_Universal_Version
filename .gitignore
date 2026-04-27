@@ -4,3 +4,6 @@
 CLAUDE.md
 GEMINI.md
 .cursorrules
+
+# Dashboard 运行时产物（项目专属数据快照，禁止入库）
+.ccgs-core/scripts/dashboard/data.json
