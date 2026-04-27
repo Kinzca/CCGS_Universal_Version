@@ -193,10 +193,20 @@ def gather_data():
             {"id": "CLEAN", "title": "Zero active bugs detected!", "priority": "Low", "status": "Clean"}
         ]
         
-    # 4. Count Technical Debt (TODO/FIXME)
-    src_dir = os.path.join(PROJECT_ROOT, "src")
-    if os.path.exists(src_dir):
-        for root, dirs, files in os.walk(src_dir):
+    # 4. Count Technical Debt (TODO/FIXME) — 多引擎源码目录自动发现
+    # 候选列表覆盖主流引擎: Web(src/js/app), Unity(Assets/Scripts), UE(Source), Godot(scripts/src), Python(lib)
+    SRC_CANDIDATES = ["src", "Assets/Scripts", "Source", "scripts", "js", "app", "lib"]
+    
+    # 优先使用 ccgs.env 中的 SRC_DIR 配置
+    src_override = _ccgs_env.get('SRC_DIR')
+    if src_override:
+        scan_dirs = [os.path.join(PROJECT_ROOT, src_override)]
+    else:
+        scan_dirs = [os.path.join(PROJECT_ROOT, d) for d in SRC_CANDIDATES
+                     if os.path.isdir(os.path.join(PROJECT_ROOT, d))]
+    
+    for scan_dir in scan_dirs:
+        for root, dirs, files in os.walk(scan_dir):
             for f in files:
                 if f.endswith(('.cs', '.js', '.ts', '.gd', '.py', '.cpp', '.h')):
                     try:
@@ -204,8 +214,8 @@ def gather_data():
                             content = file.read()
                             data["health"]["TODOs"] += content.count("TODO")
                             data["health"]["FIXMEs"] += content.count("FIXME")
-                    except:
-                        pass
+                    except (IOError, UnicodeDecodeError) as e:
+                        print(f"Warning: 无法读取 {os.path.join(root, f)}: {e}")
                     
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:
         json.dump(data, f)
