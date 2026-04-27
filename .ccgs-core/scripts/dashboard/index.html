@@ -227,6 +227,12 @@
             flex-grow: 1; display: flex; align-items: flex-end; gap: 1.5rem;
             height: calc(100% - 2rem); padding-bottom: 1rem;
             border-bottom: 1px solid var(--glass-border);
+            position: relative;
+        }
+        .empty-state {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--text-muted); font-size: 1.2rem; font-weight: 500;
+            text-align: center;
         }
         .bar-wrapper { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
         .bar {
@@ -244,6 +250,7 @@
         .bug-priority { padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .priority-high { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
         .priority-low { background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .priority-clean { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
 
         .card-health { grid-column: 2 / 3; }
         .health-grid { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -293,6 +300,7 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            position: relative;
         }
         .kanban-card {
             background: var(--card-hover);
@@ -336,7 +344,7 @@
         .yellow-text { color: #eab308; }
         .purple-text { color: var(--purple); }
 
-        .triage-list { flex-grow: 1; padding: 1.5rem 2rem; display: flex; flex-direction: column; overflow: hidden; }
+        .triage-list { flex-grow: 1; padding: 1.5rem 2rem; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .triage-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
         .triage-rows { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
         .triage-row {
@@ -351,6 +359,7 @@
         .triage-row.border-red { border-left-color: #ef4444; box-shadow: -4px 0 15px rgba(239,68,68,0.15); }
         .triage-row.border-yellow { border-left-color: #eab308; box-shadow: -4px 0 15px rgba(234,179,8,0.15); }
         .triage-row.border-purple { border-left-color: var(--purple); box-shadow: -4px 0 15px rgba(139,92,246,0.15); }
+        .triage-row.border-green { border-left-color: #10B981; box-shadow: -4px 0 15px rgba(16,185,129,0.15); }
         
         .tr-id { font-size: 0.9rem; font-weight: bold; color: var(--text-muted); }
         .tr-title { font-size: 1rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -402,7 +411,7 @@
         }
 
         body.light-mode .pill-switch span.active {
-            color: white; /* Keep white text inside cyan pill in light mode */
+            color: white;
         }
 
         /* Slider */
@@ -443,36 +452,36 @@
         </div>
 
         <ul class="nav-menu">
-            <li class="nav-item active" data-target="dashboard-view">
+            <li class="nav-item active" data-target="dashboard-view" data-i18n="nav_dashboard">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Dashboard
             </li>
-            <li class="nav-item" data-target="sprints-view">
+            <li class="nav-item" data-target="sprints-view" data-i18n="nav_sprints">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Sprints
             </li>
-            <li class="nav-item" data-target="bugs-view">
+            <li class="nav-item" data-target="bugs-view" data-i18n="nav_bugs">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Active Bugs
             </li>
-            <li class="nav-item" data-target="settings-view">
+            <li class="nav-item" data-target="settings-view" data-i18n="nav_settings">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Settings
             </li>
         </ul>
 
         <div class="sidebar-stats">
-            <h3>Project Details</h3>
+            <h3 data-i18n="side_project">Project Details</h3>
             <div class="stat-row">
-                <span>Active Sprint</span>
+                <span data-i18n="side_active">Active Sprint</span>
                 <span class="stat-value" id="sprint-name">...</span>
             </div>
             <div class="stat-row">
-                <span>Completed Pts</span>
+                <span data-i18n="side_completed">Completed Pts</span>
                 <span class="stat-value" id="sprint-pts">0</span>
             </div>
             <div class="stat-row">
-                <span>Total Pts</span>
+                <span data-i18n="side_total">Total Pts</span>
                 <span class="stat-value" id="sprint-total">0</span>
             </div>
             
@@ -484,9 +493,9 @@
 
     <main class="main-content">
         <div class="header">
-            <h1 id="page-title">Workspace Overview</h1>
+            <h1 id="page-title" data-i18n="title_workspace">Workspace Overview</h1>
             <div class="user-profile">
-                <span>Technical Director</span>
+                <span data-i18n="role_td">Technical Director</span>
                 <div class="avatar">TD</div>
             </div>
         </div>
@@ -494,15 +503,17 @@
         <!-- DASHBOARD VIEW -->
         <div class="view-section dashboard-grid active" id="dashboard-view">
             <div class="card card-chart">
-                <h2>Burn-down Chart (Velocity Tracking)</h2>
-                <div class="chart-container" id="chart"></div>
+                <h2 data-i18n="chart_title">Burn-down Chart (Velocity Tracking)</h2>
+                <div class="chart-container" id="chart">
+                    <!-- Bars injected here -->
+                </div>
             </div>
             <div class="card card-bugs">
-                <h2>Active Bugs</h2>
+                <h2 data-i18n="bugs_title">Active Bugs</h2>
                 <div class="bug-list" id="bug-list"></div>
             </div>
             <div class="card card-health">
-                <h2>Code Debt Indicators</h2>
+                <h2 data-i18n="health_title">Code Debt Indicators</h2>
                 <div class="health-grid">
                     <div class="health-indicator">
                         <div class="ring-container">
@@ -510,8 +521,8 @@
                             <div class="ring-val" id="todo-val">0</div>
                         </div>
                         <div class="health-details">
-                            <h4>Technical Debt (TODOs)</h4>
-                            <p>Pending architecture or code tasks.</p>
+                            <h4 data-i18n="health_todo">Technical Debt (TODOs)</h4>
+                            <p data-i18n="health_todo_desc">Pending architecture or code tasks.</p>
                         </div>
                     </div>
                     <div class="health-indicator">
@@ -520,8 +531,8 @@
                             <div class="ring-val" id="fixme-val">0</div>
                         </div>
                         <div class="health-details">
-                            <h4>Critical Issues (FIXMEs)</h4>
-                            <p>Code that requires immediate attention.</p>
+                            <h4 data-i18n="health_fixme">Critical Issues (FIXMEs)</h4>
+                            <p data-i18n="health_fixme_desc">Code that requires immediate attention.</p>
                         </div>
                     </div>
                 </div>
@@ -549,22 +560,22 @@
         <!-- ACTIVE BUGS VIEW -->
         <div class="view-section bugs-grid" id="bugs-view" style="display: none;">
             <div class="card quality-health">
-                <h2 style="margin-bottom: 0;">Quality Health</h2>
+                <h2 style="margin-bottom: 0;" data-i18n="qh_title">Quality Health</h2>
                 <div class="health-stats-row">
                     <div class="health-stat-box" style="border-top-color: var(--cyan)">
-                        <span class="stat-label">Total Bugs</span>
+                        <span class="stat-label" data-i18n="qh_total">Total Bugs</span>
                         <span class="stat-num cyan-text" id="qh-total">0</span>
                     </div>
                     <div class="health-stat-box" style="border-top-color: #ef4444">
-                        <span class="stat-label">Critical</span>
+                        <span class="stat-label" data-i18n="qh_crit">Critical</span>
                         <span class="stat-num red-text" id="qh-critical">0</span>
                     </div>
                     <div class="health-stat-box" style="border-top-color: #eab308">
-                        <span class="stat-label">Medium</span>
+                        <span class="stat-label" data-i18n="qh_med">Medium</span>
                         <span class="stat-num yellow-text" id="qh-medium">0</span>
                     </div>
                     <div class="health-stat-box" style="border-top-color: var(--purple)">
-                        <span class="stat-label">Low</span>
+                        <span class="stat-label" data-i18n="qh_low">Low</span>
                         <span class="stat-num purple-text" id="qh-low">0</span>
                     </div>
                 </div>
@@ -572,7 +583,7 @@
 
             <div class="card triage-list">
                 <div class="triage-header">
-                    <h2 style="margin-bottom: 0;">ACTIVE BUGS TRIAGE</h2>
+                    <h2 style="margin-bottom: 0;" data-i18n="triage_title">ACTIVE BUGS TRIAGE</h2>
                 </div>
                 <div class="triage-rows" id="triage-rows">
                     <!-- Rows populated by JS -->
@@ -586,11 +597,11 @@
                 <div class="setting-row">
                     <div class="setting-info">
                         <h3>Language / 语言</h3>
-                        <p>Switch between English and Chinese interface.</p>
+                        <p data-i18n="set_lang_desc">Switch between English and Chinese interface.</p>
                     </div>
-                    <div class="pill-switch">
-                        <span class="active">English</span>
-                        <span>中文</span>
+                    <div class="pill-switch" id="lang-toggle">
+                        <span class="active" data-lang="en">English</span>
+                        <span data-lang="zh">中文</span>
                     </div>
                 </div>
             </div>
@@ -598,8 +609,8 @@
             <div class="card">
                 <div class="setting-row">
                     <div class="setting-info">
-                        <h3>Appearance Mode</h3>
-                        <p>Toggle between Light and Dark visual modes.</p>
+                        <h3 data-i18n="set_app">Appearance Mode</h3>
+                        <p data-i18n="set_app_desc">Toggle between Light and Dark visual modes.</p>
                     </div>
                     <div class="pill-switch" id="theme-toggle">
                         <span class="active" data-mode="dark">🌙 Dark</span>
@@ -611,15 +622,15 @@
             <div class="card">
                 <div class="setting-row">
                     <div class="setting-info">
-                        <h3>Schema Validation Strictness</h3>
-                        <p>Adjust the Strictness Level of the automated YAML schema validation pipeline.</p>
+                        <h3 data-i18n="set_schema">Schema Validation Strictness</h3>
+                        <p data-i18n="set_schema_desc">Adjust the Strictness Level of the automated YAML schema validation pipeline.</p>
                     </div>
                     <div class="slider-container">
                         <input type="range" min="1" max="3" value="3" class="slider" id="schema-slider">
                         <div class="slider-labels">
-                            <span>Flexible</span>
-                            <span>Standard</span>
-                            <span>Strict</span>
+                            <span data-i18n="flex">Flexible</span>
+                            <span data-i18n="std">Standard</span>
+                            <span data-i18n="strict">Strict</span>
                         </div>
                     </div>
                 </div>
@@ -628,27 +639,102 @@
             <div class="card">
                 <div class="setting-row">
                     <div class="setting-info">
-                        <h3>Theme Accents</h3>
-                        <p>Select the global primary color accent for your project workspace.</p>
+                        <h3 data-i18n="set_theme">Theme Accents</h3>
+                        <p data-i18n="set_theme_desc">Select the global primary color accent for your project workspace.</p>
                     </div>
                     <div class="swatch-container" id="color-swatches">
-                        <div class="swatch active" style="background-color: #06B6D4; color: #06B6D4" data-color="#06B6D4"></div> <!-- Cyan -->
-                        <div class="swatch" style="background-color: #8B5CF6; color: #8B5CF6" data-color="#8B5CF6"></div> <!-- Purple -->
-                        <div class="swatch" style="background-color: #10B981; color: #10B981" data-color="#10B981"></div> <!-- Green -->
-                        <div class="swatch" style="background-color: #F59E0B; color: #F59E0B" data-color="#F59E0B"></div> <!-- Orange -->
+                        <div class="swatch active" style="background-color: #06B6D4; color: #06B6D4" data-color="#06B6D4"></div>
+                        <div class="swatch" style="background-color: #8B5CF6; color: #8B5CF6" data-color="#8B5CF6"></div>
+                        <div class="swatch" style="background-color: #10B981; color: #10B981" data-color="#10B981"></div>
+                        <div class="swatch" style="background-color: #F59E0B; color: #F59E0B" data-color="#F59E0B"></div>
                     </div>
                 </div>
             </div>
             
             <div style="display:flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                <button style="padding: 10px 24px; border-radius: 8px; border:1px solid var(--glass-border); background: transparent; color: var(--text-main); cursor: pointer;">Cancel</button>
-                <button style="padding: 10px 24px; border-radius: 8px; border:none; background: var(--cyan); color: white; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px var(--cyan-glow);">Save Changes</button>
+                <button style="padding: 10px 24px; border-radius: 8px; border:1px solid var(--glass-border); background: transparent; color: var(--text-main); cursor: pointer;" data-i18n="btn_cancel">Cancel</button>
+                <button style="padding: 10px 24px; border-radius: 8px; border:none; background: var(--cyan); color: white; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px var(--cyan-glow);" data-i18n="btn_save">Save Changes</button>
             </div>
         </div>
 
     </main>
 
     <script>
+        // i18n Dictionary
+        const i18n = {
+            'en': {
+                'nav_dashboard': 'Dashboard', 'nav_sprints': 'Sprints', 'nav_bugs': 'Active Bugs', 'nav_settings': 'Settings',
+                'title_workspace': 'Workspace Overview', 'role_td': 'Technical Director',
+                'side_project': 'Project Details', 'side_active': 'Active Sprint', 'side_completed': 'Completed Pts', 'side_total': 'Total Pts',
+                'chart_title': 'Burn-down Chart (Velocity Tracking)', 'bugs_title': 'Active Bugs', 'health_title': 'Code Debt Indicators',
+                'health_todo': 'Technical Debt (TODOs)', 'health_todo_desc': 'Pending architecture or code tasks.',
+                'health_fixme': 'Critical Issues (FIXMEs)', 'health_fixme_desc': 'Code that requires immediate attention.',
+                'qh_title': 'Quality Health', 'qh_total': 'Total Bugs', 'qh_crit': 'Critical', 'qh_med': 'Medium', 'qh_low': 'Low',
+                'triage_title': 'ACTIVE BUGS TRIAGE',
+                'set_lang_desc': 'Switch between English and Chinese interface.', 'set_app': 'Appearance Mode', 'set_app_desc': 'Toggle between Light and Dark visual modes.',
+                'set_schema': 'Schema Validation Strictness', 'set_schema_desc': 'Adjust the Strictness Level of the automated YAML schema validation pipeline.',
+                'flex': 'Flexible', 'std': 'Standard', 'strict': 'Strict',
+                'set_theme': 'Theme Accents', 'set_theme_desc': 'Select the global primary color accent for your project workspace.',
+                'btn_cancel': 'Cancel', 'btn_save': 'Save Changes',
+                'no_data': 'No Active Sprint Data', 'empty_bugs': 'All clear! No active bugs.', 'empty_kanban': 'Empty Column'
+            },
+            'zh': {
+                'nav_dashboard': '大盘概览', 'nav_sprints': '敏捷冲刺', 'nav_bugs': '缺陷分诊', 'nav_settings': '系统设置',
+                'title_workspace': '工作空间概览', 'role_td': '技术总监',
+                'side_project': '项目详情', 'side_active': '当前冲刺', 'side_completed': '已完成点数', 'side_total': '总点数',
+                'chart_title': '燃尽图 (进度追踪)', 'bugs_title': '活跃缺陷', 'health_title': '代码债务指标',
+                'health_todo': '技术债务 (TODOs)', 'health_todo_desc': '待处理的架构或普通代码逻辑。',
+                'health_fixme': '致命问题 (FIXMEs)', 'health_fixme_desc': '可能导致崩溃，需要立刻修复。',
+                'qh_title': '质量监控中心', 'qh_total': '缺陷总数', 'qh_crit': '致命缺陷', 'qh_med': '一般缺陷', 'qh_low': '低级缺陷',
+                'triage_title': '活跃缺陷分诊台',
+                'set_lang_desc': '在英文和中文面板之间切换。', 'set_app': '外观模式', 'set_app_desc': '在极客暗黑和通透白昼模式间切换。',
+                'set_schema': '校验严谨度阈值', 'set_schema_desc': '调整底层 Python 对 Markdown 规范的拦截严格度。',
+                'flex': '宽松', 'std': '标准', 'strict': '严格',
+                'set_theme': '强调色配置', 'set_theme_desc': '为当前的工作空间选择一个专属的霓虹强调色。',
+                'btn_cancel': '取消', 'btn_save': '保存配置',
+                'no_data': '当前无冲刺数据', 'empty_bugs': '完美！无任何待处理缺陷。', 'empty_kanban': '该列暂无任务'
+            }
+        };
+
+        let currentLang = 'en';
+        function setLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const text = i18n[lang][el.dataset.i18n];
+                if(text) {
+                    // Check if we need to preserve innerHTML structure (icons etc)
+                    // Currently no inline icons inside data-i18n elements, so textContent is fine
+                    if(el.childNodes.length > 1) {
+                        // Just replace text node safely
+                        for(let i=0; i<el.childNodes.length; i++) {
+                            if(el.childNodes[i].nodeType === 3 && el.childNodes[i].textContent.trim().length > 0) {
+                                el.childNodes[i].textContent = text;
+                                break;
+                            }
+                        }
+                    } else {
+                        el.textContent = text;
+                    }
+                }
+            });
+            // Update Page Title to match Nav
+            const activeNav = document.querySelector('.nav-item.active');
+            if(activeNav) {
+                document.getElementById('page-title').textContent = i18n[lang][activeNav.dataset.i18n];
+            }
+        }
+
+        // Language Toggle Logic
+        const langToggle = document.getElementById('lang-toggle');
+        const langBtns = langToggle.querySelectorAll('span');
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                langBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setLang(btn.dataset.lang);
+            });
+        });
+
         // SPA Navigation Logic
         const navItems = document.querySelectorAll('.nav-item');
         const views = document.querySelectorAll('.view-section');
@@ -658,14 +744,10 @@
             item.addEventListener('click', () => {
                 if(!item.dataset.target) return;
                 
-                // Update Nav
                 navItems.forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
-                
-                // Update Title
-                pageTitle.textContent = item.textContent.trim();
+                pageTitle.textContent = i18n[currentLang][item.dataset.i18n] || item.textContent.trim();
 
-                // Update Views
                 views.forEach(v => v.classList.remove('active'));
                 document.getElementById(item.dataset.target).classList.add('active');
             });
@@ -693,12 +775,8 @@
                 swatches.forEach(s => s.classList.remove('active'));
                 swatch.classList.add('active');
                 const color = swatch.dataset.color;
-                // Update CSS variables
                 document.documentElement.style.setProperty('--cyan', color);
-                
-                // Attempt to update glow with a hack (assuming rgb extraction or generic shadow)
-                // For a proper glow we'd need hex to rgba, but for now we set it to the raw color 
-                document.documentElement.style.setProperty('--cyan-glow', color + '66'); // adding 40% opacity hex
+                document.documentElement.style.setProperty('--cyan-glow', color + '66');
             });
         });
 
@@ -707,42 +785,49 @@
             .then(res => res.json())
             .then(data => {
                 // Populate Sidebar
-                document.getElementById('sprint-name').textContent = data.sprint.name;
+                document.getElementById('sprint-name').textContent = data.sprint.name || 'N/A';
                 document.getElementById('sprint-pts').textContent = data.sprint.completed_points;
                 document.getElementById('sprint-total').textContent = data.sprint.total_points;
                 
                 const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
-                setTimeout(() => {
-                    document.getElementById('progress-bar').style.width = percent + '%';
-                }, 100);
+                setTimeout(() => { document.getElementById('progress-bar').style.width = percent + '%'; }, 100);
                 
                 // Chart
                 const chart = document.getElementById('chart');
-                data.sprint.burn_data.forEach(val => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'bar-wrapper';
-                    const bar = document.createElement('div');
-                    bar.className = 'bar';
-                    setTimeout(() => { bar.style.height = val + '%'; }, 100);
-                    wrapper.appendChild(bar);
-                    chart.appendChild(wrapper);
-                });
+                if (data.sprint.burn_data && data.sprint.burn_data.length > 0) {
+                    data.sprint.burn_data.forEach(val => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'bar-wrapper';
+                        const bar = document.createElement('div');
+                        bar.className = 'bar';
+                        setTimeout(() => { bar.style.height = val + '%'; }, 100);
+                        wrapper.appendChild(bar);
+                        chart.appendChild(wrapper);
+                    });
+                } else {
+                    chart.innerHTML = `<div class="empty-state">${i18n[currentLang]['no_data']}</div>`;
+                }
 
-                // Bugs
+                // Bugs List (Dashboard)
                 const list = document.getElementById('bug-list');
-                data.bugs.forEach(bug => {
-                    const li = document.createElement('div');
-                    li.className = 'bug-item';
-                    const prioClass = bug.priority === 'High' || bug.priority === 'Critical' ? 'priority-high' : 'priority-low';
-                    li.innerHTML = `
-                        <div style="display:flex; flex-direction:column; gap:4px">
-                            <strong style="color: var(--text-main); font-size: 1rem;">${bug.id}</strong>
-                            <span style="font-size: 0.85rem; color: var(--text-muted)">${bug.title}</span>
-                        </div>
-                        <span class="bug-priority ${prioClass}">${bug.priority}</span>
-                    `;
-                    list.appendChild(li);
-                });
+                if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
+                    list.innerHTML = `<div class="empty-state">${i18n[currentLang]['empty_bugs']}</div>`;
+                } else {
+                    data.bugs.forEach(bug => {
+                        const li = document.createElement('div');
+                        li.className = 'bug-item';
+                        const p = bug.priority.toLowerCase();
+                        const prioClass = (p === 'critical' || p === 'high') ? 'priority-high' : 'priority-low';
+                        li.innerHTML = `
+                            <div style="display:flex; flex-direction:column; gap:4px; max-width:70%;">
+                                <strong style="color: var(--text-main); font-size: 1rem;">${bug.id}</strong>
+                                <span style="font-size: 0.85rem; color: var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${bug.title}</span>
+                            </div>
+                            <span class="bug-priority ${prioClass}">${bug.priority}</span>
+                        `;
+                        list.appendChild(li);
+                    });
+                }
 
                 // Health
                 document.getElementById('todo-val').textContent = data.health.TODOs;
@@ -753,11 +838,11 @@
                 const colInProg = document.getElementById('col-inprogress');
                 const colDone = document.getElementById('col-done');
                 
-                if (data.stories) {
+                if (data.stories && data.stories.length > 0) {
                     data.stories.forEach(story => {
                         const card = document.createElement('div');
                         card.className = 'kanban-card';
-                        const prioClass = story.priority === 'High' || story.priority === 'Critical' ? 'priority-high' : 'priority-low';
+                        const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
                         card.innerHTML = `
                             <div class="kb-id">${story.id}</div>
                             <div class="kb-title">${story.title}</div>
@@ -776,18 +861,23 @@
                             colTodo.appendChild(card);
                         }
                     });
+                } else {
+                    colTodo.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;">${i18n[currentLang]['empty_kanban']}</div>`;
+                    colInProg.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;">${i18n[currentLang]['empty_kanban']}</div>`;
+                    colDone.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;">${i18n[currentLang]['empty_kanban']}</div>`;
                 }
                 
                 // Active Bugs Triage
                 const triageRows = document.getElementById('triage-rows');
                 let countCrit = 0, countMed = 0, countLow = 0;
                 
-                if (data.bugs) {
-                    document.getElementById('qh-total').textContent = data.bugs[0].id === 'CLEAN' ? 0 : data.bugs.length;
+                if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
+                    document.getElementById('qh-total').textContent = 0;
+                    triageRows.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:2rem; font-size:1.5rem; color: #10B981;">✅ ${i18n[currentLang]['empty_bugs']}</div>`;
+                } else {
+                    document.getElementById('qh-total').textContent = data.bugs.length;
                     
                     data.bugs.forEach(bug => {
-                        if(bug.id === 'CLEAN') return;
-                        
                         let borderClass = 'border-purple';
                         let prioClass = 'priority-low';
                         const p = bug.priority.toLowerCase();
@@ -815,11 +905,10 @@
                         `;
                         triageRows.appendChild(row);
                     });
-                    
-                    document.getElementById('qh-critical').textContent = countCrit;
-                    document.getElementById('qh-medium').textContent = countMed;
-                    document.getElementById('qh-low').textContent = countLow;
                 }
+                document.getElementById('qh-critical').textContent = countCrit;
+                document.getElementById('qh-medium').textContent = countMed;
+                document.getElementById('qh-low').textContent = countLow;
 
             }).catch(e => console.log('Data fetching skipped or failed.', e));
     </script>

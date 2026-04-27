@@ -76,23 +76,25 @@ def gather_data():
         if status in ['done', 'completed', 'closed', 'verified']:
             completed_pts += pts
             
-    data["sprint"]["total_points"] = total_pts if total_pts > 0 else 100
+    data["sprint"]["total_points"] = total_pts
     data["sprint"]["completed_points"] = completed_pts
     
     # Generate an adaptive Burn-down curve based on real remaining points
-    total = data["sprint"]["total_points"]
-    remaining = total - completed_pts
-    step = completed_pts / 6 if completed_pts > 0 else (total * 0.1)
-    burn = []
-    current = total
-    for i in range(7):
-        burn.append(max(remaining, int(current)))
-        current -= step
-    # Ensure the last element matches exactly the remaining points
-    burn[-1] = remaining
-    
-    # Convert points to percentages for the CSS height render
-    data["sprint"]["burn_data"] = [int((b / total) * 100) if total > 0 else 0 for b in burn]
+    if total_pts > 0:
+        total = total_pts
+        remaining = total - completed_pts
+        step = completed_pts / 6 if completed_pts > 0 else (total * 0.1)
+        burn = []
+        current = total
+        for i in range(7):
+            burn.append(max(remaining, int(current)))
+            current -= step
+        # Ensure the last element matches exactly the remaining points
+        burn[-1] = remaining
+        # Convert points to percentages for the CSS height render
+        data["sprint"]["burn_data"] = [int((b / total) * 100) for b in burn]
+    else:
+        data["sprint"]["burn_data"] = []
         
     # 3. Parse Real Bug Data
     bug_files = glob.glob(os.path.join(DATA_DIR, "**", "BUG-*.md"), recursive=True)
