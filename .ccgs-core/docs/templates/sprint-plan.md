@@ -42,6 +42,13 @@
 |----|------|-------------|-----------|-------------|-------------------|--------|
 | S[N]-020 | | | | | | Not Started |
 
+### Art & Asset Production (UI / Visual / Audio)
+
+| ID | Asset Task | Owner | Est. Days | Target Sprint for Integration | Status |
+|----|------------|-------|-----------|-----------------------------|--------|
+| A[N]-001 | | | | Sprint [N] | Not Started |
+
+
 ## Carryover from Sprint [N-1]
 
 | Original ID | Task | Reason for Carryover | New Estimate | Priority Change |
@@ -65,6 +72,7 @@
 - [ ] Design documents updated for any deviations from spec
 - [ ] Test cases written and executed for all new features
 - [ ] Asset naming and format standards met
+- [ ] Final assets successfully integrated replacing all whitebox/placeholders
 
 ## Daily Status Tracking
 

@@ -170,6 +170,17 @@ and the architecture module's stated responsibilities]
 | TR-[system]-001 | [requirement text from registry] | ADR-NNNN ✅ |
 | TR-[system]-002 | [requirement text] | ❌ No ADR |
 
+## Asset Dependencies
+
+- **Visual Assets**: [List of 2D/3D art, sprites, models needed]
+- **UI/UX Assets**: [List of UI elements, icons, menus needed]
+- **Audio/VFX**: [List of sound effects, music, particle systems needed]
+
+## Art-Tech Decoupling Strategy
+
+- **Placeholder Phase**: [How programmers will mock this while art is pending, e.g. color blocks, text instead of icons]
+- **Asset Integration Handoff**: [At what point/sprint the placeholder should be replaced by final assets]
+
 ## Definition of Done
 
 This epic is complete when:

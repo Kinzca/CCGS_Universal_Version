@@ -259,7 +259,8 @@ change meaning. This is what the programmer reads instead of the ADR.]
 
 ## Dependencies
 
-- Depends on: [Story NNN-1 must be DONE, or "None"]
+- Code Dependencies: [Story NNN-1 must be DONE, or "None"]
+- Asset Dependencies: [Required visual/UI/audio assets must be in Asset Ready state, or "None"]
 - Unlocks: [Story NNN+1, or "None"]
 Markdown 编号列表`
 

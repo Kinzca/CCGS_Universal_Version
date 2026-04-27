@@ -64,6 +64,11 @@ Markdown 编号列表`markdown
 | ID | Task | Agent/Owner | Est. Days | Dependencies | Acceptance Criteria |
 |----|------|-------------|-----------|-------------|-------------------|
 
+### Art & Asset Production (UI / Visual / Audio)
+| ID | Asset Task | Owner | Est. Days | Target Sprint | Status |
+|----|------------|-------|-----------|---------------|--------|
+
+
 ## Carryover from Previous Sprint
 | Task | Reason | New Estimate |
 |------|--------|-------------|
@@ -84,6 +89,7 @@ Markdown 编号列表`markdown
 - [ ] QA sign-off report: APPROVED or APPROVED WITH CONDITIONS (`/team-qa sprint`)
 - [ ] No S1 or S2 bugs in delivered features
 - [ ] Design documents updated for any deviations
+- [ ] Final assets successfully integrated replacing all whitebox/placeholders
 - [ ] Code reviewed and merged
 Markdown 编号列表`
 
