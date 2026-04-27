@@ -35,8 +35,7 @@
 ## 三、 视觉原型预览 (Visual Prototype)
 基于上述专家的联合构思，这是我们为你生成的大屏视觉概念原型图：
 
-![CCGS Dashboard Mockup](/Users/chengyibo/.gemini/antigravity/brain/0d8ba333-59da-41e2-b421-3de182d4f091/ccgs_dashboard_mockup_1777265073701.png)
-
+![CCGS Dashboard Mockup](./assets/dashboard_mockup.png)
 ---
 
 ## 四、 实施路径规划 (Implementation Path)
