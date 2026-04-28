@@ -616,12 +616,7 @@
                             }
                             
                             const lockContainer = card.querySelector('.kb-lock-icon-container');
-                            if (lockContainer) {
-                                lockContainer.addEventListener('click', (e) => {
-                                    e.stopPropagation();
-                                    _activateSpotlight(card, story.id, incompleteDeps);
-                                });
-                            }
+                            // 锁图标点击不再触发任何弹窗或聚光灯效果，仅保留 hover (由 idGroup 处理)
 
                             // 点击卡片主体滑出详情侧边栏 (防误触)
                             let startX = 0, startY = 0;
@@ -1415,107 +1410,5 @@
                     }
                 });
             }
-        }
-
-        function _clearSpotlight() {
-            const board = document.getElementById('kanban-board');
-            if (board) {
-                board.classList.remove('spotlight-mode');
-                board.querySelectorAll('.spotlight-active').forEach(el => {
-                    el.classList.remove('spotlight-active', 'is-dep');
-                });
-            }
-            const svgLayer = document.getElementById('dependency-svg-layer');
-            if (svgLayer) svgLayer.innerHTML = '';
-        }
-
-        function _activateSpotlight(currentCard, storyId, incompleteDeps) {
-            _clearSpotlight();
-            const board = document.getElementById('kanban-board');
-            let svgLayer = document.getElementById('dependency-svg-layer');
-            if (!board) return;
-
-            // Ensure svgLayer exists and covers the board
-            if (!svgLayer) {
-                svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svgLayer.id = 'dependency-svg-layer';
-                svgLayer.style.position = 'absolute';
-                svgLayer.style.top = '0';
-                svgLayer.style.left = '0';
-                svgLayer.style.width = '100%';
-                svgLayer.style.height = '100%';
-                svgLayer.style.pointerEvents = 'none';
-                svgLayer.style.zIndex = '5';
-                board.style.position = 'relative';
-                board.appendChild(svgLayer);
-            }
-
-            board.classList.add('spotlight-mode');
-            currentCard.classList.add('spotlight-active');
-
-            const boardRect = board.getBoundingClientRect();
-            const currentRect = currentCard.getBoundingClientRect();
-            
-            // X, Y relative to the board
-            const endX = currentRect.left - boardRect.left;
-            const endY = currentRect.top - boardRect.top + (currentRect.height / 2);
-
-            let minTop = currentRect.top;
-            let maxBottom = currentRect.bottom;
-            let depCardToScroll = null;
-
-            incompleteDeps.forEach(dep => {
-                const depCards = Array.from(board.querySelectorAll('.kb-card')).filter(c => {
-                    const idEl = c.querySelector('.kb-id');
-                    return idEl && idEl.innerText === dep.id;
-                });
-
-                if (depCards.length > 0) {
-                    const depCard = depCards[0];
-                    depCard.classList.add('spotlight-active', 'is-dep');
-                    
-                    const depRect = depCard.getBoundingClientRect();
-                    
-                    // Track bounds for scrolling
-                    if (depRect.top < minTop || depRect.bottom > maxBottom) {
-                        depCardToScroll = depCard;
-                    }
-
-                    const startX = depRect.right - boardRect.left;
-                    const startY = depRect.top - boardRect.top + (depRect.height / 2);
-
-                    const controlX1 = startX + 50;
-                    const controlX2 = endX - 50;
-
-                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`);
-                    path.setAttribute('class', 'dep-spotlight-line');
-                    
-                    // Add arrowhead marker
-                    path.setAttribute('marker-end', 'url(#spotlight-arrow)');
-                    svgLayer.appendChild(path);
-                }
-            });
-
-            // Ensure marker exists in SVG
-            if (!document.getElementById('spotlight-arrow')) {
-                const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-                defs.innerHTML = `<marker id="spotlight-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--cyan)"/></marker>`;
-                svgLayer.appendChild(defs);
-            }
-
-            // Scroll dependent card into view if needed
-            if (depCardToScroll) {
-                depCardToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
-            // Click anywhere to clear spotlight
-            setTimeout(() => {
-                const clearSpotlightHandler = (e) => {
-                    _clearSpotlight();
-                    document.removeEventListener('click', clearSpotlightHandler);
-                };
-                document.addEventListener('click', clearSpotlightHandler);
-            }, 50);
-        }
+        // No spotlight logic here
 
