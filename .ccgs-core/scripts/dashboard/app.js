@@ -13,6 +13,7 @@
 
                 'flex': 'Flexible', 'std': 'Standard', 'strict': 'Strict',
                 'set_theme': 'Theme Accents', 'set_theme_desc': 'Select the global primary color accent for your project workspace. (Auto-saved)',
+                'status_connected': 'Connected', 'status_disconnected': 'Offline', 'warn_disconnected': 'Disconnected from server. Retrying...',
 
                 'no_data': 'No Active Sprint Data', 'empty_bugs': 'All clear! No active bugs.', 'empty_kanban': 'Empty Column',
                 'clean_bugs': '✅ All clear! No active bugs.'
@@ -30,6 +31,7 @@
 
                 'flex': '宽松', 'std': '标准', 'strict': '严格',
                 'set_theme': '强调色配置', 'set_theme_desc': '为当前的工作空间选择一个专属的霓虹强调色。（已自动保存）',
+                'status_connected': '已连接', 'status_disconnected': '已断开', 'warn_disconnected': '已与服务器断开连接，正在尝试重连...',
 
                 'no_data': '当前无冲刺数据', 'empty_bugs': '完美！无任何待处理缺陷。', 'empty_kanban': '该列暂无任务',
                 'clean_bugs': '✅ 完美！当前无任何活跃缺陷。'
@@ -151,133 +153,178 @@
             });
         });
 
+        let failCount = 0;
+        const connWarning = document.getElementById('connection-warning');
+        const connDot = document.getElementById('conn-dot');
+        const connText = document.getElementById('conn-text');
+
+        function updateConnectionState(isOnline) {
+            if (isOnline) {
+                failCount = 0;
+                if(connWarning) connWarning.style.display = 'none';
+                if(connDot) {
+                    connDot.style.backgroundColor = '#10b981';
+                    connDot.style.boxShadow = '0 0 8px #10b981';
+                }
+                if(connText) connText.textContent = i18n[currentLang]['status_connected'] || 'Connected';
+            } else {
+                failCount++;
+                if(connDot) {
+                    connDot.style.backgroundColor = '#ef4444';
+                    connDot.style.boxShadow = '0 0 8px #ef4444';
+                }
+                if(connText) connText.textContent = i18n[currentLang]['status_disconnected'] || 'Offline';
+                
+                if (failCount >= 2 && connWarning) {
+                    connWarning.style.display = 'block';
+                }
+            }
+        }
+
         // Fetch Dashboard Data (prevent cache to ensure fresh state)
-        fetch('/api/data', { cache: 'no-store' })
-            .then(res => res.json())
-            .then(data => {
-                // Populate Sidebar
-                document.getElementById('sprint-name').textContent = data.sprint.name || 'N/A';
-                document.getElementById('sprint-pts').textContent = data.sprint.completed_points;
-                document.getElementById('sprint-total').textContent = data.sprint.total_points;
-                
-                const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
-                setTimeout(() => { document.getElementById('progress-bar').style.width = percent + '%'; }, 100);
-                
-                // Sprint Progress Ring — 诚实的完成百分比
-                const progressPercent = data.sprint.progress_percent || 0;
-                const circumference = 2 * Math.PI * 85; // r=85
-                const ring = document.getElementById('progress-ring');
-                const ringVal = document.getElementById('progress-ring-val');
-                const ringMeta = document.getElementById('progress-ring-meta');
-                if (ring) {
-                    const offset = circumference - (progressPercent / 100) * circumference;
-                    setTimeout(() => {
-                        ring.style.strokeDashoffset = offset;
-                        ringVal.textContent = progressPercent + '%';
-                    }, 200);
-                    ringMeta.innerHTML = `<strong>${data.sprint.completed_points}</strong> / ${data.sprint.total_points} pts`;
-                }
-
-                // Bugs List (Dashboard)
-                const list = document.getElementById('bug-list');
-                if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
-                    list.innerHTML = `<div class="empty-state" data-i18n="empty_bugs">${i18n[currentLang]['empty_bugs']}</div>`;
-                } else {
-                    data.bugs.forEach(bug => {
-                        const li = document.createElement('div');
-                        li.className = 'bug-item';
-                        const p = bug.priority.toLowerCase();
-                        const prioClass = (p === 'critical' || p === 'high') ? 'priority-high' : 'priority-low';
-                        li.innerHTML = `
-                            <div style="display:flex; flex-direction:column; gap:4px; max-width:70%;">
-                                <strong style="color: var(--text-main); font-size: 1rem;">${bug.id}</strong>
-                                <span style="font-size: 0.85rem; color: var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${bug.title}</span>
-                            </div>
-                            <span class="bug-priority ${prioClass}">${bug.priority}</span>
-                        `;
-                        list.appendChild(li);
-                    });
-                }
-
-                // Health
-                document.getElementById('todo-val').textContent = data.health.TODOs;
-                document.getElementById('fixme-val').textContent = data.health.FIXMEs;
-
-                // Sprints Kanban
-                const colTodo = document.getElementById('col-todo');
-                const colInProg = document.getElementById('col-inprogress');
-                const colDone = document.getElementById('col-done');
-                
-                if (data.stories && data.stories.length > 0) {
-                    data.stories.forEach(story => {
-                        const card = document.createElement('div');
-                        card.className = 'kanban-card';
-                        const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
-                        card.innerHTML = `
-                            <div class="kb-id">${story.id}</div>
-                            <div class="kb-title">${story.title}</div>
-                            <div class="kb-footer">
-                                <span class="bug-priority ${prioClass}">${story.priority}</span>
-                                <span class="kb-pts">${story.points} SP</span>
-                            </div>
-                        `;
-                        
-                        const status = story.status;
-                        if (['done', 'completed', 'closed', 'verified'].includes(status)) {
-                            colDone.appendChild(card);
-                        } else if (['in progress', 'doing', 'wip', 'review'].includes(status)) {
-                            colInProg.appendChild(card);
-                        } else {
-                            colTodo.appendChild(card);
-                        }
-                    });
-                } else {
-                    colTodo.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
-                    colInProg.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
-                    colDone.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
-                }
-                
-                // Active Bugs Triage
-                const triageRows = document.getElementById('triage-rows');
-                let countCrit = 0, countMed = 0, countLow = 0;
-                
-                if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
-                    document.getElementById('qh-total').textContent = 0;
-                    triageRows.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:2rem; font-size:1.5rem; color: #10B981;" data-i18n="clean_bugs">${i18n[currentLang]['clean_bugs']}</div>`;
-                } else {
-                    document.getElementById('qh-total').textContent = data.bugs.length;
+        function fetchData() {
+            fetch('/api/data', { cache: 'no-store' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
+                .then(data => {
+                    updateConnectionState(true);
                     
-                    data.bugs.forEach(bug => {
-                        let borderClass = 'border-purple';
-                        let prioClass = 'priority-low';
-                        const p = bug.priority.toLowerCase();
+                    // Populate Sidebar
+                    document.getElementById('sprint-name').textContent = data.sprint.name || 'N/A';
+                    document.getElementById('sprint-pts').textContent = data.sprint.completed_points;
+                    document.getElementById('sprint-total').textContent = data.sprint.total_points;
+                    
+                    const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
+                    setTimeout(() => { document.getElementById('progress-bar').style.width = percent + '%'; }, 100);
+                    
+                    // Sprint Progress Ring — 诚实的完成百分比
+                    const progressPercent = data.sprint.progress_percent || 0;
+                    const circumference = 2 * Math.PI * 85; // r=85
+                    const ring = document.getElementById('progress-ring');
+                    const ringVal = document.getElementById('progress-ring-val');
+                    const ringMeta = document.getElementById('progress-ring-meta');
+                    if (ring) {
+                        const offset = circumference - (progressPercent / 100) * circumference;
+                        setTimeout(() => {
+                            ring.style.strokeDashoffset = offset;
+                            ringVal.textContent = progressPercent + '%';
+                        }, 200);
+                        ringMeta.innerHTML = `<strong>${data.sprint.completed_points}</strong> / ${data.sprint.total_points} pts`;
+                    }
+
+                    // Bugs List (Dashboard)
+                    const list = document.getElementById('bug-list');
+                    if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
+                        list.innerHTML = `<div class="empty-state" data-i18n="empty_bugs">${i18n[currentLang]['empty_bugs']}</div>`;
+                    } else {
+                        list.innerHTML = ''; // clear before append
+                        data.bugs.forEach(bug => {
+                            const li = document.createElement('div');
+                            li.className = 'bug-item';
+                            const p = bug.priority.toLowerCase();
+                            const prioClass = (p === 'critical' || p === 'high') ? 'priority-high' : 'priority-low';
+                            li.innerHTML = `
+                                <div style="display:flex; flex-direction:column; gap:4px; max-width:70%;">
+                                    <strong style="color: var(--text-main); font-size: 1rem;">${bug.id}</strong>
+                                    <span style="font-size: 0.85rem; color: var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${bug.title}</span>
+                                </div>
+                                <span class="bug-priority ${prioClass}">${bug.priority}</span>
+                            `;
+                            list.appendChild(li);
+                        });
+                    }
+
+                    // Health
+                    document.getElementById('todo-val').textContent = data.health.TODOs;
+                    document.getElementById('fixme-val').textContent = data.health.FIXMEs;
+
+                    // Sprints Kanban
+                    const colTodo = document.getElementById('col-todo');
+                    const colInProg = document.getElementById('col-inprogress');
+                    const colDone = document.getElementById('col-done');
+                    
+                    if (data.stories && data.stories.length > 0) {
+                        colTodo.innerHTML = ''; colInProg.innerHTML = ''; colDone.innerHTML = '';
+                        data.stories.forEach(story => {
+                            const card = document.createElement('div');
+                            card.className = 'kanban-card';
+                            const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
+                            card.innerHTML = `
+                                <div class="kb-id">${story.id}</div>
+                                <div class="kb-title">${story.title}</div>
+                                <div class="kb-footer">
+                                    <span class="bug-priority ${prioClass}">${story.priority}</span>
+                                    <span class="kb-pts">${story.points} SP</span>
+                                </div>
+                            `;
+                            
+                            const status = story.status;
+                            if (['done', 'completed', 'closed', 'verified'].includes(status)) {
+                                colDone.appendChild(card);
+                            } else if (['in progress', 'doing', 'wip', 'review'].includes(status)) {
+                                colInProg.appendChild(card);
+                            } else {
+                                colTodo.appendChild(card);
+                            }
+                        });
+                    } else {
+                        colTodo.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
+                        colInProg.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
+                        colDone.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
+                    }
+                    
+                    // Active Bugs Triage
+                    const triageRows = document.getElementById('triage-rows');
+                    let countCrit = 0, countMed = 0, countLow = 0;
+                    
+                    if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
+                        document.getElementById('qh-total').textContent = 0;
+                        triageRows.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:2rem; font-size:1.5rem; color: #10B981;" data-i18n="clean_bugs">${i18n[currentLang]['clean_bugs']}</div>`;
+                    } else {
+                        document.getElementById('qh-total').textContent = data.bugs.length;
+                        triageRows.innerHTML = '';
                         
-                        if (p === 'critical' || p === 'high') {
-                            borderClass = 'border-red';
-                            prioClass = 'priority-high';
-                            countCrit++;
-                        } else if (p === 'medium') {
-                            borderClass = 'border-yellow';
-                            prioClass = 'priority-low';
-                            countMed++;
-                        } else {
-                            countLow++;
-                        }
+                        data.bugs.forEach(bug => {
+                            let borderClass = 'border-purple';
+                            let prioClass = 'priority-low';
+                            const p = bug.priority.toLowerCase();
+                            
+                            if (p === 'critical' || p === 'high') {
+                                borderClass = 'border-red';
+                                prioClass = 'priority-high';
+                                countCrit++;
+                            } else if (p === 'medium') {
+                                borderClass = 'border-yellow';
+                                prioClass = 'priority-low';
+                                countMed++;
+                            } else {
+                                countLow++;
+                            }
 
-                        const row = document.createElement('div');
-                        row.className = `triage-row ${borderClass}`;
-                        row.innerHTML = `
-                            <div class="tr-id">${bug.id}</div>
-                            <div><span class="bug-priority ${prioClass}">${bug.priority}</span></div>
-                            <div class="tr-title">${bug.title}</div>
-                            <div class="tr-status">${bug.status}</div>
-                            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">TD</div>
-                        `;
-                        triageRows.appendChild(row);
-                    });
-                }
-                document.getElementById('qh-critical').textContent = countCrit;
-                document.getElementById('qh-medium').textContent = countMed;
-                document.getElementById('qh-low').textContent = countLow;
+                            const row = document.createElement('div');
+                            row.className = `triage-row ${borderClass}`;
+                            row.innerHTML = `
+                                <div class="tr-id">${bug.id}</div>
+                                <div><span class="bug-priority ${prioClass}">${bug.priority}</span></div>
+                                <div class="tr-title">${bug.title}</div>
+                                <div class="tr-status">${bug.status}</div>
+                                <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">TD</div>
+                            `;
+                            triageRows.appendChild(row);
+                        });
+                    }
+                    document.getElementById('qh-critical').textContent = countCrit;
+                    document.getElementById('qh-medium').textContent = countMed;
+                    document.getElementById('qh-low').textContent = countLow;
 
-            }).catch(e => console.log('Data fetching skipped or failed.', e));
+                }).catch(e => {
+                    console.log('Data fetching failed.', e);
+                    updateConnectionState(false);
+                });
+        }
+        
+        // Initial fetch and start polling
+        fetchData();
+        setInterval(fetchData, 30000);

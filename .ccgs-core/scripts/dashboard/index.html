@@ -55,11 +55,21 @@
     </aside>
 
     <main class="main-content">
+        <div id="connection-warning" class="global-warning" style="display: none; background: #ef4444; color: white; padding: 10px; text-align: center; border-radius: 4px; margin-bottom: 20px;">
+            <svg style="vertical-align: middle; margin-right: 5px;" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span data-i18n="warn_disconnected">Disconnected from server. Retrying...</span>
+        </div>
         <div class="header">
             <h1 id="page-title" data-i18n="title_workspace">Workspace Overview</h1>
-            <div class="user-profile">
-                <span data-i18n="role_td">Technical Director</span>
-                <div class="avatar">TD</div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div id="connection-status" style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-hover); padding: 4px 10px; border-radius: 12px;">
+                    <span id="conn-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                    <span id="conn-text" data-i18n="status_connected">Connected</span>
+                </div>
+                <div class="user-profile">
+                    <span data-i18n="role_td">Technical Director</span>
+                    <div class="avatar">TD</div>
+                </div>
             </div>
         </div>
 
