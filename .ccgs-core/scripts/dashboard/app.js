@@ -449,9 +449,34 @@
                                 <div class="kb-footer">
                                     <span class="bug-priority ${prioClass}">${story.priority}</span>
                                     <span class="kb-pts">${story.points} SP</span>
+                                    <button class="kb-copy-btn" title="复制 Skill 指令">
+                                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    </button>
                                 </div>
                             `;
                             
+                            // 📋 复制按钮：点击复制该卡片对应的 Skill 指令
+                            const copyBtn = card.querySelector('.kb-copy-btn');
+                            copyBtn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                // 根据卡片当前所在列决定指令
+                                const parent = card.parentElement;
+                                let col = 'todo';
+                                if (parent && parent.id === 'col-inprogress') col = 'inprogress';
+                                else if (parent && parent.id === 'col-done') col = 'done';
+                                const cmd = _getSkillCommand(story.id, col);
+                                navigator.clipboard.writeText(cmd).then(() => {
+                                    window.showToast('📋 ' + cmd, 'success');
+                                    // 按钮微动效：短暂变为 ✅
+                                    copyBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                                    setTimeout(() => {
+                                        copyBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>';
+                                    }, 1500);
+                                }).catch(() => {
+                                    window.showToast('剪贴板写入失败', 'info');
+                                });
+                            });
+
                             // 拖拽开始：记录来源卡片 ID
                             card.addEventListener('dragstart', function(e) {
                                 e.dataTransfer.setData('text/plain', story.id);

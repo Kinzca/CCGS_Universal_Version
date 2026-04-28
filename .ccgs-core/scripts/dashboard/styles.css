@@ -345,6 +345,26 @@
         .kb-title { font-size: 0.95rem; font-weight: 500; margin-bottom: 12px; line-height: 1.4; color: var(--text-main); }
         .kb-footer { display: flex; justify-content: space-between; align-items: center; }
         .kb-pts { font-size: 0.75rem; font-weight: bold; color: var(--cyan); background: rgba(6, 182, 212, 0.1); padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(6, 182, 212, 0.2); }
+        .kb-copy-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            padding: 4px 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+        .kanban-card:hover .kb-copy-btn { opacity: 1; }
+        .kb-copy-btn:hover {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--cyan);
+            transform: scale(1.1);
+        }
+        .kb-copy-btn:active { transform: scale(0.95); }
 
         /* Kanban 拖拽交互样式 (D-011) */
         .kanban-card.kb-dragging {
