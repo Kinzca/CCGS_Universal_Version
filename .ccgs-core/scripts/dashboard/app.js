@@ -654,12 +654,14 @@
                     timestamp: Date.now()
                 }));
                 
-                // 复制对应 Skill 指令到剪贴板
+                // 复制对应 Skill 指令到剪贴板（防抖：取消上一次未触发的第二段 Toast）
                 const command = _getSkillCommand(storyId, colName);
+                if (window._dragToastTimer) clearTimeout(window._dragToastTimer);
                 navigator.clipboard.writeText(command).then(() => {
                     window.showToast('指令已复制: ' + command, 'success');
-                    setTimeout(() => {
+                    window._dragToastTimer = setTimeout(() => {
                         window.showToast('请在 Agent 终端粘贴执行', 'info');
+                        window._dragToastTimer = null;
                     }, 1500);
                 }).catch(() => {
                     window.showToast('剪贴板写入失败', 'info');
@@ -667,10 +669,17 @@
             });
         }
 
-        // Toast Feedback System
+        // Toast Feedback System（限制最多同时显示 3 条，超出时移除最旧的）
         window.showToast = function(message, type = "info") {
             const container = document.getElementById('toast-container');
             if (!container) return;
+            
+            // 限流：超过 3 条时移除最早的 Toast
+            const MAX_TOASTS = 3;
+            while (container.children.length >= MAX_TOASTS) {
+                container.children[0].remove();
+            }
+            
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             const icon = type === 'success' 
