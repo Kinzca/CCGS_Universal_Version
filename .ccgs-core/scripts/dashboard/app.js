@@ -421,8 +421,27 @@
                             const card = document.createElement('div');
                             card.className = 'kanban-card';
                             const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
+                            
+                            // 状态色：根据分列状态设置左边框颜色
+                            const status = story.status;
+                            let statusColor = 'var(--cyan)';  // 默认 TODO
+                            if (['done', 'completed', 'closed', 'verified'].includes(status)) {
+                                statusColor = '#10b981';
+                            } else if (['in progress', 'doing', 'wip', 'review'].includes(status)) {
+                                statusColor = 'var(--purple)';
+                            }
+                            card.style.borderLeft = `4px solid ${statusColor}`;
+                            
+                            // Epic 标签：截取简短名称
+                            const epicShort = (story.epic || '').length > 20 
+                                ? (story.epic || '').substring(0, 18) + '…' 
+                                : (story.epic || 'N/A');
+                            
                             card.innerHTML = `
-                                <div class="kb-id">${story.id}</div>
+                                <div class="kb-header">
+                                    <span class="kb-id">${story.id}</span>
+                                    <span class="kb-epic-tag">${epicShort}</span>
+                                </div>
                                 <div class="kb-title">${story.title}</div>
                                 <div class="kb-footer">
                                     <span class="bug-priority ${prioClass}">${story.priority}</span>
@@ -430,7 +449,6 @@
                                 </div>
                             `;
                             
-                            const status = story.status;
                             if (['done', 'completed', 'closed', 'verified'].includes(status)) {
                                 colDone.appendChild(card);
                             } else if (['in progress', 'doing', 'wip', 'review'].includes(status)) {

@@ -209,13 +209,18 @@ def gather_data():
         pts = int(pts_str) if pts_str.isdigit() else 1
         status = normalize_status(fm.get('status', 'todo'))
         
+        # 从目录路径中提取 epic 名称（如 wp-5-dashboard-upgrade）
+        epic_dir = os.path.basename(os.path.dirname(sf))
+        epic_label = fm.get('epic', epic_dir).replace('-', ' ').title()
+        
         # Append story data for Kanban board
         data["stories"].append({
             "id": os.path.basename(sf).replace('.md', ''),
             "title": fm.get('title', 'Untitled Story'),
             "points": pts,
             "priority": fm.get('priority', 'Medium').capitalize(),
-            "status": status
+            "status": status,
+            "epic": epic_label
         })
         
         total_pts += pts
