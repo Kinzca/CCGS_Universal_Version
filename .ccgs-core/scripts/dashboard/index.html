@@ -66,6 +66,10 @@
         <div class="header">
             <h1 id="page-title" data-i18n="title_workspace">Workspace Overview</h1>
             <div style="display: flex; align-items: center; gap: 20px;">
+                <div id="gate-status-light" class="gate-light" style="display: none; cursor: pointer; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-hover); padding: 4px 10px; border-radius: 12px;" onclick="document.getElementById('gate-modal').style.display='flex'">
+                    <span id="gate-dot" class="gate-dot unknown"></span>
+                    <span id="gate-text">Gate Check</span>
+                </div>
                 <div id="connection-status" style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-hover); padding: 4px 10px; border-radius: 12px;">
                     <span id="conn-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 8px #10b981;"></span>
                     <span id="conn-text" data-i18n="status_connected">Connected</span>
@@ -270,8 +274,20 @@
             </div>
 
         </div>
-
     </main>
+
+    <!-- Gate Check Modal -->
+    <div id="gate-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 data-i18n="gate_modal_title">Gate Check Details</h2>
+                <button onclick="document.getElementById('gate-modal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="gate-modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <!-- Lists injected here -->
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>

@@ -246,6 +246,52 @@ def gather_data():
             pass
             
     data["stage"] = current_stage
+    
+    # 6. Parse latest gate-check report
+    gate_reports_dirs = [
+        os.path.join(DATA_DIR, "production", "qa", "reports"),
+        os.path.join(DATA_DIR, "production", "gate-checks")
+    ]
+    
+    gate_files = []
+    for d in gate_reports_dirs:
+        if os.path.exists(d):
+            gate_files.extend([os.path.join(d, f) for f in os.listdir(d) if f.endswith('.md') and 'gate' in f.lower() or 'report' in f.lower()])
+            
+    gate_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+    
+    gate_data = {
+        "status": "unknown",
+        "passing": [],
+        "failing": []
+    }
+    
+    if gate_files:
+        latest_gate = gate_files[0]
+        try:
+            with open(latest_gate, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # Find verdict
+            verdict_match = re.search(r'### Verdict:\s*\[?(PASS|CONCERNS|FAIL)\]?', content, re.IGNORECASE)
+            if verdict_match:
+                gate_data["status"] = verdict_match.group(1).upper()
+                
+            # Find passing/failing items based on checkbox syntax
+            for line in content.split('\n'):
+                line = line.strip()
+                if line.startswith('- [x]') or line.startswith('- [X]'):
+                    item = line[5:].strip()
+                    if item:
+                        gate_data["passing"].append(item)
+                elif line.startswith('- [ ]'):
+                    item = line[5:].strip()
+                    if item:
+                        gate_data["failing"].append(item)
+        except Exception as e:
+            print(f"Warning: 无法解析 {latest_gate}: {e}")
+            
+    data["gate_check"] = gate_data
                     
     global _last_data_update, _cached_data
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:

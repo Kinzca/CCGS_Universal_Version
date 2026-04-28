@@ -9,6 +9,7 @@
                 'empty_quality_title': 'Zero Active Bugs', 'empty_quality_desc': 'Excellent work! There are currently no active bug reports in the tracker.',
                 'stage_title': 'Project Stage', 'stage_concept': 'Concept', 'stage_systems': 'Systems Design', 'stage_setup': 'Technical Setup',
                 'stage_preprod': 'Pre-Production', 'stage_prod': 'Production', 'stage_polish': 'Polish', 'stage_release': 'Release',
+                'gate_modal_title': 'Gate Check Details', 'gate_pass': 'Gate: PASS', 'gate_fail': 'Gate: FAIL', 'gate_concerns': 'Gate: CONCERNS',
                 'chart_title': 'Sprint Progress', 'bugs_title': 'Active Bugs', 'health_title': 'Code Debt Indicators',
                 'health_todo': 'Technical Debt (TODOs)', 'health_todo_desc': 'Pending architecture or code tasks.',
                 'health_fixme': 'Critical Issues (FIXMEs)', 'health_fixme_desc': 'Code that requires immediate attention.',
@@ -32,6 +33,7 @@
                 'empty_quality_title': '完美状态', 'empty_quality_desc': '干得漂亮！当前追踪系统中没有任何待处理的活跃缺陷报告。',
                 'stage_title': '项目阶段', 'stage_concept': '概念孵化', 'stage_systems': '系统设计', 'stage_setup': '技术基建',
                 'stage_preprod': '前期量产', 'stage_prod': '全力量产', 'stage_polish': '打磨抛光', 'stage_release': '正式发布',
+                'gate_modal_title': '阶段验收明细', 'gate_pass': '验收: 通过', 'gate_fail': '验收: 失败', 'gate_concerns': '验收: 存在隐患',
                 'chart_title': '冲刺进度', 'bugs_title': '活跃缺陷', 'health_title': '代码债务指标',
                 'health_todo': '技术债务 (TODOs)', 'health_todo_desc': '待处理的架构或普通代码逻辑。',
                 'health_fixme': '致命问题 (FIXMEs)', 'health_fixme_desc': '可能导致崩溃，需要立刻修复。',
@@ -201,10 +203,69 @@
                 .then(data => {
                     updateConnectionState(true);
                     
-                    // Populate Sidebar
                     document.getElementById('sprint-name').textContent = data.sprint.name || 'N/A';
                     document.getElementById('sprint-pts').textContent = data.sprint.completed_points;
                     document.getElementById('sprint-total').textContent = data.sprint.total_points;
+                    
+                    // Gate Check Status Light
+                    const gateLight = document.getElementById('gate-status-light');
+                    if (data.gate_check && data.gate_check.status !== 'unknown') {
+                        if (gateLight) {
+                            gateLight.style.display = 'flex';
+                            const gateDot = document.getElementById('gate-dot');
+                            const gateText = document.getElementById('gate-text');
+                            
+                            gateDot.className = 'gate-dot';
+                            if (data.gate_check.status === 'PASS') {
+                                gateDot.classList.add('pass');
+                                gateText.textContent = i18n[currentLang]['gate_pass'];
+                            } else if (data.gate_check.status === 'FAIL') {
+                                gateDot.classList.add('fail');
+                                gateText.textContent = i18n[currentLang]['gate_fail'];
+                            } else if (data.gate_check.status === 'CONCERNS') {
+                                gateDot.classList.add('concerns');
+                                gateText.textContent = i18n[currentLang]['gate_concerns'];
+                            }
+                            
+                            // Render Modal Body
+                            const modalBody = document.getElementById('gate-modal-body');
+                            if (modalBody) {
+                                modalBody.innerHTML = '';
+                                if (data.gate_check.failing.length > 0) {
+                                    const failTitle = document.createElement('h3');
+                                    failTitle.style.color = '#ef4444';
+                                    failTitle.style.marginBottom = '10px';
+                                    failTitle.textContent = currentLang === 'zh' ? '阻碍项 / 未通过' : 'Blockers / Failing';
+                                    modalBody.appendChild(failTitle);
+                                    
+                                    data.gate_check.failing.forEach(item => {
+                                        const div = document.createElement('div');
+                                        div.className = 'gate-item';
+                                        div.innerHTML = `<span class="gate-icon-fail">❌</span><span style="color: var(--text-main);">${item}</span>`;
+                                        modalBody.appendChild(div);
+                                    });
+                                }
+                                
+                                if (data.gate_check.passing.length > 0) {
+                                    const passTitle = document.createElement('h3');
+                                    passTitle.style.color = '#10b981';
+                                    passTitle.style.marginTop = '20px';
+                                    passTitle.style.marginBottom = '10px';
+                                    passTitle.textContent = currentLang === 'zh' ? '已通过项' : 'Passing Items';
+                                    modalBody.appendChild(passTitle);
+                                    
+                                    data.gate_check.passing.forEach(item => {
+                                        const div = document.createElement('div');
+                                        div.className = 'gate-item';
+                                        div.innerHTML = `<span class="gate-icon-pass">✅</span><span style="color: var(--text-muted);">${item}</span>`;
+                                        modalBody.appendChild(div);
+                                    });
+                                }
+                            }
+                        }
+                    } else {
+                        if (gateLight) gateLight.style.display = 'none';
+                    }
                     
                     const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
                     setTimeout(() => { document.getElementById('progress-bar').style.width = percent + '%'; }, 100);
