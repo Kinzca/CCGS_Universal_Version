@@ -520,12 +520,17 @@
             border-radius: 12px;
             transition: background 0.2s;
         }
-        /* kb-pending: 仅用于内部状态追踪，不产生任何视觉差异 */
+        /* kb-pending: 仅用于内部状态追踪，不产生视觉差异 */
         .kanban-card.kb-pending {
+            /* 无额外样式 */
+        }
+
+        /* IN PROGRESS 列专属样式：透明度 + 右上角沙漏旋转 */
+        #col-inprogress > .kanban-card {
             opacity: 0.6;
             position: relative;
         }
-        .kanban-card.kb-pending::after {
+        #col-inprogress > .kanban-card::after {
             content: '⏳';
             position: absolute;
             top: 8px;
