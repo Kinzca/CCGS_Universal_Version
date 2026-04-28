@@ -525,6 +525,29 @@
             /* 无额外样式 */
         }
 
+        /* Story D-034: Epic Separator */
+        .epic-separator {
+            width: 100%;
+            height: 1px;
+            background: var(--glass-border);
+            margin: 1.5rem 0 1rem 0;
+            position: relative;
+            z-index: 1;
+        }
+        .epic-separator-label {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            padding: 0 10px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: 8px;
+        }
+
         /* IN PROGRESS 列专属样式：透明度 + 右上角沙漏旋转 */
         #col-inprogress > .kanban-card {
             opacity: 0.6;

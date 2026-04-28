@@ -417,13 +417,72 @@
                         if(kanbanBoard) kanbanBoard.style.display = 'grid';
                         if(sprintsEmpty) sprintsEmpty.style.display = 'none';
                         colTodo.innerHTML = ''; colInProg.innerHTML = ''; colDone.innerHTML = '';
-                        data.stories.forEach(story => {
+                        
+                        // --- Story D-034: Global Topological Sorting ---
+                        const inDegree = new Map();
+                        const graph = new Map();
+                        data.stories.forEach(s => {
+                            inDegree.set(s.id, 0);
+                            graph.set(s.id, []);
+                        });
+                        data.stories.forEach(s => {
+                            (s.dependencies || []).forEach(depId => {
+                                if (graph.has(depId)) {
+                                    graph.get(depId).push(s.id);
+                                    inDegree.set(s.id, inDegree.get(s.id) + 1);
+                                }
+                            });
+                        });
+                        let queue = [];
+                        inDegree.forEach((deg, id) => { if (deg === 0) queue.push(id); });
+                        const topoRanks = new Map();
+                        let currentRank = 0;
+                        while(queue.length > 0) {
+                            let nextQueue = [];
+                            for (const id of queue) {
+                                topoRanks.set(id, currentRank);
+                                graph.get(id).forEach(dependentId => {
+                                    let d = inDegree.get(dependentId) - 1;
+                                    inDegree.set(dependentId, d);
+                                    if (d === 0) nextQueue.push(dependentId);
+                                });
+                            }
+                            queue = nextQueue;
+                            currentRank++;
+                        }
+                        // 兜底：处理环依赖
+                        data.stories.forEach(s => {
+                            if (!topoRanks.has(s.id)) topoRanks.set(s.id, 9999);
+                        });
+
+                        // 排序: Epic -> 拓扑序 -> ID 数字升序
+                        data.stories.sort((a, b) => {
+                            const epicA = a.epic || 'zzzz'; // 未分类放最后
+                            const epicB = b.epic || 'zzzz';
+                            if (epicA !== epicB) return epicA.localeCompare(epicB);
+                            
+                            const rankA = topoRanks.get(a.id);
+                            const rankB = topoRanks.get(b.id);
+                            if (rankA !== rankB) return rankA - rankB;
+                            
+                            const idA = parseInt((a.id.match(/(\d+)$/) || [0, 0])[1], 10);
+                            const idB = parseInt((b.id.match(/(\d+)$/) || [0, 0])[1], 10);
+                            return idA - idB;
+                        });
+
+                        let lastEpicTodo = null;
+                        let lastEpicInProg = null;
+                        let lastEpicDone = null;
+                        // --- End D-034 Sort Logic ---
+
+                        data.stories.forEach((story, idx) => {
                             const card = document.createElement('div');
                             card.className = 'kanban-card';
                             card.draggable = true;
                             card.dataset.storyId = story.id;
                             card.dataset.realStatus = story.status;
                             card.dataset.epic = story.epic || 'N/A';
+                            card.dataset.sortWeight = idx;
                             const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
                             
                             // 状态色：根据分列状态设置左边框颜色
@@ -620,13 +679,33 @@
                             
                             // 按 effectiveCol（若有 pending）或真实 status 分列
                             const targetCol = effectiveCol || _getColumnForStatus(status);
+                            const epicFull = (story.epic && story.epic.trim() !== '') ? story.epic : '未分类';
+                            let targetEl = null;
+                            let needsSeparator = false;
+
                             if (targetCol === 'done') {
-                                colDone.appendChild(card);
+                                targetEl = colDone;
+                                if (lastEpicDone !== null && lastEpicDone !== epicFull) needsSeparator = true;
+                                lastEpicDone = epicFull;
                             } else if (targetCol === 'inprogress') {
-                                colInProg.appendChild(card);
+                                targetEl = colInProg;
+                                if (lastEpicInProg !== null && lastEpicInProg !== epicFull) needsSeparator = true;
+                                lastEpicInProg = epicFull;
                             } else {
-                                colTodo.appendChild(card);
+                                targetEl = colTodo;
+                                if (lastEpicTodo !== null && lastEpicTodo !== epicFull) needsSeparator = true;
+                                lastEpicTodo = epicFull;
                             }
+
+                            if (needsSeparator) {
+                                const sep = document.createElement('div');
+                                sep.className = 'epic-separator';
+                                sep.dataset.epic = epicFull;
+                                const sepLabel = epicFull.length > 20 ? epicFull.substring(0, 18) + '…' : epicFull;
+                                sep.innerHTML = `<span class="epic-separator-label">${sepLabel}</span>`;
+                                targetEl.appendChild(sep);
+                            }
+                            targetEl.appendChild(card);
                         });
                         
                         // 为三列容器绑定 dragover/dragleave/drop 事件
@@ -811,6 +890,48 @@
                     // 跨列拖拽：移动卡片 + 设置 pending + 复制指令 + 二段式 Toast
                     colBody.appendChild(card);
                     card.classList.add('kb-pending');
+                    
+                    // --- Story D-034: Immediate Frontend Re-sort upon drop ---
+                    // 收集本列所有卡片并按 sortWeight 排序
+                    const cardsInCol = Array.from(colBody.querySelectorAll('.kanban-card'));
+                    cardsInCol.sort((a, b) => {
+                        return parseInt(a.dataset.sortWeight || '0', 10) - parseInt(b.dataset.sortWeight || '0', 10);
+                    });
+                    
+                    // 移除旧的分隔线
+                    colBody.querySelectorAll('.epic-separator').forEach(el => el.remove());
+                    
+                    // 重新按顺序挂载卡片并插入分隔线
+                    let lastEpic = null;
+                    cardsInCol.forEach(c => {
+                        const epicFull = (c.dataset.epic && c.dataset.epic.trim() !== '') ? c.dataset.epic : '未分类';
+                        if (lastEpic !== null && lastEpic !== epicFull) {
+                            const sep = document.createElement('div');
+                            sep.className = 'epic-separator';
+                            sep.dataset.epic = epicFull;
+                            const sepLabel = epicFull.length > 20 ? epicFull.substring(0, 18) + '…' : epicFull;
+                            sep.innerHTML = `<span class="epic-separator-label">${sepLabel}</span>`;
+                            // 若 Epic filter 处于激活状态，则隐藏分隔线
+                            if (typeof _currentEpicFilter !== 'undefined' && _currentEpicFilter) {
+                                sep.style.display = 'none';
+                            }
+                            colBody.appendChild(sep);
+                        }
+                        lastEpic = epicFull;
+                        colBody.appendChild(c);
+                    });
+                    
+                    // 触发过渡动画 (0.3s 过渡动画)
+                    cardsInCol.forEach(c => {
+                        // 利用 transform 模拟一个短暂的下沉放入效果
+                        c.style.transform = 'scale(0.98)';
+                        requestAnimationFrame(() => {
+                            c.style.transition = 'transform 0.3s ease';
+                            c.style.transform = '';
+                            setTimeout(() => { c.style.transition = ''; }, 300);
+                        });
+                    });
+                    // --- End D-034 Re-sort ---
                     
                     // UX Fix: 即时更新状态颜色，消除格式滞后感
                     let targetColor = 'var(--cyan)';
@@ -1152,6 +1273,16 @@
                     } else {
                         card.style.display = 'none';
                     }
+                }
+            });
+
+            // Show/Hide separators (Story D-034)
+            const separators = document.querySelectorAll('.epic-separator');
+            separators.forEach(sep => {
+                if (_currentEpicFilter) {
+                    sep.style.display = 'none'; // When filtered, hide all separators
+                } else {
+                    sep.style.display = 'block';
                 }
             });
 
