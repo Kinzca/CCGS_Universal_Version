@@ -441,7 +441,37 @@
                                 ? (story.epic || '').substring(0, 18) + '…' 
                                 : (story.epic || 'N/A');
                             
+                            // 依赖检查 (Story D-032)
+                            const incompleteDeps = [];
+                            if (story.dependencies && story.dependencies.length > 0) {
+                                story.dependencies.forEach(depId => {
+                                    const depStory = data.stories.find(s => s.id === depId);
+                                    if (!depStory || !['done', 'completed', 'closed', 'verified'].includes(depStory.status.toLowerCase())) {
+                                        incompleteDeps.push(depStory ? { id: depId, status: depStory.status, title: depStory.title } : { id: depId, status: 'unknown', title: 'Unknown Story' });
+                                    }
+                                });
+                            }
+                            const isLocked = incompleteDeps.length > 0;
+                            
+                            if (isLocked) {
+                                card.classList.add('kb-locked');
+                                card.draggable = false;
+                                card.dataset.locked = 'true';
+                                card.dataset.incompleteDeps = JSON.stringify(incompleteDeps);
+                            }
+                            card.dataset.allDeps = JSON.stringify(story.dependencies || []);
+
+                            let lockHtml = '';
+                            if (isLocked) {
+                                lockHtml = `
+                                    <div class="kb-lock-icon-container" title="存在未完成的依赖">
+                                        <svg class="kb-lock-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    </div>
+                                `;
+                            }
+                            
                             card.innerHTML = `
+                                ${lockHtml}
                                 <div class="kb-header">
                                     <span class="kb-id">${story.id}</span>
                                     <span class="kb-epic-tag">${epicShort}</span>
@@ -478,6 +508,35 @@
                                 });
                             });
 
+                            // Story D-032: 锁图标悬浮与点击交互
+                            const lockContainer = card.querySelector('.kb-lock-icon-container');
+                            if (lockContainer) {
+                                lockContainer.addEventListener('mouseenter', () => {
+                                    if (story.dependencies) {
+                                        window._activeHoverSource = card;
+                                        window._activeHoverDeps = story.dependencies;
+                                        story.dependencies.forEach(depId => {
+                                            const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
+                                            if (depCard) {
+                                                depCard.classList.add('kb-dep-highlight');
+                                            }
+                                        });
+                                        _drawDependencyLines(card, story.dependencies);
+                                    }
+                                });
+                                lockContainer.addEventListener('mouseleave', () => {
+                                    window._activeHoverSource = null;
+                                    window._activeHoverDeps = null;
+                                    document.querySelectorAll('.kb-dep-highlight').forEach(el => el.classList.remove('kb-dep-highlight'));
+                                    const svgLayer = document.getElementById('dependency-svg-layer');
+                                    if (svgLayer) svgLayer.innerHTML = '';
+                                });
+                                lockContainer.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    _showDependencyPopover(lockContainer, story.id, incompleteDeps, data);
+                                });
+                            }
+
                             // 点击卡片主体滑出详情侧边栏 (防误触)
                             let startX = 0, startY = 0;
                             card.addEventListener('mousedown', (e) => {
@@ -498,6 +557,10 @@
 
                             // 拖拽开始：记录来源卡片 ID
                             card.addEventListener('dragstart', function(e) {
+                                if (card.dataset.locked === 'true') {
+                                    e.preventDefault();
+                                    return;
+                                }
                                 e.dataTransfer.setData('text/plain', story.id);
                                 e.dataTransfer.effectAllowed = 'move';
                                 card.classList.add('kb-dragging');
@@ -1109,3 +1172,131 @@
                 });
             }
         });
+
+        // ---------------------------------------------------------
+        // Story D-032: Dependency Interaction Functions
+        // ---------------------------------------------------------
+        
+        window.addEventListener('scroll', () => {
+            if (window._activeHoverSource && window._activeHoverDeps) {
+                _drawDependencyLines(window._activeHoverSource, window._activeHoverDeps);
+            }
+        }, true); // Use capture to catch scroll events on any internal div
+
+        function _drawDependencyLines(sourceCard, dependencies) {
+            let svgLayer = document.getElementById('dependency-svg-layer');
+            if (!svgLayer) {
+                svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgLayer.id = 'dependency-svg-layer';
+                document.body.appendChild(svgLayer);
+            }
+            svgLayer.innerHTML = `<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#F59E0B" /></marker></defs>`;
+            
+            const board = document.querySelector('.kanban-board');
+            if (!board) return;
+            const boardRect = board.getBoundingClientRect();
+            
+            // Limit to board dimensions
+            svgLayer.style.left = boardRect.left + 'px';
+            svgLayer.style.top = boardRect.top + 'px';
+            svgLayer.style.width = boardRect.width + 'px';
+            svgLayer.style.height = boardRect.height + 'px';
+
+            const sourceRect = sourceCard.getBoundingClientRect();
+            // Connect to middle-left of the locked source card
+            const startX = sourceRect.left - boardRect.left;
+            const startY = sourceRect.top + sourceRect.height / 2 - boardRect.top;
+
+            dependencies.forEach(depId => {
+                const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
+                if (depCard) {
+                    const depRect = depCard.getBoundingClientRect();
+                    // Connect to middle-right of the dependency card
+                    const endX = depRect.right - boardRect.left;
+                    const endY = depRect.top + depRect.height / 2 - boardRect.top;
+                    
+                    const controlX1 = startX - 50;
+                    const controlX2 = endX + 50;
+                    
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`);
+                    path.setAttribute('class', 'dep-arrow-line');
+                    svgLayer.appendChild(path);
+                }
+            });
+        }
+
+        function _showDependencyPopover(iconEl, storyId, incompleteDeps, data) {
+            let popover = document.getElementById('dep-popover');
+            if (popover) popover.remove();
+            if (!incompleteDeps || incompleteDeps.length === 0) return;
+
+            popover = document.createElement('div');
+            popover.id = 'dep-popover';
+            popover.className = 'dep-popover';
+            
+            let html = `<div class="dep-popover-header">未完成的依赖 (${incompleteDeps.length})</div>`;
+            
+            incompleteDeps.forEach(dep => {
+                let statusIcon = '⏳';
+                if (['in progress', 'doing', 'review'].includes(dep.status.toLowerCase())) statusIcon = '🔄';
+                html += `
+                    <div class="dep-item">
+                        <span class="dep-status-icon">${statusIcon}</span>
+                        <span><strong>${dep.id}</strong>: ${dep.title}</span>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <button class="dep-copy-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    复制 /dev-story 指令
+                </button>
+            `;
+            popover.innerHTML = html;
+            document.body.appendChild(popover);
+            
+            const rect = iconEl.getBoundingClientRect();
+            popover.style.top = (rect.bottom + 8) + 'px';
+            popover.style.left = (rect.right - 280) + 'px';
+            
+            const copyBtn = popover.querySelector('.dep-copy-btn');
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const firstDepId = incompleteDeps[0].id;
+                let path = firstDepId;
+                if (data && data.stories) {
+                    const firstDepObj = data.stories.find(s => s.id === firstDepId);
+                    if (firstDepObj && firstDepObj.path) {
+                        path = firstDepObj.path;
+                    }
+                }
+                const finalCmd = `/dev-story ${path}`;
+                navigator.clipboard.writeText(finalCmd).then(() => {
+                    window.showToast('📋 ' + finalCmd, 'success');
+                    popover.remove();
+                });
+            });
+            
+            const closePopover = (e) => {
+                if (!popover.contains(e.target) && !iconEl.contains(e.target)) {
+                    popover.remove();
+                    document.removeEventListener('click', closePopover);
+                    document.removeEventListener('keydown', keyClose);
+                }
+            };
+            const keyClose = (e) => {
+                if (e.key === 'Escape') {
+                    popover.remove();
+                    document.removeEventListener('click', closePopover);
+                    document.removeEventListener('keydown', keyClose);
+                }
+            };
+            
+            setTimeout(() => {
+                document.addEventListener('click', closePopover);
+                document.addEventListener('keydown', keyClose);
+            }, 10);
+        }
+
