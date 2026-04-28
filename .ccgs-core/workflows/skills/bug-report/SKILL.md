@@ -28,16 +28,18 @@ If no argument is provided, ask the user for a bug description before proceeding
 3. **Draft the bug report**:
 
 Markdown 编号列表`markdown
+---
+id: "BUG-[NNNN]"
+title: "[Concise, descriptive title]"
+severity: "[S1-Critical / S2-Major / S3-Minor / S4-Trivial]"
+priority: "[P1-Immediate / P2-Next Sprint / P3-Backlog / P4-Wishlist]"
+status: "Open"
+reporter: "[Name]"
+---
 # Bug Report
 
 ## Summary
-**Title**: [Concise, descriptive title]
-**ID**: BUG-[NNNN]
-**Severity**: [S1-Critical / S2-Major / S3-Minor / S4-Trivial]
-**Priority**: [P1-Immediate / P2-Next Sprint / P3-Backlog / P4-Wishlist]
-**Status**: Open
 **Reported**: [Date]
-**Reporter**: [Name]
 
 ## Classification
 - **Category**: [Gameplay / UI / Audio / Visual / Performance / Crash / Network]

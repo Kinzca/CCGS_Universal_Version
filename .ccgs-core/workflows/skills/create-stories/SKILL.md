@@ -171,9 +171,15 @@ After writing the story files, you MUST run `.ccgs-core/hooks/verify-schema.sh C
 Markdown 编号列表`markdown
 ---
 epic: "[epic name]"
-status: "Ready"
-layer: "[Foundation / Core / Feature / Presentation]"
+status: "Todo"
+phase: "P1"
+owner: "[Role Name]"
 type: "[Logic | Integration | Visual/Feel | UI | Config/Data]"
+estimate: "1天"
+dependencies: []
+group: ""
+sprint: ""
+layer: "[Foundation / Core / Feature / Presentation]"
 manifest_version: "[date from control-manifest.md header]"
 ---
 # Story [NNN]: [title]
@@ -261,7 +267,7 @@ change meaning. This is what the programmer reads instead of the ADR.]
 
 ## Dependencies
 
-- Code Dependencies: [Story NNN-1 must be DONE, or "None"]
+*Code Dependencies must be defined in the YAML frontmatter `dependencies: []` array.*
 - Asset Dependencies: [Required visual/UI/audio assets must be in Asset Ready state, or "None"]
 - Unlocks: [Story NNN+1, or "None"]
 Markdown 编号列表`

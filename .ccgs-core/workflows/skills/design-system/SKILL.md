@@ -217,6 +217,14 @@ headers. This ensures incremental writes have a target.
 Use the template structure from `.ccgs-core/docs/templates/game-design-document.md`:
 
 Markdown 编号列表`markdown
+---
+id: "[system-name]"
+system: "[System Name]"
+layer: "[from index]"
+version: "0.1.0"
+status: "Draft"
+related_adrs: []
+---
 # [System Name]
 
 > **Status**: In Design

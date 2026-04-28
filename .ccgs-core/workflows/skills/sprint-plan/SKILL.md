@@ -40,6 +40,13 @@ For `new`:
 **Generate a sprint plan** following this format and present it to the user. Do NOT ask to write yet — the producer feasibility gate (Phase 4) runs first and may require revisions before the file is written.
 
 Markdown 编号列表`markdown
+---
+id: "sprint-[N]"
+name: "Sprint [N]"
+start_date: "[Start Date]"
+end_date: "[End Date]"
+stories: []
+---
 # Sprint [N] -- [Start Date] to [End Date]
 
 ## Sprint Goal

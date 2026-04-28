@@ -145,10 +145,14 @@ After user confirms, write the files. After writing all epic files, you MUST run
 
 Markdown 编号列表`markdown
 ---
+epic: "[epic-slug]"
+title: "[System Name]"
+status: "Todo"
 layer: "[Foundation / Core / Feature / Presentation]"
+owner: "Technical Director"
+phase: "P1"
 gdd: "CCGS-Data/design/gdd/[filename].md"
 architecture_module: "[module name]"
-status: "Ready"
 ---
 # Epic: [System Name]
 

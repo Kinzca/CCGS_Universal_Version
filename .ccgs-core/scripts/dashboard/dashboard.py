@@ -244,7 +244,88 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 def open_browser():
     webbrowser.open_new(f"http://localhost:{PORT}/")
 
+def repair_metadata():
+    print(f"Repairing metadata in {DATA_DIR}...")
+    import re
+    
+    # 1. repair stage.txt
+    stage_path = os.path.join(DATA_DIR, "production", "tracking", "stage.txt")
+    os.makedirs(os.path.dirname(stage_path), exist_ok=True)
+    if not os.path.exists(stage_path):
+        with open(stage_path, "w", encoding="utf-8") as f:
+            f.write("production")
+        print(f"Created {stage_path}")
+
+    # 2. repair systems-index.md
+    index_path = os.path.join(DATA_DIR, "design", "systems-index.md")
+    os.makedirs(os.path.dirname(index_path), exist_ok=True)
+    if not os.path.exists(index_path):
+        with open(index_path, "w", encoding="utf-8") as f:
+            f.write("# Systems Index\n\n| System | Layer | Priority | Status | Design Doc |\n|---|---|---|---|---|\n")
+        print(f"Created {index_path}")
+
+    def inject_frontmatter(filepath, default_yaml):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            if content.startswith('---'):
+                return # Already has frontmatter
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(default_yaml + "\n" + content)
+            print(f"Repaired: {filepath}")
+        except Exception as e:
+            print(f"Failed to repair {filepath}: {e}")
+
+    # 3. GDDs
+    for f in glob.glob(os.path.join(DATA_DIR, "design", "gdd", "*.md")):
+        if "index" in f.lower() or "concept" in f.lower() or "pillars" in f.lower(): continue
+        name = os.path.basename(f).replace('.md', '')
+        yaml = f"---\nid: \"{name}\"\nsystem: \"{name.replace('-', ' ').title()}\"\nlayer: \"Core\"\nversion: \"0.1.0\"\nstatus: \"Draft\"\n---"
+        inject_frontmatter(f, yaml)
+
+    # 4. Epics
+    for f in glob.glob(os.path.join(DATA_DIR, "production", "epics", "*", "EPIC.md")):
+        epic = os.path.basename(os.path.dirname(f))
+        yaml = f"---\nepic: \"{epic}\"\ntitle: \"{epic}\"\nstatus: \"Todo\"\nlayer: \"Core\"\n---"
+        inject_frontmatter(f, yaml)
+
+    # 5. Stories
+    for f in glob.glob(os.path.join(DATA_DIR, "production", "epics", "*", "story-*.md")):
+        epic = os.path.basename(os.path.dirname(f))
+        deps = []
+        try:
+            with open(f, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+                for line in lines:
+                    if "Dependencies" in line or "Depends on" in line:
+                        matches = re.findall(r'([D]-\d{3})', line)
+                        deps.extend(matches)
+        except:
+            pass
+        deps_str = "[" + ", ".join(f'"{d}"' for d in set(deps)) + "]"
+        yaml = f"---\nepic: \"{epic}\"\nstatus: \"Todo\"\ntype: \"Logic\"\nestimate: \"1天\"\ndependencies: {deps_str}\ngroup: \"{epic}\"\n---"
+        inject_frontmatter(f, yaml)
+
+    # 6. Bugs
+    for f in glob.glob(os.path.join(DATA_DIR, "production", "qa", "bugs", "*.md")):
+        bug_id = os.path.basename(f).replace('.md', '')
+        yaml = f"---\nid: \"{bug_id}\"\ntitle: \"{bug_id}\"\nseverity: \"Medium\"\npriority: \"P2\"\nstatus: \"Open\"\n---"
+        inject_frontmatter(f, yaml)
+
+    # 7. Sprints
+    for f in glob.glob(os.path.join(DATA_DIR, "production", "sprints", "sprint-*.md")):
+        sprint_id = os.path.basename(f).replace('.md', '')
+        yaml = f"---\nid: \"{sprint_id}\"\nname: \"{sprint_id}\"\nstart_date: \"\"\nend_date: \"\"\nstories: []\n---"
+        inject_frontmatter(f, yaml)
+
+    print("Metadata repair completed.")
+
 if __name__ == "__main__":
+    import sys
+    if "--repair" in sys.argv:
+        repair_metadata()
+        sys.exit(0)
+        
     print("Gathering project data for Dashboard...")
     gather_data()
     print("Starting Glassmorphism Dashboard...")
