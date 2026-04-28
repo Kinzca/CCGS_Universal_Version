@@ -610,6 +610,11 @@
                                     // 仍在等待确认 → 保持在目标列 + 保持 pending 样式
                                     effectiveCol = pending.targetCol;
                                     card.classList.add('kb-pending');
+                                    // 根据目标列覆盖 borderLeft 颜色，防止刷新后回退到原始状态色
+                                    let pendingColor = 'var(--cyan)';
+                                    if (pending.targetCol === 'done') pendingColor = '#10b981';
+                                    else if (pending.targetCol === 'inprogress') pendingColor = 'var(--purple)';
+                                    card.style.borderLeft = `4px solid ${pendingColor}`;
                                 }
                             }
                             
