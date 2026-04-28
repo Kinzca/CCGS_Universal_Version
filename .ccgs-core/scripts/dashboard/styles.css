@@ -520,8 +520,9 @@
             transition: background 0.2s, border 0.2s;
         }
         .kanban-card.kb-pending {
-            opacity: 0.6;
-            box-shadow: inset 0 0 0 2px var(--purple) !important;
+            opacity: 0.75;
+            outline: 2px dashed var(--purple);
+            outline-offset: -1px;
             position: relative;
             animation: kb-pending-pulse 2s ease-in-out infinite;
         }
@@ -534,8 +535,8 @@
             animation: kb-pending-spin 1.5s linear infinite;
         }
         @keyframes kb-pending-pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 0.45; }
+            0%, 100% { opacity: 0.75; }
+            50% { opacity: 0.6; }
         }
         @keyframes kb-pending-spin {
             0% { transform: rotate(0deg); }
