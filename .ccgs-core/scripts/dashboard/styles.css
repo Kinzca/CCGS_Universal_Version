@@ -346,6 +346,41 @@
         .kb-footer { display: flex; justify-content: space-between; align-items: center; }
         .kb-pts { font-size: 0.75rem; font-weight: bold; color: var(--cyan); background: rgba(6, 182, 212, 0.1); padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(6, 182, 212, 0.2); }
 
+        /* Kanban 拖拽交互样式 (D-011) */
+        .kanban-card.kb-dragging {
+            opacity: 0.4;
+            transform: rotate(2deg) scale(0.95);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .col-body.kb-drop-active {
+            background: rgba(6, 182, 212, 0.06);
+            border: 2px dashed var(--cyan);
+            border-radius: 12px;
+            transition: background 0.2s, border 0.2s;
+        }
+        .kanban-card.kb-pending {
+            opacity: 0.6;
+            border: 2px dashed var(--purple) !important;
+            position: relative;
+            animation: kb-pending-pulse 2s ease-in-out infinite;
+        }
+        .kanban-card.kb-pending::after {
+            content: '⏳';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+            animation: kb-pending-spin 1.5s linear infinite;
+        }
+        @keyframes kb-pending-pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.45; }
+        }
+        @keyframes kb-pending-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Active Bugs View specific */
         .bugs-grid {
             flex-direction: column;

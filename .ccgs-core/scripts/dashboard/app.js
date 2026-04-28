@@ -420,6 +420,9 @@
                         data.stories.forEach(story => {
                             const card = document.createElement('div');
                             card.className = 'kanban-card';
+                            card.draggable = true;
+                            card.dataset.storyId = story.id;
+                            card.dataset.realStatus = story.status;
                             const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
                             
                             // 状态色：根据分列状态设置左边框颜色
@@ -449,6 +452,31 @@
                                 </div>
                             `;
                             
+                            // 拖拽开始：记录来源卡片 ID
+                            card.addEventListener('dragstart', function(e) {
+                                e.dataTransfer.setData('text/plain', story.id);
+                                e.dataTransfer.effectAllowed = 'move';
+                                card.classList.add('kb-dragging');
+                            });
+                            card.addEventListener('dragend', function() {
+                                card.classList.remove('kb-dragging');
+                            });
+                            
+                            // 检查是否处于待确认伪状态（上一次拖拽产生的）
+                            const pendingKey = 'kb_pending_' + story.id;
+                            const pendingInfo = sessionStorage.getItem(pendingKey);
+                            if (pendingInfo) {
+                                const pending = JSON.parse(pendingInfo);
+                                // 如果真实状态已匹配目标列 → 固化（清除伪状态）
+                                const realCol = _getColumnForStatus(story.status);
+                                if (realCol === pending.targetCol) {
+                                    sessionStorage.removeItem(pendingKey);
+                                } else {
+                                    // 真实状态未匹配 → 弹回原列，清除伪状态
+                                    sessionStorage.removeItem(pendingKey);
+                                }
+                            }
+                            
                             if (['done', 'completed', 'closed', 'verified'].includes(status)) {
                                 colDone.appendChild(card);
                             } else if (['in progress', 'doing', 'wip', 'review'].includes(status)) {
@@ -457,6 +485,12 @@
                                 colTodo.appendChild(card);
                             }
                         });
+                        
+                        // 为三列容器绑定 dragover/dragleave/drop 事件
+                        _setupDropZone(colTodo, 'todo');
+                        _setupDropZone(colInProg, 'inprogress');
+                        _setupDropZone(colDone, 'done');
+                        
                     } else {
                         if(kanbanBoard) kanbanBoard.style.display = 'none';
                         if(sprintsEmpty) sprintsEmpty.style.display = 'flex';
@@ -563,6 +597,75 @@
         // Initial fetch and start polling
         fetchData();
         setInterval(fetchData, 30000);
+
+        // 拖拽辅助：根据 story.status 判断卡片应归属的列
+        function _getColumnForStatus(status) {
+            if (['done', 'completed', 'closed', 'verified'].includes(status)) return 'done';
+            if (['in progress', 'doing', 'wip', 'review'].includes(status)) return 'inprogress';
+            return 'todo';
+        }
+
+        // 拖拽辅助：根据目标列生成对应的 Skill 指令
+        function _getSkillCommand(storyId, targetCol) {
+            const path = 'CCGS-Data/production/epics/**/' + storyId + '.md';
+            if (targetCol === 'inprogress') return '/dev-story ' + path;
+            if (targetCol === 'done') return '/story-done ' + path;
+            return '/story-readiness ' + path;
+        }
+
+        // 拖拽辅助：为列容器绑定 drop zone 事件
+        function _setupDropZone(colBody, colName) {
+            if (!colBody) return;
+            
+            colBody.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                colBody.classList.add('kb-drop-active');
+            });
+            
+            colBody.addEventListener('dragleave', function(e) {
+                // 仅当离开列容器本身时才移除高亮
+                if (!colBody.contains(e.relatedTarget)) {
+                    colBody.classList.remove('kb-drop-active');
+                }
+            });
+            
+            colBody.addEventListener('drop', function(e) {
+                e.preventDefault();
+                colBody.classList.remove('kb-drop-active');
+                const storyId = e.dataTransfer.getData('text/plain');
+                if (!storyId) return;
+                
+                // 找到被拖拽的卡片
+                const card = document.querySelector(`[data-story-id="${storyId}"]`);
+                if (!card) return;
+                
+                // 如果放回原列则忽略
+                const realCol = _getColumnForStatus(card.dataset.realStatus);
+                if (realCol === colName) return;
+                
+                // 移动卡片到目标列并设为待确认伪状态
+                colBody.appendChild(card);
+                card.classList.add('kb-pending');
+                
+                // 记录伪状态到 sessionStorage（30s 刷新时校准）
+                sessionStorage.setItem('kb_pending_' + storyId, JSON.stringify({
+                    targetCol: colName,
+                    timestamp: Date.now()
+                }));
+                
+                // 复制对应 Skill 指令到剪贴板
+                const command = _getSkillCommand(storyId, colName);
+                navigator.clipboard.writeText(command).then(() => {
+                    window.showToast('指令已复制: ' + command, 'success');
+                    setTimeout(() => {
+                        window.showToast('请在 Agent 终端粘贴执行', 'info');
+                    }, 1500);
+                }).catch(() => {
+                    window.showToast('剪贴板写入失败', 'info');
+                });
+            });
+        }
 
         // Toast Feedback System
         window.showToast = function(message, type = "info") {
