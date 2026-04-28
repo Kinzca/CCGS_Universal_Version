@@ -477,6 +477,24 @@
                                 });
                             });
 
+                            // 点击卡片主体滑出详情侧边栏 (防误触)
+                            let startX = 0, startY = 0;
+                            card.addEventListener('mousedown', (e) => {
+                                startX = e.clientX;
+                                startY = e.clientY;
+                            });
+                            card.addEventListener('mouseup', (e) => {
+                                const dx = e.clientX - startX;
+                                const dy = e.clientY - startY;
+                                const dist = Math.sqrt(dx*dx + dy*dy);
+                                // 如果移动距离小于 5 像素且未点到复制按钮，视为点击 (非拖拽)
+                                if (dist < 5 && !e.target.closest('.kb-copy-btn')) {
+                                    if (typeof window.showStoryPanel === 'function') {
+                                        window.showStoryPanel(story);
+                                    }
+                                }
+                            });
+
                             // 拖拽开始：记录来源卡片 ID
                             card.addEventListener('dragstart', function(e) {
                                 e.dataTransfer.setData('text/plain', story.id);
@@ -779,3 +797,62 @@
                 window.showToast("复制失败", "info");
             });
         };
+
+        // Story Side Panel Logic
+        window.showStoryPanel = function(story) {
+            document.getElementById('sp-id').innerText = story.id;
+            document.getElementById('sp-epic').innerText = story.epic;
+            document.getElementById('sp-status').innerText = story.status.toUpperCase();
+            document.getElementById('sp-title').innerText = story.title;
+            
+            // Set up copy handlers
+            const btnDev = document.getElementById('sp-btn-dev');
+            const btnReview = document.getElementById('sp-btn-review');
+            const btnPath = document.getElementById('sp-btn-path');
+            
+            // Helper for copy
+            const setupCopyBtn = (btn, text, toastPrefix) => {
+                // Clear old listeners by cloning
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(text).then(() => {
+                        window.showToast(toastPrefix + text, 'success');
+                        closeStoryPanel();
+                    }).catch(() => {
+                        window.showToast('剪贴板写入失败', 'info');
+                    });
+                });
+                return newBtn;
+            };
+            
+            const path = `CCGS-Data/production/epics/**/${story.id}.md`;
+            setupCopyBtn(btnDev, `/dev-story ${path}`, '▶️ ');
+            setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
+            setupCopyBtn(btnPath, path, '🔗 ');
+            
+            // Show panel
+            document.getElementById('story-panel-overlay').style.display = 'block';
+            document.getElementById('story-side-panel').style.display = 'flex';
+            // Trigger reflow
+            void document.getElementById('story-panel-overlay').offsetWidth;
+            document.getElementById('story-panel-overlay').classList.add('show');
+            document.getElementById('story-side-panel').classList.add('show');
+        };
+
+        const closeStoryPanel = function() {
+            const overlay = document.getElementById('story-panel-overlay');
+            const panel = document.getElementById('story-side-panel');
+            overlay.classList.remove('show');
+            panel.classList.remove('show');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                panel.style.display = 'none';
+            }, 300); // Wait for transition
+        };
+
+        // Attach close events
+        const overlay = document.getElementById('story-panel-overlay');
+        if(overlay) overlay.addEventListener('click', closeStoryPanel);
+        const closeBtn = document.getElementById('sp-close-btn');
+        if(closeBtn) closeBtn.addEventListener('click', closeStoryPanel);
