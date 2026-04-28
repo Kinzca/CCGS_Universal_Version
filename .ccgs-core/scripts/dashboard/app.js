@@ -232,34 +232,37 @@
                             if (modalBody) {
                                 modalBody.innerHTML = '';
                                 if (data.gate_check.failing.length > 0) {
+                                    const section = document.createElement('div');
+                                    section.className = 'gate-section gate-section-fail';
+                                    
                                     const failTitle = document.createElement('h3');
-                                    failTitle.style.color = '#ef4444';
-                                    failTitle.style.marginBottom = '10px';
-                                    failTitle.textContent = currentLang === 'zh' ? '阻碍项 / 未通过' : 'Blockers / Failing';
-                                    modalBody.appendChild(failTitle);
+                                    failTitle.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> ` + (currentLang === 'zh' ? '阻碍项 / 未通过' : 'Blockers / Failing');
+                                    section.appendChild(failTitle);
                                     
                                     data.gate_check.failing.forEach(item => {
                                         const div = document.createElement('div');
                                         div.className = 'gate-item';
-                                        div.innerHTML = `<span class="gate-icon-fail">❌</span><span style="color: var(--text-main);">${item}</span>`;
-                                        modalBody.appendChild(div);
+                                        div.innerHTML = `<span style="color: #ef4444; flex-shrink:0;">✕</span><span>${item}</span>`;
+                                        section.appendChild(div);
                                     });
+                                    modalBody.appendChild(section);
                                 }
                                 
                                 if (data.gate_check.passing.length > 0) {
+                                    const section = document.createElement('div');
+                                    section.className = 'gate-section gate-section-pass';
+                                    
                                     const passTitle = document.createElement('h3');
-                                    passTitle.style.color = '#10b981';
-                                    passTitle.style.marginTop = '20px';
-                                    passTitle.style.marginBottom = '10px';
-                                    passTitle.textContent = currentLang === 'zh' ? '已通过项' : 'Passing Items';
-                                    modalBody.appendChild(passTitle);
+                                    passTitle.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> ` + (currentLang === 'zh' ? '已通过项' : 'Passing Items');
+                                    section.appendChild(passTitle);
                                     
                                     data.gate_check.passing.forEach(item => {
                                         const div = document.createElement('div');
                                         div.className = 'gate-item';
-                                        div.innerHTML = `<span class="gate-icon-pass">✅</span><span style="color: var(--text-muted);">${item}</span>`;
-                                        modalBody.appendChild(div);
+                                        div.innerHTML = `<span style="color: #10b981; flex-shrink:0;">✓</span><span>${item}</span>`;
+                                        section.appendChild(div);
                                     });
+                                    modalBody.appendChild(section);
                                 }
                             }
                         }
