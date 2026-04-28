@@ -577,10 +577,10 @@
                                 });
                             });
 
-                            // Story D-032: Hovering the ID group highlights connected dependencies
-                            const idGroup = card.querySelector('.kb-id-group');
-                            if (idGroup) {
-                                idGroup.addEventListener('mouseenter', () => {
+                            // Story D-032 / D-033: Hovering the lock icon highlights connected dependencies
+                            const lockContainer = card.querySelector('.kb-lock-icon-container');
+                            if (lockContainer) {
+                                lockContainer.addEventListener('mouseenter', () => {
                                     const myDeps = story.dependencies || [];
                                     const dependingOnMe = [];
                                     if (data && data.stories) {
@@ -605,7 +605,7 @@
                                         _drawDependencyLines(card, myDeps, dependingOnMe);
                                     }
                                 });
-                                idGroup.addEventListener('mouseleave', () => {
+                                lockContainer.addEventListener('mouseleave', () => {
                                     window._activeHoverSource = null;
                                     window._activeHoverDeps = null;
                                     window._activeHoverDependents = null;
@@ -614,9 +614,6 @@
                                     if (svgLayer) svgLayer.innerHTML = '';
                                 });
                             }
-                            
-                            const lockContainer = card.querySelector('.kb-lock-icon-container');
-                            // 锁图标点击不再触发任何弹窗或聚光灯效果，仅保留 hover (由 idGroup 处理)
 
                             // 点击卡片主体滑出详情侧边栏 (防误触)
                             let startX = 0, startY = 0;
