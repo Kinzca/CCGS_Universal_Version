@@ -65,6 +65,34 @@ def extract_markdown_fields(filepath):
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             lines = f.readlines()
+            
+            # YAML Frontmatter parsing
+            if lines and lines[0].strip() == '---':
+                end_idx = -1
+                for i in range(1, len(lines)):
+                    if lines[i].strip() == '---':
+                        end_idx = i
+                        break
+                if end_idx != -1:
+                    frontmatter = {}
+                    import re
+                    for i in range(1, end_idx):
+                        fm_line = lines[i].strip()
+                        if fm_line and ':' in fm_line:
+                            match_plain = re.match(r'^([a-zA-Z0-9_-]+):\s*(.*)', fm_line)
+                            if match_plain:
+                                k = match_plain.group(1).lower()
+                                v = match_plain.group(2).strip().strip('"\'')
+                                if k == 'dependencies' and v.startswith('['):
+                                    import ast
+                                    try:
+                                        frontmatter[k] = ast.literal_eval(v)
+                                    except:
+                                        frontmatter[k] = []
+                                else:
+                                    frontmatter[k] = v
+                    result.update(frontmatter)
+            
             for line in lines:
                 # 标题解析: 多级兜底
                 if line.startswith('# ') and 'title' not in result:
@@ -80,7 +108,25 @@ def extract_markdown_fields(filepath):
                 if match:
                     key = match.group(1).strip().lower()
                     val = match.group(2).strip().strip('"\'')
-                    result[key] = val
+                    if key not in result:
+                        result[key] = val
+                
+                # Fallback non-bold 'key: value' matching if not in frontmatter
+                # But to avoid false positives, only parse simple ones like dependencies: ["D-010"]
+                match_plain = re.match(r'^([a-zA-Z0-9_-]+):\s*(.*)', line.strip())
+                if match_plain:
+                    k = match_plain.group(1).lower()
+                    v = match_plain.group(2).strip().strip('"\'')
+                    if k not in result:
+                        if k == 'dependencies' and v.startswith('['):
+                            import ast
+                            try:
+                                result[k] = ast.literal_eval(v)
+                            except:
+                                pass
+                        else:
+                            result[k] = v
+
     except (IOError, UnicodeDecodeError) as e:
         print(f"Warning: 无法解析 {filepath}: {e}")
     return result
@@ -214,13 +260,18 @@ def gather_data():
         epic_label = fm.get('epic', epic_dir).replace('-', ' ').title()
         
         # Append story data for Kanban board
+        deps_val = fm.get('dependencies', [])
+        deps = deps_val if isinstance(deps_val, list) else []
+        
         data["stories"].append({
             "id": os.path.basename(sf).replace('.md', ''),
             "title": fm.get('title', 'Untitled Story'),
             "points": pts,
             "priority": fm.get('priority', 'Medium').capitalize(),
             "status": status,
-            "epic": epic_label
+            "epic": epic_label,
+            "dependencies": deps,
+            "path": sf
         })
         
         total_pts += pts
