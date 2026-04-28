@@ -806,8 +806,10 @@
             document.getElementById('sp-title').innerText = story.title;
             
             // Set up copy handlers
+            const btnReady = document.getElementById('sp-btn-ready');
             const btnDev = document.getElementById('sp-btn-dev');
             const btnReview = document.getElementById('sp-btn-review');
+            const btnBranch = document.getElementById('sp-btn-branch');
             const btnPath = document.getElementById('sp-btn-path');
             
             // Helper for copy
@@ -827,8 +829,10 @@
             };
             
             const path = `CCGS-Data/production/epics/**/${story.id}.md`;
+            setupCopyBtn(btnReady, `/story-readiness ${path}`, '🔍 ');
             setupCopyBtn(btnDev, `/dev-story ${path}`, '▶️ ');
             setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
+            setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
             setupCopyBtn(btnPath, path, '🔗 ');
             
             // Show panel
