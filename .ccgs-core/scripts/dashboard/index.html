@@ -224,6 +224,28 @@
                 </div>
             </div>
 
+            <!-- Epic Progress Summary (Story D-031) -->
+            <div class="epic-summary-container" id="epic-summary-container" style="display: none;">
+                <div class="epic-summary-header" id="epic-summary-header">
+                    <div class="epic-summary-title">
+                        <svg width="16" height="16" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <span data-i18n="epic_progress">Epic 进度汇总</span>
+                    </div>
+                    <div class="epic-summary-actions">
+                        <div class="epic-filter-banner" id="epic-filter-banner" style="display: none;">
+                            <span data-i18n="filtering_by">过滤:</span> <strong id="epic-filter-name" style="color: var(--cyan); margin: 0 8px;"></strong>
+                            <button id="epic-filter-clear" class="clear-filter-btn"><span data-i18n="clear">清除</span> ✖</button>
+                        </div>
+                        <button class="toggle-epic-btn" id="toggle-epic-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="epic-summary-body" id="epic-summary-body">
+                    <!-- JS generated rows -->
+                </div>
+            </div>
+
             <div class="kanban-board" id="kanban-board">
                 <div class="kanban-col">
                     <div class="col-header" style="border-top-color: var(--cyan);">TO DO</div>

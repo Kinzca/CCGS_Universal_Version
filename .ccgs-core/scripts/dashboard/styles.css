@@ -989,3 +989,176 @@ body.light-mode .big-metric-card .bm-title { color: var(--text-color-muted-light
     opacity: 0.8;
 }
 body.light-mode .big-metric-card .bm-sub { color: var(--text-color-light); }
+
+/* --- Story D-031: Epic Progress Summary --- */
+.epic-summary-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+body.light-mode .epic-summary-container {
+    background: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.epic-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.1);
+    border-bottom: 1px solid var(--border-color);
+}
+body.light-mode .epic-summary-header {
+    background: rgba(255,255,255,0.5);
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.epic-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.epic-summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.toggle-epic-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: transform 0.3s;
+}
+body.light-mode .toggle-epic-btn { color: var(--text-color-light); }
+.toggle-epic-btn:hover { background: rgba(255,255,255,0.1); }
+body.light-mode .toggle-epic-btn:hover { background: rgba(0,0,0,0.05); }
+
+.epic-summary-container.collapsed .toggle-epic-btn {
+    transform: rotate(-90deg);
+}
+.epic-summary-container.collapsed .epic-summary-body {
+    display: none;
+}
+
+.epic-summary-body {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.epic-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    gap: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.epic-row:hover {
+    background: rgba(255,255,255,0.05);
+}
+body.light-mode .epic-row:hover {
+    background: rgba(0,0,0,0.03);
+}
+
+.epic-name {
+    flex: 0 0 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.epic-filter-icon {
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: var(--cyan);
+}
+.epic-row:hover .epic-filter-icon {
+    opacity: 0.6;
+}
+.epic-row.active .epic-filter-icon {
+    opacity: 1;
+}
+.epic-row.active {
+    background: rgba(0, 240, 255, 0.05);
+}
+
+.epic-bar-wrapper {
+    flex-grow: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+}
+body.light-mode .epic-bar-wrapper { background: rgba(0,0,0,0.1); }
+
+.epic-bar-done {
+    background: var(--cyan);
+    height: 100%;
+}
+.epic-bar-wip {
+    background: var(--purple);
+    opacity: 0.7;
+    height: 100%;
+}
+
+.epic-stats {
+    flex: 0 0 60px;
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-color-muted);
+}
+body.light-mode .epic-stats { color: var(--text-color-muted-light); }
+
+.epic-filter-banner {
+    font-size: 0.85rem;
+    background: rgba(0, 240, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    display: flex;
+    align-items: center;
+}
+.clear-filter-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+body.light-mode .clear-filter-btn { color: var(--text-color-light); }
+.clear-filter-btn:hover {
+    background: rgba(255,0,0,0.2);
+    color: #ff4444;
+}
+
+.kanban-col-empty-msg {
+    text-align: center;
+    color: var(--text-color-muted);
+    font-size: 0.85rem;
+    padding: 20px;
+    opacity: 0.6;
+}
+body.light-mode .kanban-col-empty-msg { color: var(--text-color-muted-light); }

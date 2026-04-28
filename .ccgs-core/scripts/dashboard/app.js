@@ -423,6 +423,7 @@
                             card.draggable = true;
                             card.dataset.storyId = story.id;
                             card.dataset.realStatus = story.status;
+                            card.dataset.epic = story.epic || 'N/A';
                             const prioClass = (story.priority.toLowerCase() === 'high' || story.priority.toLowerCase() === 'critical') ? 'priority-high' : 'priority-low';
                             
                             // 状态色：根据分列状态设置左边框颜色
@@ -552,6 +553,9 @@
                     
                     if (data.sprint_history && typeof window._renderHistoryDrawer === 'function') {
                         window._renderHistoryDrawer(data.sprint_history, data.sprint);
+                    }
+                    if (data.stories && typeof window._renderEpicSummary === 'function') {
+                        window._renderEpicSummary(data.stories);
                     }
                     
                     // Active Bugs Triage
@@ -955,6 +959,124 @@
             });
         };
         
+        // Story D-031: Epic Progress Summary
+        let _currentEpicFilter = null;
+
+        window._renderEpicSummary = function(stories) {
+            const container = document.getElementById('epic-summary-container');
+            const body = document.getElementById('epic-summary-body');
+            if (!container || !body) return;
+
+            if (!stories || stories.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
+
+            // Group by Epic
+            const epics = {};
+            stories.forEach(s => {
+                const eName = s.epic || 'N/A';
+                if (!epics[eName]) epics[eName] = { total: 0, done: 0, wip: 0 };
+                epics[eName].total += s.points;
+                const st = s.status;
+                if (['done', 'completed', 'closed', 'verified'].includes(st)) {
+                    epics[eName].done += s.points;
+                } else if (['in progress', 'doing', 'wip', 'review'].includes(st)) {
+                    epics[eName].wip += s.points;
+                }
+            });
+
+            // Generate HTML
+            let html = '';
+            const epicKeys = Object.keys(epics).sort();
+            epicKeys.forEach(eName => {
+                const stats = epics[eName];
+                const pctDone = stats.total > 0 ? (stats.done / stats.total) * 100 : 0;
+                const pctWip = stats.total > 0 ? (stats.wip / stats.total) * 100 : 0;
+                const isActive = _currentEpicFilter === eName ? 'active' : '';
+
+                html += `
+                    <div class="epic-row ${isActive}" data-epic="${eName}">
+                        <div class="epic-name">
+                            <svg class="epic-filter-icon" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            ${eName}
+                        </div>
+                        <div class="epic-bar-wrapper">
+                            <div class="epic-bar-done" style="width: ${pctDone}%"></div>
+                            <div class="epic-bar-wip" style="width: ${pctWip}%"></div>
+                        </div>
+                        <div class="epic-stats">
+                            ${stats.done} / ${stats.total}
+                        </div>
+                    </div>
+                `;
+            });
+            body.innerHTML = html;
+
+            // Bind click events
+            body.querySelectorAll('.epic-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const eName = row.getAttribute('data-epic');
+                    if (_currentEpicFilter === eName) {
+                        _currentEpicFilter = null; // Toggle off
+                    } else {
+                        _currentEpicFilter = eName;
+                    }
+                    _applyEpicFilter();
+                    window._renderEpicSummary(stories); // Re-render to update active classes
+                });
+            });
+
+            _applyEpicFilter();
+        };
+
+        function _applyEpicFilter() {
+            const cards = document.querySelectorAll('.kanban-card');
+            const banner = document.getElementById('epic-filter-banner');
+            const filterName = document.getElementById('epic-filter-name');
+
+            if (_currentEpicFilter) {
+                if (banner) banner.style.display = 'flex';
+                if (filterName) filterName.textContent = _currentEpicFilter;
+            } else {
+                if (banner) banner.style.display = 'none';
+            }
+
+            // Show/Hide cards
+            cards.forEach(card => {
+                if (!_currentEpicFilter) {
+                    card.style.display = 'block';
+                } else {
+                    const eName = card.dataset.epic || '';
+                    if (eName === _currentEpicFilter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+
+            // Update columns empty state
+            ['todo', 'inprogress', 'done'].forEach(colId => {
+                const colBody = document.getElementById('col-' + colId);
+                if (colBody) {
+                    // Remove existing empty message if any
+                    const existingMsg = colBody.querySelector('.kanban-col-empty-msg');
+                    if (existingMsg) existingMsg.remove();
+
+                    // Check visible cards
+                    const visibleCards = Array.from(colBody.querySelectorAll('.kanban-card')).filter(c => c.style.display !== 'none');
+                    if (visibleCards.length === 0 && _currentEpicFilter) {
+                        const msg = document.createElement('div');
+                        msg.className = 'kanban-col-empty-msg';
+                        msg.textContent = '该 Epic 在此列暂无 Story';
+                        colBody.appendChild(msg);
+                    }
+                }
+            });
+        }
+
         // Setup toggle button event
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('toggle-history-btn');
@@ -966,6 +1088,24 @@
                 btn.addEventListener('click', () => {
                     drawer.classList.toggle('open');
                     sessionStorage.setItem('ccgs_history_open', drawer.classList.contains('open'));
+                });
+            }
+
+            // D-031 UI Bindings
+            const toggleEpicBtn = document.getElementById('toggle-epic-btn');
+            const epicContainer = document.getElementById('epic-summary-container');
+            if (toggleEpicBtn && epicContainer) {
+                toggleEpicBtn.addEventListener('click', () => {
+                    epicContainer.classList.toggle('collapsed');
+                });
+            }
+
+            const clearFilterBtn = document.getElementById('epic-filter-clear');
+            if (clearFilterBtn) {
+                clearFilterBtn.addEventListener('click', () => {
+                    _currentEpicFilter = null;
+                    _applyEpicFilter();
+                    document.querySelectorAll('.epic-row').forEach(r => r.classList.remove('active'));
                 });
             }
         });
