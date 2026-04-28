@@ -460,3 +460,46 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
         }
+
+        /* Stage Tracker */
+        .stage-tracker {
+            grid-column: 1 / -1; margin-bottom: 0.5rem; overflow: visible; padding: 1.5rem;
+        }
+        .stage-container {
+            display: flex; justify-content: space-between; align-items: center; position: relative; padding: 0 1rem;
+        }
+        .stage-container::before {
+            content: ''; position: absolute; top: 15px; left: 2rem; right: 2rem; height: 3px;
+            background: var(--bg-hover); z-index: 0;
+        }
+        .stage-step {
+            position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+            flex: 1; text-align: center; color: var(--text-muted); transition: color 0.3s;
+        }
+        .stage-icon {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--bg-card);
+            border: 3px solid var(--bg-hover); display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: bold; transition: all 0.3s; z-index: 2;
+        }
+        .stage-label {
+            font-size: 0.85rem; font-weight: 500; white-space: nowrap;
+        }
+        .stage-step.completed .stage-icon {
+            border-color: #10B981; background: #10B981; color: white;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+        .stage-step.completed .stage-label {
+            color: #10B981;
+        }
+        .stage-step.completed::after {
+            content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 3px;
+            background: #10B981; z-index: -1;
+        }
+        .stage-step:last-child::after { display: none; }
+        .stage-step.current .stage-icon {
+            border-color: var(--cyan); background: var(--cyan); color: #fff;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); transform: scale(1.15);
+        }
+        .stage-step.current .stage-label {
+            color: var(--text-main); font-weight: bold;
+        }

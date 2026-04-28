@@ -231,6 +231,21 @@ def gather_data():
                             data["health"]["FIXMEs"] += content.count("FIXME")
                     except (IOError, UnicodeDecodeError) as e:
                         print(f"Warning: 无法读取 {os.path.join(root, f)}: {e}")
+                        
+    # 5. Parse current Stage
+    stage_path = os.path.join(DATA_DIR, "production", "tracking", "stage.txt")
+    if not os.path.exists(stage_path):
+        stage_path = os.path.join(DATA_DIR, "production", "stage.txt")
+        
+    current_stage = "unknown"
+    if os.path.exists(stage_path):
+        try:
+            with open(stage_path, 'r', encoding='utf-8') as f:
+                current_stage = f.read().strip().lower()
+        except Exception:
+            pass
+            
+    data["stage"] = current_stage
                     
     global _last_data_update, _cached_data
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:

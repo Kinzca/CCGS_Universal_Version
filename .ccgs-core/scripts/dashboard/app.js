@@ -7,6 +7,8 @@
                 'empty_design_title': 'Design Repository Empty', 'empty_design_desc': 'There are no Game Design Documents (GDD) or Technical Architecture diagrams found in the current workspace.',
                 'empty_sprints_title': 'No Active Sprint', 'empty_sprints_desc': 'There are no active sprints running. Please create a sprint plan to track stories and velocity.',
                 'empty_quality_title': 'Zero Active Bugs', 'empty_quality_desc': 'Excellent work! There are currently no active bug reports in the tracker.',
+                'stage_title': 'Project Stage', 'stage_concept': 'Concept', 'stage_systems': 'Systems Design', 'stage_setup': 'Technical Setup',
+                'stage_preprod': 'Pre-Production', 'stage_prod': 'Production', 'stage_polish': 'Polish', 'stage_release': 'Release',
                 'chart_title': 'Sprint Progress', 'bugs_title': 'Active Bugs', 'health_title': 'Code Debt Indicators',
                 'health_todo': 'Technical Debt (TODOs)', 'health_todo_desc': 'Pending architecture or code tasks.',
                 'health_fixme': 'Critical Issues (FIXMEs)', 'health_fixme_desc': 'Code that requires immediate attention.',
@@ -28,6 +30,8 @@
                 'empty_design_title': '设计存储库为空', 'empty_design_desc': '当前工作空间中未找到任何游戏设计文档（GDD）或技术架构蓝图。',
                 'empty_sprints_title': '暂无进行中的冲刺', 'empty_sprints_desc': '当前没有任何活跃的敏捷冲刺。请创建一个冲刺计划以追踪故事点与开发速率。',
                 'empty_quality_title': '完美状态', 'empty_quality_desc': '干得漂亮！当前追踪系统中没有任何待处理的活跃缺陷报告。',
+                'stage_title': '项目阶段', 'stage_concept': '概念孵化', 'stage_systems': '系统设计', 'stage_setup': '技术基建',
+                'stage_preprod': '前期量产', 'stage_prod': '全力量产', 'stage_polish': '打磨抛光', 'stage_release': '正式发布',
                 'chart_title': '冲刺进度', 'bugs_title': '活跃缺陷', 'health_title': '代码债务指标',
                 'health_todo': '技术债务 (TODOs)', 'health_todo_desc': '待处理的架构或普通代码逻辑。',
                 'health_fixme': '致命问题 (FIXMEs)', 'health_fixme_desc': '可能导致崩溃，需要立刻修复。',
@@ -245,6 +249,57 @@
                     // Health
                     document.getElementById('todo-val').textContent = data.health.TODOs;
                     document.getElementById('fixme-val').textContent = data.health.FIXMEs;
+
+                    // Stage Tracker
+                    const stageTracker = document.getElementById('stage-tracker');
+                    const stageContainer = document.getElementById('stage-container');
+                    if (data.stage && data.stage !== 'unknown') {
+                        if(stageTracker) stageTracker.style.display = 'block';
+                        
+                        const stages = [
+                            {id: 'concept', key: 'stage_concept'},
+                            {id: 'systems design', key: 'stage_systems'},
+                            {id: 'technical setup', key: 'stage_setup'},
+                            {id: 'pre-production', key: 'stage_preprod'},
+                            {id: 'production', key: 'stage_prod'},
+                            {id: 'polish', key: 'stage_polish'},
+                            {id: 'release', key: 'stage_release'}
+                        ];
+                        
+                        let fetchedStage = data.stage.toLowerCase().replace('_', ' ');
+                        let currentIndex = stages.findIndex(s => s.id === fetchedStage);
+                        
+                        if(currentIndex === -1) {
+                            if (fetchedStage.includes('pre') || fetchedStage.includes('preprod')) currentIndex = 3;
+                            else if (fetchedStage.includes('prod')) currentIndex = 4;
+                            else if (fetchedStage.includes('sys')) currentIndex = 1;
+                            else if (fetchedStage.includes('tech')) currentIndex = 2;
+                            else currentIndex = 0; // fallback
+                        }
+                        
+                        if(stageContainer) {
+                            stageContainer.innerHTML = '';
+                            stages.forEach((st, idx) => {
+                                const isCompleted = idx < currentIndex;
+                                const isCurrent = idx === currentIndex;
+                                
+                                const stepDiv = document.createElement('div');
+                                stepDiv.className = `stage-step ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
+                                
+                                const iconContent = isCompleted 
+                                    ? `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`
+                                    : (idx + 1);
+                                    
+                                stepDiv.innerHTML = `
+                                    <div class="stage-icon">${iconContent}</div>
+                                    <div class="stage-label" data-i18n="${st.key}">${i18n[currentLang][st.key]}</div>
+                                `;
+                                stageContainer.appendChild(stepDiv);
+                            });
+                        }
+                    } else {
+                        if(stageTracker) stageTracker.style.display = 'none';
+                    }
 
                     // Sprints Kanban
                     const colTodo = document.getElementById('col-todo');
