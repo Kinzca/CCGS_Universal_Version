@@ -7,8 +7,12 @@ import http.server
 import socketserver
 import webbrowser
 from threading import Timer
+import time
 
 PORT = 8080
+CACHE_TTL = 5
+_last_data_update = 0
+_cached_data = None
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 CWD = os.getcwd()
 if os.path.exists(os.path.join(CWD, "CCGS-Data")):
@@ -228,12 +232,26 @@ def gather_data():
                     except (IOError, UnicodeDecodeError) as e:
                         print(f"Warning: 无法读取 {os.path.join(root, f)}: {e}")
                     
+    global _last_data_update, _cached_data
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:
         json.dump(data, f)
+    _cached_data = json.dumps(data)
+    _last_data_update = time.time()
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
+        
+    def do_GET(self):
+        if self.path == '/api/data':
+            if time.time() - _last_data_update > CACHE_TTL or _cached_data is None:
+                gather_data()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(_cached_data.encode('utf-8'))
+        else:
+            super().do_GET()
         
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")

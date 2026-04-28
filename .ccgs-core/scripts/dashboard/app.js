@@ -152,7 +152,7 @@
         });
 
         // Fetch Dashboard Data (prevent cache to ensure fresh state)
-        fetch('data.json', { cache: 'no-store' })
+        fetch('/api/data', { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 // Populate Sidebar
