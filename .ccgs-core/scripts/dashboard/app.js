@@ -441,13 +441,14 @@
                                 ? (story.epic || '').substring(0, 18) + '…' 
                                 : (story.epic || 'N/A');
                             
-                            // 依赖检查 (Story D-032)
+                            // 依赖检查 (Story D-032 / UX Fix)
                             const incompleteDeps = [];
-                            if (story.dependencies && story.dependencies.length > 0) {
+                            const isSelfDone = ['done', 'completed', 'closed', 'verified'].includes(story.status.toLowerCase());
+                            if (!isSelfDone && story.dependencies && story.dependencies.length > 0) {
                                 story.dependencies.forEach(depId => {
                                     const depStory = data.stories.find(s => s.id === depId);
-                                    if (!depStory || !['done', 'completed', 'closed', 'verified'].includes(depStory.status.toLowerCase())) {
-                                        incompleteDeps.push(depStory ? { id: depId, status: depStory.status, title: depStory.title } : { id: depId, status: 'unknown', title: 'Unknown Story' });
+                                    if (depStory && !['done', 'completed', 'closed', 'verified'].includes(depStory.status.toLowerCase())) {
+                                        incompleteDeps.push({ id: depId, status: depStory.status, title: depStory.title });
                                     }
                                 });
                             }
@@ -465,15 +466,17 @@
                             if (isLocked) {
                                 lockHtml = `
                                     <div class="kb-lock-icon-container" title="存在未完成的依赖">
-                                        <svg class="kb-lock-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                        <svg class="kb-lock-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                     </div>
                                 `;
                             }
                             
                             card.innerHTML = `
-                                ${lockHtml}
                                 <div class="kb-header">
-                                    <span class="kb-id">${story.id}</span>
+                                    <span class="kb-id-group">
+                                        ${lockHtml}
+                                        <span class="kb-id">${story.id}</span>
+                                    </span>
                                     <span class="kb-epic-tag">${epicShort}</span>
                                 </div>
                                 <div class="kb-title">${story.title}</div>
@@ -508,29 +511,46 @@
                                 });
                             });
 
-                            // Story D-032: 锁图标悬浮与点击交互
-                            const lockContainer = card.querySelector('.kb-lock-icon-container');
-                            if (lockContainer) {
-                                lockContainer.addEventListener('mouseenter', () => {
-                                    if (story.dependencies) {
+                            // Story D-032: Hovering the ID group highlights connected dependencies
+                            const idGroup = card.querySelector('.kb-id-group');
+                            if (idGroup) {
+                                idGroup.addEventListener('mouseenter', () => {
+                                    const myDeps = story.dependencies || [];
+                                    const dependingOnMe = [];
+                                    if (data && data.stories) {
+                                        data.stories.forEach(s => {
+                                            if (s.dependencies && s.dependencies.includes(story.id)) {
+                                                dependingOnMe.push(s.id);
+                                            }
+                                        });
+                                    }
+                                    const allConnected = [...myDeps, ...dependingOnMe];
+                                    if (allConnected.length > 0) {
                                         window._activeHoverSource = card;
-                                        window._activeHoverDeps = story.dependencies;
-                                        story.dependencies.forEach(depId => {
+                                        window._activeHoverDeps = myDeps; 
+                                        window._activeHoverDependents = dependingOnMe;
+                                        
+                                        allConnected.forEach(depId => {
                                             const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
                                             if (depCard) {
                                                 depCard.classList.add('kb-dep-highlight');
                                             }
                                         });
-                                        _drawDependencyLines(card, story.dependencies);
+                                        _drawDependencyLines(card, myDeps, dependingOnMe);
                                     }
                                 });
-                                lockContainer.addEventListener('mouseleave', () => {
+                                idGroup.addEventListener('mouseleave', () => {
                                     window._activeHoverSource = null;
                                     window._activeHoverDeps = null;
+                                    window._activeHoverDependents = null;
                                     document.querySelectorAll('.kb-dep-highlight').forEach(el => el.classList.remove('kb-dep-highlight'));
                                     const svgLayer = document.getElementById('dependency-svg-layer');
                                     if (svgLayer) svgLayer.innerHTML = '';
                                 });
+                            }
+                            
+                            const lockContainer = card.querySelector('.kb-lock-icon-container');
+                            if (lockContainer) {
                                 lockContainer.addEventListener('click', (e) => {
                                     e.stopPropagation();
                                     _showDependencyPopover(lockContainer, story.id, incompleteDeps, data);
@@ -1178,12 +1198,12 @@
         // ---------------------------------------------------------
         
         window.addEventListener('scroll', () => {
-            if (window._activeHoverSource && window._activeHoverDeps) {
-                _drawDependencyLines(window._activeHoverSource, window._activeHoverDeps);
+            if (window._activeHoverSource && (window._activeHoverDeps || window._activeHoverDependents)) {
+                _drawDependencyLines(window._activeHoverSource, window._activeHoverDeps, window._activeHoverDependents);
             }
         }, true); // Use capture to catch scroll events on any internal div
 
-        function _drawDependencyLines(sourceCard, dependencies) {
+        function _drawDependencyLines(sourceCard, myDeps, dependingOnMe) {
             let svgLayer = document.getElementById('dependency-svg-layer');
             if (!svgLayer) {
                 svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -1203,27 +1223,45 @@
             svgLayer.style.height = boardRect.height + 'px';
 
             const sourceRect = sourceCard.getBoundingClientRect();
-            // Connect to middle-left of the locked source card
-            const startX = sourceRect.left - boardRect.left;
-            const startY = sourceRect.top + sourceRect.height / 2 - boardRect.top;
-
-            dependencies.forEach(depId => {
-                const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
-                if (depCard) {
-                    const depRect = depCard.getBoundingClientRect();
-                    // Connect to middle-right of the dependency card
-                    const endX = depRect.right - boardRect.left;
-                    const endY = depRect.top + depRect.height / 2 - boardRect.top;
-                    
-                    const controlX1 = startX - 50;
-                    const controlX2 = endX + 50;
-                    
-                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`);
-                    path.setAttribute('class', 'dep-arrow-line');
-                    svgLayer.appendChild(path);
-                }
-            });
+            const sourceMidY = sourceRect.top + sourceRect.height / 2 - boardRect.top;
+            
+            // Draw lines TO things I depend on (myDeps)
+            if (myDeps) {
+                const startX = sourceRect.left - boardRect.left;
+                myDeps.forEach(depId => {
+                    const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
+                    if (depCard) {
+                        const depRect = depCard.getBoundingClientRect();
+                        const endX = depRect.right - boardRect.left;
+                        const endY = depRect.top + depRect.height / 2 - boardRect.top;
+                        const controlX1 = startX - 50;
+                        const controlX2 = endX + 50;
+                        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        path.setAttribute('d', `M ${startX} ${sourceMidY} C ${controlX1} ${sourceMidY}, ${controlX2} ${endY}, ${endX} ${endY}`);
+                        path.setAttribute('class', 'dep-arrow-line');
+                        svgLayer.appendChild(path);
+                    }
+                });
+            }
+            
+            // Draw lines FROM things depending on me (dependingOnMe)
+            if (dependingOnMe) {
+                const endXForThem = sourceRect.right - boardRect.left;
+                dependingOnMe.forEach(depId => {
+                    const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
+                    if (depCard) {
+                        const depRect = depCard.getBoundingClientRect();
+                        const startXForThem = depRect.left - boardRect.left;
+                        const startYForThem = depRect.top + depRect.height / 2 - boardRect.top;
+                        const controlX1 = startXForThem - 50;
+                        const controlX2 = endXForThem + 50;
+                        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        path.setAttribute('d', `M ${startXForThem} ${startYForThem} C ${controlX1} ${startYForThem}, ${controlX2} ${sourceMidY}, ${endXForThem} ${sourceMidY}`);
+                        path.setAttribute('class', 'dep-arrow-line');
+                        svgLayer.appendChild(path);
+                    }
+                });
+            }
         }
 
         function _showDependencyPopover(iconEl, storyId, incompleteDeps, data) {
