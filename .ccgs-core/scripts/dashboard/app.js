@@ -871,7 +871,7 @@
             if (!container) return;
             
             // Fallback: Big Metric for insufficient historical data
-            if (!historyData || historyData.length < 1) {
+            if (!historyData || historyData.length < 2) {
                 const pct = currentSprintData.total_points > 0 
                     ? Math.round((currentSprintData.completed_points / currentSprintData.total_points) * 100)
                     : 0;
@@ -901,7 +901,7 @@
             // Background lines & Y-axis labels
             [0, 0.5, 1].forEach(tick => {
                 const y = h - pad - tick * (h - pad * 2);
-                svgStr += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="var(--border-color)" stroke-dasharray="4" opacity="0.5"/>`;
+                svgStr += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="currentColor" stroke-dasharray="4" opacity="0.15"/>`;
                 svgStr += `<text x="${pad-10}" y="${y+4}" fill="var(--text-color)" font-size="12" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
             });
             

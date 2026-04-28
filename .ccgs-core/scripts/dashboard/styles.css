@@ -917,9 +917,16 @@ body.light-mode .sp-action-btn:hover { background: rgba(0,0,0,0.08); }
     overflow: hidden;
 }
 body.light-mode .drawer-content {
-    background: var(--card-bg-light);
-    border-color: var(--border-color-light);
+    background: rgba(245, 246, 250, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+#history-drawer-content svg {
+    max-height: 240px;
+    width: 100%;
+    margin: 0 auto;
+    display: block;
 }
 
 .svg-bar {
