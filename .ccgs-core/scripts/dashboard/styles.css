@@ -515,32 +515,14 @@
         }
         .col-body.kb-drop-active {
             background: rgba(6, 182, 212, 0.06);
-            border: 2px dashed var(--cyan);
+            outline: 2px dashed var(--cyan);
+            outline-offset: -2px;
             border-radius: 12px;
-            transition: background 0.2s, border 0.2s;
+            transition: background 0.2s;
         }
+        /* kb-pending: 仅用于内部状态追踪，不产生任何视觉差异 */
         .kanban-card.kb-pending {
-            opacity: 0.75;
-            outline: 2px dashed var(--purple);
-            outline-offset: -1px;
-            position: relative;
-            animation: kb-pending-pulse 2s ease-in-out infinite;
-        }
-        .kanban-card.kb-pending::after {
-            content: '⏳';
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            font-size: 14px;
-            animation: kb-pending-spin 1.5s linear infinite;
-        }
-        @keyframes kb-pending-pulse {
-            0%, 100% { opacity: 0.75; }
-            50% { opacity: 0.6; }
-        }
-        @keyframes kb-pending-spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            /* 无额外样式 */
         }
 
         /* Active Bugs View specific */
