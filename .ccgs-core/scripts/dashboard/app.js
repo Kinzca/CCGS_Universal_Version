@@ -651,32 +651,45 @@
                 const card = document.querySelector(`[data-story-id="${storyId}"]`);
                 if (!card) return;
                 
-                // 如果放回原列则忽略
+                // 判断卡片是否已在当前列（含 pending 状态的情况）
+                const alreadyInColumn = card.parentElement === colBody;
+                
+                // 如果卡片的真实状态就属于此列且无 pending → 纯原地放回，忽略
                 const realCol = _getColumnForStatus(card.dataset.realStatus);
-                if (realCol === colName) return;
+                if (realCol === colName && !card.classList.contains('kb-pending')) return;
                 
-                // 移动卡片到目标列并设为待确认伪状态
-                colBody.appendChild(card);
-                card.classList.add('kb-pending');
-                
-                // 记录伪状态到 sessionStorage（30s 刷新时校准）
-                sessionStorage.setItem('kb_pending_' + storyId, JSON.stringify({
-                    targetCol: colName,
-                    timestamp: Date.now()
-                }));
-                
-                // 复制对应 Skill 指令到剪贴板（防抖：取消上一次未触发的第二段 Toast）
-                const command = _getSkillCommand(storyId, colName);
-                if (window._dragToastTimer) clearTimeout(window._dragToastTimer);
-                navigator.clipboard.writeText(command).then(() => {
-                    window.showToast('指令已复制: ' + command, 'success');
-                    window._dragToastTimer = setTimeout(() => {
-                        window.showToast('请在 Agent 终端粘贴执行', 'info');
-                        window._dragToastTimer = null;
-                    }, 1500);
-                }).catch(() => {
-                    window.showToast('剪贴板写入失败', 'info');
-                });
+                if (alreadyInColumn) {
+                    // 同列重放：仅复制指令，单条 Toast，不改变状态
+                    const command = _getSkillCommand(storyId, colName);
+                    if (window._dragToastTimer) clearTimeout(window._dragToastTimer);
+                    window._dragToastTimer = null;
+                    navigator.clipboard.writeText(command).then(() => {
+                        window.showToast('📋 ' + command, 'success');
+                    }).catch(() => {
+                        window.showToast('剪贴板写入失败', 'info');
+                    });
+                } else {
+                    // 跨列拖拽：移动卡片 + 设置 pending + 复制指令 + 二段式 Toast
+                    colBody.appendChild(card);
+                    card.classList.add('kb-pending');
+                    
+                    sessionStorage.setItem('kb_pending_' + storyId, JSON.stringify({
+                        targetCol: colName,
+                        timestamp: Date.now()
+                    }));
+                    
+                    const command = _getSkillCommand(storyId, colName);
+                    if (window._dragToastTimer) clearTimeout(window._dragToastTimer);
+                    navigator.clipboard.writeText(command).then(() => {
+                        window.showToast('指令已复制: ' + command, 'success');
+                        window._dragToastTimer = setTimeout(() => {
+                            window.showToast('请在 Agent 终端粘贴执行', 'info');
+                            window._dragToastTimer = null;
+                        }, 1500);
+                    }).catch(() => {
+                        window.showToast('剪贴板写入失败', 'info');
+                    });
+                }
             });
         }
 
