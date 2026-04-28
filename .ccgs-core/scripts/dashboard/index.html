@@ -209,6 +209,18 @@
 
         <!-- SPRINTS VIEW -->
         <div class="view-section" id="sprints-view">
+            <div class="sprint-toolbar">
+                <button class="skill-btn outline-btn" id="toggle-history-btn" style="margin-bottom: 12px;">
+                    📊 <span data-i18n="history_velocity">历史速率</span>
+                </button>
+            </div>
+            
+            <div class="history-drawer" id="history-drawer">
+                <div class="drawer-content" id="history-drawer-content">
+                    <!-- JS will render SVG or Big Metric here -->
+                </div>
+            </div>
+
             <div class="kanban-board" id="kanban-board">
                 <div class="kanban-col">
                     <div class="col-header" style="border-top-color: var(--cyan);">TO DO</div>

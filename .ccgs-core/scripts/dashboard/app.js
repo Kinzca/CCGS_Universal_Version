@@ -550,6 +550,10 @@
                         if(sprintsEmpty) sprintsEmpty.style.display = 'flex';
                     }
                     
+                    if (data.sprint_history && typeof window._renderHistoryDrawer === 'function') {
+                        window._renderHistoryDrawer(data.sprint_history, data.sprint);
+                    }
+                    
                     // Active Bugs Triage
                     const triageRows = document.getElementById('triage-rows');
                     const qualityContent = document.getElementById('quality-content');
@@ -860,3 +864,108 @@
         if(overlay) overlay.addEventListener('click', closeStoryPanel);
         const closeBtn = document.getElementById('sp-close-btn');
         if(closeBtn) closeBtn.addEventListener('click', closeStoryPanel);
+
+        // History Drawer Implementation (Story D-013)
+        window._renderHistoryDrawer = function(historyData, currentSprintData) {
+            const container = document.getElementById('history-drawer-content');
+            if (!container) return;
+            
+            // Fallback: Big Metric for insufficient historical data
+            if (!historyData || historyData.length < 2) {
+                const pct = currentSprintData.total_points > 0 
+                    ? Math.round((currentSprintData.completed_points / currentSprintData.total_points) * 100)
+                    : 0;
+                container.innerHTML = `
+                    <div class="big-metric-card">
+                        <div class="bm-title" data-i18n="bm_completion">当期冲刺完成率</div>
+                        <div class="bm-value">${pct}%</div>
+                        <div class="bm-sub">${currentSprintData.completed_points} / ${currentSprintData.total_points} SP</div>
+                        <div class="bm-sub" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.5;">
+                            需要至少 2 个历史冲刺数据才能生成速率趋势图。
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render SVG Velocity Chart
+            const pad = 40;
+            const w = 600;
+            const h = 240;
+            const maxPts = Math.max(...historyData.map(d => Math.max(d.total_points, d.completed_points, 1))) * 1.2;
+            const barW = Math.min(40, (w - pad * 2) / historyData.length * 0.6);
+            const gap = ((w - pad * 2) - barW * historyData.length) / (historyData.length + 1);
+            
+            let svgStr = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible; font-family: inherit;">`;
+            
+            // Background lines & Y-axis labels
+            [0, 0.5, 1].forEach(tick => {
+                const y = h - pad - tick * (h - pad * 2);
+                svgStr += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="var(--border-color)" stroke-dasharray="4" opacity="0.5"/>`;
+                svgStr += `<text x="${pad-10}" y="${y+4}" fill="var(--text-color)" font-size="12" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
+            });
+            
+            // Bars & X-axis labels
+            historyData.forEach((d, i) => {
+                const x = pad + gap * (i + 1) + barW * i;
+                const totH = (d.total_points / maxPts) * (h - pad * 2);
+                const compH = (d.completed_points / maxPts) * (h - pad * 2);
+                
+                // Background bar (Total)
+                svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" 
+                    x="${x}" y="${h - pad - totH}" width="${barW}" height="${totH}" 
+                    fill="var(--border-color)" rx="4" opacity="0.3"></rect>`;
+                    
+                // Foreground bar (Completed)
+                svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" 
+                    x="${x}" y="${h - pad - compH}" width="${barW}" height="${compH}" 
+                    fill="var(--cyan)" rx="4"></rect>`;
+                    
+                // Label (Sprint Name)
+                svgStr += `<text x="${x + barW/2}" y="${h - pad + 20}" fill="var(--text-color)" font-size="12" text-anchor="middle" opacity="0.8">${d.name}</text>`;
+            });
+            
+            svgStr += `</svg>`;
+            container.innerHTML = svgStr;
+            
+            // Tooltip setup
+            let tooltip = document.getElementById('svg-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'svg-tooltip';
+                document.body.appendChild(tooltip);
+            }
+            
+            const bars = container.querySelectorAll('.svg-bar');
+            bars.forEach(b => {
+                b.addEventListener('mouseenter', () => {
+                    const name = b.getAttribute('data-name');
+                    const comp = b.getAttribute('data-comp');
+                    const tot = b.getAttribute('data-total');
+                    tooltip.innerHTML = `<strong>${name}</strong><br/>已完成: <span style="color:var(--cyan)">${comp}</span> / ${tot} SP`;
+                    tooltip.style.opacity = '1';
+                });
+                b.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.pageX + 15) + 'px';
+                    tooltip.style.top = (e.pageY - 20) + 'px';
+                });
+                b.addEventListener('mouseleave', () => {
+                    tooltip.style.opacity = '0';
+                });
+            });
+        };
+        
+        // Setup toggle button event
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('toggle-history-btn');
+            const drawer = document.getElementById('history-drawer');
+            if (btn && drawer) {
+                if (sessionStorage.getItem('ccgs_history_open') === 'true') {
+                    drawer.classList.add('open');
+                }
+                btn.addEventListener('click', () => {
+                    drawer.classList.toggle('open');
+                    sessionStorage.setItem('ccgs_history_open', drawer.classList.contains('open'));
+                });
+            }
+        });

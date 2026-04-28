@@ -887,3 +887,93 @@ body.light-mode .sp-action-btn:hover { background: rgba(0,0,0,0.08); }
         }
         .toast.success { border-left-color: #10B981; }
         .toast.info { border-left-color: var(--cyan); }
+
+/* --- Story D-013: History Drawer & Velocity Chart --- */
+.sprint-toolbar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.history-drawer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.4s;
+}
+
+.history-drawer.open {
+    max-height: 400px;
+    margin-bottom: 24px;
+}
+
+.drawer-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+body.light-mode .drawer-content {
+    background: var(--card-bg-light);
+    border-color: var(--border-color-light);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+.svg-bar {
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+}
+.svg-bar:hover {
+    opacity: 0.7;
+}
+
+#svg-tooltip {
+    position: absolute;
+    background: var(--bg-color);
+    border: 1px solid var(--cyan);
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+body.light-mode #svg-tooltip {
+    background: var(--bg-color-light);
+    color: var(--text-color-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.big-metric-card {
+    text-align: center;
+    padding: 20px 0;
+}
+.big-metric-card .bm-title {
+    font-size: 1rem;
+    color: var(--text-color-muted);
+    margin-bottom: 8px;
+}
+body.light-mode .big-metric-card .bm-title { color: var(--text-color-muted-light); }
+
+.big-metric-card .bm-value {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--cyan);
+    text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    margin: 10px 0;
+    line-height: 1;
+}
+
+.big-metric-card .bm-sub {
+    font-size: 1rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+body.light-mode .big-metric-card .bm-sub { color: var(--text-color-light); }

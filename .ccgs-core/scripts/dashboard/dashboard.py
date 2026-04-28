@@ -237,6 +237,33 @@ def gather_data():
     else:
         data["sprint"]["progress_percent"] = 0
     data["sprint"]["burn_data"] = []  # 保留字段，向后兼容
+    
+    # 历史冲刺数据解析 (Story D-013)
+    data["sprint_history"] = []
+    for sf in sorted(sprint_files):
+        sprint_name = os.path.basename(sf).replace('.md', '')
+        retro_file = sf.replace('.md', '-retrospective.md')
+        
+        # 尝试从 retrospective 中提取完成情况（简化版正则或默认0）
+        c_pts, t_pts = 0, 0
+        if os.path.exists(retro_file):
+            try:
+                with open(retro_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # 尝试匹配 "| Sprint 1 | 6 | 5 |" 等表格行
+                    import re
+                    match = re.search(r'\|\s*Sprint.*?\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|', content)
+                    if match:
+                        t_pts = int(match.group(1))
+                        c_pts = int(match.group(2))
+            except Exception:
+                pass
+                
+        data["sprint_history"].append({
+            "name": sprint_name.replace('-', ' ').title(),
+            "total_points": t_pts,
+            "completed_points": c_pts
+        })
         
     # 3. Parse Real Bug Data
     bug_files = glob.glob(os.path.join(DATA_DIR, "**", "BUG-*.md"), recursive=True)
