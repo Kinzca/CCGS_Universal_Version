@@ -6,6 +6,7 @@ import re
 import http.server
 import socketserver
 import webbrowser
+import subprocess
 from threading import Timer
 import time
 
@@ -139,7 +140,8 @@ def gather_data():
         "suggested_action": {
             "command": "/help",
             "desc": "Initializing rules..."
-        }
+        },
+        "activity_timeline": []
     }
     
     print("Gathering data...")
@@ -362,6 +364,49 @@ def gather_data():
                     data["test_coverage"]["percent"] = int(match.group(1))
         except:
             pass
+
+    # 8. 活动时间线 — 通过 git log 采集最近 20 条提交记录
+    def collect_activity_timeline():
+        """采集项目根目录的 git 提交历史，超时 5s 并完整容错"""
+        events = []
+        try:
+            result = subprocess.run(
+                ['git', 'log', '--oneline', '--format=%h|%ai|%s', '-20'],
+                capture_output=True, text=True, timeout=5,
+                cwd=PROJECT_ROOT
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    if not line.strip():
+                        continue
+                    parts = line.split('|', 2)
+                    if len(parts) == 3:
+                        sha, date_str, msg = parts
+                        # 智能分类：根据提交信息中的关键词判定事件类型
+                        etype = 'commit'
+                        msg_lower = msg.lower()
+                        if any(k in msg_lower for k in ['gdd', 'design', '设计']):
+                            etype = 'gdd'
+                        elif any(k in msg_lower for k in ['story', 'epic', 'sprint', '任务']):
+                            etype = 'story'
+                        elif any(k in msg_lower for k in ['bug', 'fix', 'hotfix', '修复']):
+                            etype = 'bug'
+                        events.append({
+                            'sha': sha.strip(),
+                            'date': date_str.strip()[:10],
+                            'time': date_str.strip()[11:16],
+                            'msg': msg.strip(),
+                            'type': etype
+                        })
+        except subprocess.TimeoutExpired:
+            print("Warning: git log 超时 (5s)")
+        except FileNotFoundError:
+            print("Warning: git 未安装或不在 PATH 中")
+        except Exception as e:
+            print(f"Warning: 采集 git log 失败: {e}")
+        return events
+
+    data["activity_timeline"] = collect_activity_timeline()
 
     global _last_data_update, _cached_data
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:

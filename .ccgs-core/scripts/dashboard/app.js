@@ -493,6 +493,49 @@
                     document.getElementById('qh-medium').textContent = countMed;
                     document.getElementById('qh-low').textContent = countLow;
 
+                    // Activity Timeline 渲染
+                    const timelineCard = document.getElementById('activity-timeline-card');
+                    const timelineList = document.getElementById('timeline-list');
+                    if (data.activity_timeline && data.activity_timeline.length > 0) {
+                        if(timelineCard) timelineCard.style.display = 'block';
+                        if(timelineList) {
+                            timelineList.innerHTML = '';
+                            data.activity_timeline.forEach(evt => {
+                                const item = document.createElement('div');
+                                item.className = 'timeline-item';
+                                // 点击时间线条目 → 根据类型跳转到对应视图
+                                item.onclick = function() {
+                                    if (evt.type === 'gdd') {
+                                        window.switchView('design-view');
+                                    } else if (evt.type === 'story') {
+                                        window.switchView('sprints-view');
+                                    } else if (evt.type === 'bug') {
+                                        window.switchView('quality-view');
+                                    } else {
+                                        // 普通 commit → 复制 SHA 到剪贴板
+                                        navigator.clipboard.writeText(evt.sha).then(() => {
+                                            window.showToast('SHA ' + evt.sha + ' 已复制', 'success');
+                                        });
+                                    }
+                                };
+                                item.innerHTML = `
+                                    <div class="timeline-dot ${evt.type}"></div>
+                                    <div class="timeline-body">
+                                        <div class="timeline-msg">${evt.msg}</div>
+                                        <div class="timeline-meta">
+                                            <span class="timeline-sha">${evt.sha}</span>
+                                            <span>${evt.date} ${evt.time}</span>
+                                            <span class="timeline-type-tag ${evt.type}">${evt.type}</span>
+                                        </div>
+                                    </div>
+                                `;
+                                timelineList.appendChild(item);
+                            });
+                        }
+                    } else {
+                        if(timelineCard) timelineCard.style.display = 'none';
+                    }
+
                 }).catch(e => {
                     console.log('Data fetching failed.', e);
                     updateConnectionState(false);
