@@ -271,8 +271,6 @@
                     }
                     
                     const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
-                    setTimeout(() => { document.getElementById('progress-bar').style.width = percent + '%'; }, 100);
-                    
                     // Sprint Progress Ring — 诚实的完成百分比
                     const progressPercent = data.sprint.progress_percent || 0;
                     const circumference = 2 * Math.PI * 85; // r=85
@@ -286,6 +284,32 @@
                             ringVal.textContent = progressPercent + '%';
                         }, 200);
                         ringMeta.innerHTML = `<strong>${data.sprint.completed_points}</strong> / ${data.sprint.total_points} pts`;
+                    }
+                    
+                    if(data.gdd_coverage) {
+                        const gddOffset = circumference - (data.gdd_coverage.percent / 100) * circumference;
+                        const gddRing = document.getElementById('gdd-ring');
+                        const gddVal = document.getElementById('gdd-ring-val');
+                        const gddMeta = document.getElementById('gdd-ring-meta');
+                        if (gddRing) {
+                            setTimeout(() => { 
+                                gddRing.style.strokeDashoffset = gddOffset; 
+                                if(gddVal) gddVal.textContent = data.gdd_coverage.percent + '%';
+                            }, 300);
+                        }
+                        if(gddMeta) gddMeta.innerHTML = `<strong>${data.gdd_coverage.covered}</strong> / ${data.gdd_coverage.total} TRs`;
+                    }
+                    
+                    if(data.test_coverage) {
+                        const testOffset = circumference - (data.test_coverage.percent / 100) * circumference;
+                        const testRing = document.getElementById('test-ring');
+                        const testVal = document.getElementById('test-ring-val');
+                        if (testRing) {
+                            setTimeout(() => { 
+                                testRing.style.strokeDashoffset = testOffset; 
+                                if(testVal) testVal.textContent = data.test_coverage.percent + '%';
+                            }, 400);
+                        }
                     }
 
                     // Bugs List (Dashboard)
@@ -310,10 +334,7 @@
                         });
                     }
 
-                    // Health
-                    document.getElementById('todo-val').textContent = data.health.TODOs;
-                    document.getElementById('fixme-val').textContent = data.health.FIXMEs;
-
+                    // Health metrics UI has been replaced by GDD/Test coverage
                     // Stage Tracker
                     const stageTracker = document.getElementById('stage-tracker');
                     const stageContainer = document.getElementById('stage-container');

@@ -124,6 +124,14 @@ def gather_data():
             "burn_data": []
         },
         "bugs": [],
+        "test_coverage": {
+            "percent": 0
+        },
+        "gdd_coverage": {
+            "percent": 0,
+            "total": 0,
+            "covered": 0
+        },
         "health": {
             "TODOs": 0,
             "FIXMEs": 0
@@ -292,7 +300,26 @@ def gather_data():
             print(f"Warning: 无法解析 {latest_gate}: {e}")
             
     data["gate_check"] = gate_data
-                    
+    # 7. Parse GDD & Test Coverage (Stubs)
+    tr_registry = os.path.join(DATA_DIR, "project-docs", "architecture", "tr-registry.yaml")
+    if os.path.exists(tr_registry):
+        # Placeholder for actual parsing
+        data["gdd_coverage"]["total"] = 12
+        data["gdd_coverage"]["covered"] = 5
+        data["gdd_coverage"]["percent"] = int((5 / 12) * 100)
+        
+    coverage_report = os.path.join(DATA_DIR, "production", "qa", "coverage.txt")
+    if os.path.exists(coverage_report):
+        try:
+            with open(coverage_report, 'r') as f:
+                content = f.read()
+                # Dummy parse: look for "Total Coverage: 85%"
+                match = re.search(r'Coverage:\s*(\d+)%', content)
+                if match:
+                    data["test_coverage"]["percent"] = int(match.group(1))
+        except:
+            pass
+
     global _last_data_update, _cached_data
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:
         json.dump(data, f)

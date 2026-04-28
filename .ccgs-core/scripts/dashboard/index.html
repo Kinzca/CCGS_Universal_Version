@@ -82,7 +82,7 @@
         </div>
 
         <!-- DASHBOARD VIEW -->
-        <div class="view-section dashboard-grid active" id="dashboard-view">
+        <div class="view-section active" id="dashboard-view">
             <!-- Stage Tracker -->
             <div class="card stage-tracker" id="stage-tracker" style="display: none;">
                 <h2 data-i18n="stage_title" style="margin-bottom: 1.5rem;">Project Stage</h2>
@@ -90,8 +90,9 @@
                     <!-- Stages populated by JS -->
                 </div>
             </div>
-
-            <div class="card card-chart">
+            
+        <div class="dashboard-grid">
+            <div class="card card-sprint" onclick="window.switchView('sprint-view')" style="cursor: pointer;">
                 <h2 data-i18n="chart_title">Sprint Progress</h2>
                 <div class="chart-container" id="chart">
                     <div class="progress-ring-wrap">
@@ -113,35 +114,57 @@
                     </div>
                 </div>
             </div>
-            <div class="card card-bugs">
+            
+            <div class="card card-bugs" onclick="window.switchView('bugs-view')" style="cursor: pointer;">
                 <h2 data-i18n="bugs_title">Active Bugs</h2>
                 <div class="bug-list" id="bug-list"></div>
             </div>
-            <div class="card card-health">
-                <h2 data-i18n="health_title">Code Debt Indicators</h2>
-                <div class="health-grid">
-                    <div class="health-indicator">
-                        <div class="ring-container">
-                            <div class="ring"></div>
-                            <div class="ring-val" id="todo-val">0</div>
+            
+            <div class="card card-gdd" onclick="window.switchView('design-view')" style="cursor: pointer;">
+                <h2 data-i18n="gdd_coverage_title">GDD Coverage</h2>
+                <div class="chart-container" id="chart-gdd">
+                    <div class="progress-ring-wrap">
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring-svg" viewBox="0 0 200 200">
+                                <defs>
+                                    <linearGradient id="gddGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#10b981" />
+                                        <stop offset="100%" stop-color="#34d399" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="progress-ring-bg" cx="100" cy="100" r="85" />
+                                <circle class="progress-ring-fg" id="gdd-ring" cx="100" cy="100" r="85"
+                                    stroke-dasharray="534" stroke-dashoffset="534" stroke="url(#gddGrad)" />
+                            </svg>
+                            <span class="progress-ring-label" id="gdd-ring-val">0%</span>
                         </div>
-                        <div class="health-details">
-                            <h4 data-i18n="health_todo">Technical Debt (TODOs)</h4>
-                            <p data-i18n="health_todo_desc">Pending architecture or code tasks.</p>
-                        </div>
+                        <div class="progress-ring-meta" id="gdd-ring-meta">0 / 0 TRs</div>
                     </div>
-                    <div class="health-indicator">
-                        <div class="ring-container">
-                            <div class="ring purple"></div>
-                            <div class="ring-val" id="fixme-val">0</div>
-                        </div>
-                        <div class="health-details">
-                            <h4 data-i18n="health_fixme">Critical Issues (FIXMEs)</h4>
-                            <p data-i18n="health_fixme_desc">Code that requires immediate attention.</p>
+                </div>
+            </div>
+            
+            <div class="card card-test" onclick="window.switchView('bugs-view')" style="cursor: pointer;">
+                <h2 data-i18n="test_coverage_title">Test Coverage</h2>
+                <div class="chart-container" id="chart-test">
+                    <div class="progress-ring-wrap">
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring-svg" viewBox="0 0 200 200">
+                                <defs>
+                                    <linearGradient id="testGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#f59e0b" />
+                                        <stop offset="100%" stop-color="#fbbf24" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="progress-ring-bg" cx="100" cy="100" r="85" />
+                                <circle class="progress-ring-fg" id="test-ring" cx="100" cy="100" r="85"
+                                    stroke-dasharray="534" stroke-dashoffset="534" stroke="url(#testGrad)" />
+                            </svg>
+                            <span class="progress-ring-label" id="test-ring-val">0%</span>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- DESIGN VIEW -->
