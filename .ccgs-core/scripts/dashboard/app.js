@@ -1,9 +1,12 @@
         // i18n Dictionary
         const i18n = {
             'en': {
-                'nav_dashboard': 'Dashboard', 'nav_sprints': 'Sprints', 'nav_bugs': 'Active Bugs', 'nav_settings': 'Settings',
+                'nav_dashboard': 'Dashboard', 'nav_design': 'Design', 'nav_sprints': 'Sprints', 'nav_quality': 'Quality', 'nav_settings': 'Settings',
                 'title_workspace': 'Workspace Overview', 'role_td': 'Technical Director',
                 'side_project': 'Project Details', 'side_active': 'Active Sprint', 'side_completed': 'Completed Pts', 'side_total': 'Total Pts',
+                'empty_design_title': 'Design Repository Empty', 'empty_design_desc': 'There are no Game Design Documents (GDD) or Technical Architecture diagrams found in the current workspace.',
+                'empty_sprints_title': 'No Active Sprint', 'empty_sprints_desc': 'There are no active sprints running. Please create a sprint plan to track stories and velocity.',
+                'empty_quality_title': 'Zero Active Bugs', 'empty_quality_desc': 'Excellent work! There are currently no active bug reports in the tracker.',
                 'chart_title': 'Sprint Progress', 'bugs_title': 'Active Bugs', 'health_title': 'Code Debt Indicators',
                 'health_todo': 'Technical Debt (TODOs)', 'health_todo_desc': 'Pending architecture or code tasks.',
                 'health_fixme': 'Critical Issues (FIXMEs)', 'health_fixme_desc': 'Code that requires immediate attention.',
@@ -19,9 +22,12 @@
                 'clean_bugs': '✅ All clear! No active bugs.'
             },
             'zh': {
-                'nav_dashboard': '大盘概览', 'nav_sprints': '敏捷冲刺', 'nav_bugs': '缺陷分诊', 'nav_settings': '系统设置',
+                'nav_dashboard': '大盘概览', 'nav_design': '设计中枢', 'nav_sprints': '敏捷冲刺', 'nav_quality': '质量中心', 'nav_settings': '系统设置',
                 'title_workspace': '工作空间概览', 'role_td': '技术总监',
                 'side_project': '项目详情', 'side_active': '当前冲刺', 'side_completed': '已完成点数', 'side_total': '总点数',
+                'empty_design_title': '设计存储库为空', 'empty_design_desc': '当前工作空间中未找到任何游戏设计文档（GDD）或技术架构蓝图。',
+                'empty_sprints_title': '暂无进行中的冲刺', 'empty_sprints_desc': '当前没有任何活跃的敏捷冲刺。请创建一个冲刺计划以追踪故事点与开发速率。',
+                'empty_quality_title': '完美状态', 'empty_quality_desc': '干得漂亮！当前追踪系统中没有任何待处理的活跃缺陷报告。',
                 'chart_title': '冲刺进度', 'bugs_title': '活跃缺陷', 'health_title': '代码债务指标',
                 'health_todo': '技术债务 (TODOs)', 'health_todo_desc': '待处理的架构或普通代码逻辑。',
                 'health_fixme': '致命问题 (FIXMEs)', 'health_fixme_desc': '可能导致崩溃，需要立刻修复。',
@@ -244,8 +250,12 @@
                     const colTodo = document.getElementById('col-todo');
                     const colInProg = document.getElementById('col-inprogress');
                     const colDone = document.getElementById('col-done');
+                    const kanbanBoard = document.getElementById('kanban-board');
+                    const sprintsEmpty = document.getElementById('sprints-empty');
                     
                     if (data.stories && data.stories.length > 0) {
+                        if(kanbanBoard) kanbanBoard.style.display = 'grid';
+                        if(sprintsEmpty) sprintsEmpty.style.display = 'none';
                         colTodo.innerHTML = ''; colInProg.innerHTML = ''; colDone.innerHTML = '';
                         data.stories.forEach(story => {
                             const card = document.createElement('div');
@@ -270,20 +280,24 @@
                             }
                         });
                     } else {
-                        colTodo.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
-                        colInProg.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
-                        colDone.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:1rem; font-size:0.9rem;" data-i18n="empty_kanban">${i18n[currentLang]['empty_kanban']}</div>`;
+                        if(kanbanBoard) kanbanBoard.style.display = 'none';
+                        if(sprintsEmpty) sprintsEmpty.style.display = 'flex';
                     }
                     
                     // Active Bugs Triage
                     const triageRows = document.getElementById('triage-rows');
+                    const qualityContent = document.getElementById('quality-content');
+                    const qualityEmpty = document.getElementById('quality-empty');
                     let countCrit = 0, countMed = 0, countLow = 0;
                     
                     if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
                         document.getElementById('qh-total').textContent = 0;
-                        triageRows.innerHTML = `<div class="empty-state" style="position:relative; transform:none; left:0; top:0; margin-top:2rem; font-size:1.5rem; color: #10B981;" data-i18n="clean_bugs">${i18n[currentLang]['clean_bugs']}</div>`;
+                        if(qualityContent) qualityContent.style.display = 'none';
+                        if(qualityEmpty) qualityEmpty.style.display = 'flex';
                     } else {
                         document.getElementById('qh-total').textContent = data.bugs.length;
+                        if(qualityContent) qualityContent.style.display = 'contents';
+                        if(qualityEmpty) qualityEmpty.style.display = 'none';
                         triageRows.innerHTML = '';
                         
                         data.bugs.forEach(bug => {
