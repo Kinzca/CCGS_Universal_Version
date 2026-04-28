@@ -180,9 +180,14 @@
         }
         .view-section.active {
             display: grid;
+            align-content: start;
         }
         .view-section.bugs-grid.active {
             display: flex;
+        }
+        #sprints-view.active {
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes fadeIn {
