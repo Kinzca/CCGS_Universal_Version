@@ -615,11 +615,10 @@
                                 });
                             }
                             
-                            const lockContainer = card.querySelector('.kb-lock-icon-container');
                             if (lockContainer) {
                                 lockContainer.addEventListener('click', (e) => {
                                     e.stopPropagation();
-                                    _showDependencyPopover(lockContainer, story.id, incompleteDeps, data);
+                                    _activateSpotlight(card, story.id, incompleteDeps);
                                 });
                             }
 
@@ -634,7 +633,7 @@
                                 const dy = e.clientY - startY;
                                 const dist = Math.sqrt(dx*dx + dy*dy);
                                 // 如果移动距离小于 5 像素且未点到复制按钮，视为点击 (非拖拽)
-                                if (dist < 5 && !e.target.closest('.kb-copy-btn')) {
+                                if (dist < 5 && !e.target.closest('.kb-copy-btn') && !e.target.closest('.kb-lock-icon-container')) {
                                     if (typeof window.showStoryPanel === 'function') {
                                         window.showStoryPanel(story);
                                     }
@@ -1417,77 +1416,105 @@
             }
         }
 
-        function _showDependencyPopover(iconEl, storyId, incompleteDeps, data) {
-            let popover = document.getElementById('dep-popover');
-            if (popover) popover.remove();
-            if (!incompleteDeps || incompleteDeps.length === 0) return;
-
-            popover = document.createElement('div');
-            popover.id = 'dep-popover';
-            popover.className = 'dep-popover';
-            
-            let html = `<div class="dep-popover-header">未完成的依赖 (${incompleteDeps.length})</div>`;
-            
-            incompleteDeps.forEach(dep => {
-                let statusIcon = '⏳';
-                if (['in progress', 'doing', 'review'].includes(dep.status.toLowerCase())) statusIcon = '🔄';
-                html += `
-                    <div class="dep-item">
-                        <span class="dep-status-icon">${statusIcon}</span>
-                        <span><strong>${dep.id}</strong>: ${dep.title}</span>
-                    </div>
-                `;
-            });
-            
-            html += `
-                <button class="dep-copy-btn">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                    复制 /dev-story 指令
-                </button>
-            `;
-            popover.innerHTML = html;
-            document.body.appendChild(popover);
-            
-            const rect = iconEl.getBoundingClientRect();
-            popover.style.top = (rect.bottom + 8) + 'px';
-            popover.style.left = (rect.right - 280) + 'px';
-            
-            const copyBtn = popover.querySelector('.dep-copy-btn');
-            copyBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const firstDepId = incompleteDeps[0].id;
-                let path = firstDepId;
-                if (data && data.stories) {
-                    const firstDepObj = data.stories.find(s => s.id === firstDepId);
-                    if (firstDepObj && firstDepObj.path) {
-                        path = firstDepObj.path;
-                    }
-                }
-                const finalCmd = `/dev-story ${path}`;
-                navigator.clipboard.writeText(finalCmd).then(() => {
-                    window.showToast('📋 ' + finalCmd, 'success');
-                    popover.remove();
+        function _clearSpotlight() {
+            const board = document.getElementById('kanban-board');
+            if (board) {
+                board.classList.remove('spotlight-mode');
+                board.querySelectorAll('.spotlight-active').forEach(el => {
+                    el.classList.remove('spotlight-active', 'is-dep');
                 });
+            }
+            const svgLayer = document.getElementById('dependency-svg-layer');
+            if (svgLayer) svgLayer.innerHTML = '';
+        }
+
+        function _activateSpotlight(currentCard, storyId, incompleteDeps) {
+            _clearSpotlight();
+            const board = document.getElementById('kanban-board');
+            let svgLayer = document.getElementById('dependency-svg-layer');
+            if (!board) return;
+
+            // Ensure svgLayer exists and covers the board
+            if (!svgLayer) {
+                svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgLayer.id = 'dependency-svg-layer';
+                svgLayer.style.position = 'absolute';
+                svgLayer.style.top = '0';
+                svgLayer.style.left = '0';
+                svgLayer.style.width = '100%';
+                svgLayer.style.height = '100%';
+                svgLayer.style.pointerEvents = 'none';
+                svgLayer.style.zIndex = '5';
+                board.style.position = 'relative';
+                board.appendChild(svgLayer);
+            }
+
+            board.classList.add('spotlight-mode');
+            currentCard.classList.add('spotlight-active');
+
+            const boardRect = board.getBoundingClientRect();
+            const currentRect = currentCard.getBoundingClientRect();
+            
+            // X, Y relative to the board
+            const endX = currentRect.left - boardRect.left;
+            const endY = currentRect.top - boardRect.top + (currentRect.height / 2);
+
+            let minTop = currentRect.top;
+            let maxBottom = currentRect.bottom;
+            let depCardToScroll = null;
+
+            incompleteDeps.forEach(dep => {
+                const depCards = Array.from(board.querySelectorAll('.kb-card')).filter(c => {
+                    const idEl = c.querySelector('.kb-id');
+                    return idEl && idEl.innerText === dep.id;
+                });
+
+                if (depCards.length > 0) {
+                    const depCard = depCards[0];
+                    depCard.classList.add('spotlight-active', 'is-dep');
+                    
+                    const depRect = depCard.getBoundingClientRect();
+                    
+                    // Track bounds for scrolling
+                    if (depRect.top < minTop || depRect.bottom > maxBottom) {
+                        depCardToScroll = depCard;
+                    }
+
+                    const startX = depRect.right - boardRect.left;
+                    const startY = depRect.top - boardRect.top + (depRect.height / 2);
+
+                    const controlX1 = startX + 50;
+                    const controlX2 = endX - 50;
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`);
+                    path.setAttribute('class', 'dep-spotlight-line');
+                    
+                    // Add arrowhead marker
+                    path.setAttribute('marker-end', 'url(#spotlight-arrow)');
+                    svgLayer.appendChild(path);
+                }
             });
-            
-            const closePopover = (e) => {
-                if (!popover.contains(e.target) && !iconEl.contains(e.target)) {
-                    popover.remove();
-                    document.removeEventListener('click', closePopover);
-                    document.removeEventListener('keydown', keyClose);
-                }
-            };
-            const keyClose = (e) => {
-                if (e.key === 'Escape') {
-                    popover.remove();
-                    document.removeEventListener('click', closePopover);
-                    document.removeEventListener('keydown', keyClose);
-                }
-            };
-            
+
+            // Ensure marker exists in SVG
+            if (!document.getElementById('spotlight-arrow')) {
+                const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+                defs.innerHTML = `<marker id="spotlight-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--cyan)"/></marker>`;
+                svgLayer.appendChild(defs);
+            }
+
+            // Scroll dependent card into view if needed
+            if (depCardToScroll) {
+                depCardToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // Click anywhere to clear spotlight
             setTimeout(() => {
-                document.addEventListener('click', closePopover);
-                document.addEventListener('keydown', keyClose);
-            }, 10);
+                const clearSpotlightHandler = (e) => {
+                    _clearSpotlight();
+                    document.removeEventListener('click', clearSpotlightHandler);
+                };
+                document.addEventListener('click', clearSpotlightHandler);
+            }, 50);
         }
 
