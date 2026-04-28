@@ -615,6 +615,7 @@
                                 });
                             }
                             
+                            const lockContainer = card.querySelector('.kb-lock-icon-container');
                             if (lockContainer) {
                                 lockContainer.addEventListener('click', (e) => {
                                     e.stopPropagation();
