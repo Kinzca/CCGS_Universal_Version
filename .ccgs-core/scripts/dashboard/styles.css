@@ -480,8 +480,8 @@
             flex: 1; text-align: center; color: var(--text-muted); transition: color 0.3s;
         }
         .stage-icon {
-            width: 32px; height: 32px; border-radius: 50%; background: var(--bg-card);
-            border: 3px solid var(--bg-hover); display: flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%; background: var(--bg-color);
+            border: 3px solid var(--glass-border); display: flex; align-items: center; justify-content: center;
             font-size: 0.9rem; font-weight: bold; transition: all 0.3s; z-index: 2;
         }
         .stage-label {
