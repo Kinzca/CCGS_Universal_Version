@@ -526,32 +526,34 @@
             z-index: 1000; display: flex; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: var(--bg-card); border-radius: 12px; padding: 2rem;
-            width: 90%; max-width: 600px; border: 1px solid var(--glass-border);
+            background: #ffffff; border-radius: 12px; padding: 2rem;
+            width: 90%; max-width: 600px; border: none;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             animation: fadeIn 0.2s ease-out;
         }
+        .modal-content h2 { color: #111827; margin: 0; }
+        .modal-content button { color: #6b7280; }
 
         /* Sub-sections for Option A */
         .gate-section {
             border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid transparent;
         }
         .gate-section-fail {
-            background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.08); border-left-color: #ef4444;
         }
         .gate-section-pass {
-            background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.08); border-left-color: #10b981;
         }
         .gate-section h3 {
             margin-top: 0; margin-bottom: 0.8rem; font-size: 1.05rem;
             display: flex; align-items: center; gap: 8px;
         }
-        .gate-section-fail h3 { color: #fca5a5; }
-        .gate-section-pass h3 { color: #6ee7b7; }
+        .gate-section-fail h3 { color: #dc2626; }
+        .gate-section-pass h3 { color: #059669; }
 
         .gate-item {
-            padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0.4rem 0; border-bottom: 1px solid rgba(0,0,0,0.05);
             display: flex; gap: 8px; align-items: flex-start;
-            color: var(--text-main); font-size: 0.95rem; line-height: 1.4;
+            color: #374151; font-size: 0.95rem; line-height: 1.4;
         }
         .gate-item:last-child { border-bottom: none; padding-bottom: 0; }
