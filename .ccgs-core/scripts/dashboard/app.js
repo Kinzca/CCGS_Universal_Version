@@ -807,6 +807,16 @@
                     colBody.appendChild(card);
                     card.classList.add('kb-pending');
                     
+                    // UX Fix: 即时更新状态颜色，消除格式滞后感
+                    let targetColor = 'var(--cyan)';
+                    if (colName === 'done') targetColor = '#10b981';
+                    else if (colName === 'inprogress') targetColor = 'var(--purple)';
+                    card.style.borderLeft = `4px solid ${targetColor}`;
+                    
+                    // UX Fix: 拖拽进入后立即移除该列的“无 Story”提示
+                    const emptyMsg = colBody.querySelector('.kanban-col-empty-msg');
+                    if (emptyMsg) emptyMsg.remove();
+                    
                     sessionStorage.setItem('kb_pending_' + storyId, JSON.stringify({
                         targetCol: colName,
                         timestamp: Date.now()
