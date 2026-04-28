@@ -522,7 +522,20 @@
         }
         /* kb-pending: 仅用于内部状态追踪，不产生任何视觉差异 */
         .kanban-card.kb-pending {
-            /* 无额外样式 */
+            opacity: 0.6;
+            position: relative;
+        }
+        .kanban-card.kb-pending::after {
+            content: '⏳';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+            animation: kb-pending-spin 1.5s linear infinite;
+        }
+        @keyframes kb-pending-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Active Bugs View specific */
