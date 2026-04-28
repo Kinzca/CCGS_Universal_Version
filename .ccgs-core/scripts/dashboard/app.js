@@ -1410,5 +1410,5 @@
                     }
                 });
             }
+        }
         // No spotlight logic here
-
