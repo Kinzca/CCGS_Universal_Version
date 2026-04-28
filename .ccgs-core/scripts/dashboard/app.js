@@ -871,7 +871,7 @@
             if (!container) return;
             
             // Fallback: Big Metric for insufficient historical data
-            if (!historyData || historyData.length < 2) {
+            if (!historyData || historyData.length < 1) {
                 const pct = currentSprintData.total_points > 0 
                     ? Math.round((currentSprintData.completed_points / currentSprintData.total_points) * 100)
                     : 0;
