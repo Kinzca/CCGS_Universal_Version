@@ -135,12 +135,55 @@ def gather_data():
         "health": {
             "TODOs": 0,
             "FIXMEs": 0
+        },
+        "suggested_action": {
+            "command": "/help",
+            "desc": "Initializing rules..."
         }
     }
     
     print("Gathering data...")
     print("CWD:", CWD)
     print("DATA_DIR:", DATA_DIR)
+
+    def get_suggested_action():
+        def _exists(rel_path):
+            return os.path.exists(os.path.join(DATA_DIR, rel_path))
+            
+        if not _exists("design/game-concept.md"):
+            return {"command": "/brainstorm", "desc": "项目尚未启动，建议执行 /brainstorm 创建游戏概念"}
+            
+        if not _exists("design/gdd/systems-index.md"):
+            return {"command": "/map-systems", "desc": "概念已就绪，建议执行 /map-systems 拆解子系统"}
+            
+        gdd_files = glob.glob(os.path.join(DATA_DIR, "design", "gdd", "*.md"))
+        if len(gdd_files) <= 1:
+            return {"command": "/design-system [next]", "desc": "建议执行 /design-system 设计 MVP 子系统"}
+            
+        if not _exists("production/qa/reports/gdd-review-report.md"):
+            return {"command": "/review-all-gdds", "desc": "建议执行 /review-all-gdds 进行跨文档一致性审查"}
+            
+        adr_files = glob.glob(os.path.join(DATA_DIR, "project-docs", "architecture", "adr-*.md"))
+        if len(adr_files) == 0:
+            return {"command": "/create-architecture", "desc": "建议执行 /create-architecture 制定架构蓝图"}
+            
+        epic_files = glob.glob(os.path.join(DATA_DIR, "production", "epics", "*", "EPIC.md"))
+        if len(epic_files) == 0:
+            return {"command": "/create-epics", "desc": "建议执行 /create-epics 生成史诗任务"}
+            
+        story_files = glob.glob(os.path.join(DATA_DIR, "production", "epics", "**", "story-*.md"), recursive=True)
+        if len(story_files) == 0:
+            return {"command": "/create-stories [epic]", "desc": "建议执行 /create-stories 拆分开发票"}
+            
+        sprint_files = glob.glob(os.path.join(DATA_DIR, "production", "sprints", "sprint-*.md"))
+        sprint_files = [f for f in sprint_files if not any(x in f for x in ['-retrospective', '-review'])]
+        if len(sprint_files) == 0:
+            return {"command": "/sprint-plan new", "desc": "建议执行 /sprint-plan 规划冲刺"}
+            
+        return {"command": "/gate-check [next-phase]", "desc": "当前阶段交付物推进中，可随时验证闸门"}
+        
+    data["suggested_action"] = get_suggested_action()
+
     
     # 1. Parse Sprint Name — 排除 retrospective/review 等衍生文档
     SPRINT_SUFFIX_BLACKLIST = ['-retrospective', '-review', '-retro', '-summary']

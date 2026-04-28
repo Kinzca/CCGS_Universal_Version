@@ -279,6 +279,17 @@
                         if (gateLight) gateLight.style.display = 'none';
                     }
                     
+                    // Smart Action Banner
+                    if (data.suggested_action) {
+                        const banner = document.getElementById('smart-banner');
+                        if(banner) {
+                            banner.style.display = 'flex';
+                            document.getElementById('smart-action-desc').textContent = data.suggested_action.desc;
+                            document.getElementById('smart-action-cmd').textContent = data.suggested_action.command;
+                            window._currentSmartCommand = data.suggested_action.command;
+                        }
+                    }
+                    
                     const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
                     // Sprint Progress Ring — 诚实的完成百分比
                     const progressPercent = data.sprint.progress_percent || 0;
@@ -491,3 +502,58 @@
         // Initial fetch and start polling
         fetchData();
         setInterval(fetchData, 30000);
+
+        // Toast Feedback System
+        window.showToast = function(message, type = "info") {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' 
+                ? `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+                : `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            toast.innerHTML = `${icon}<span>${message}</span>`;
+            container.appendChild(toast);
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+            
+            // Remove after delay
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // Smart Action Copy Interaction
+        window.copySmartAction = function() {
+            if (!window._currentSmartCommand) return;
+            navigator.clipboard.writeText(window._currentSmartCommand).then(() => {
+                // Micro-animation U2: 📋 -> ✅
+                const icon = document.getElementById('smart-copy-icon');
+                const btn = document.getElementById('smart-copy-btn');
+                
+                // Switch to checkmark
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                icon.style.stroke = "#10B981";
+                btn.style.borderColor = "#10B981";
+                
+                // Toast Feedback U1: 2 stages
+                window.showToast("指令已复制", "success");
+                setTimeout(() => {
+                    window.showToast("请在终端粘贴执行", "info");
+                }, 1500);
+                
+                // Revert after 2 seconds
+                setTimeout(() => {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>';
+                    icon.style.stroke = "currentColor";
+                    btn.style.borderColor = "var(--glass-border)";
+                }, 2000);
+            }).catch(err => {
+                window.showToast("复制失败", "info");
+            });
+        };

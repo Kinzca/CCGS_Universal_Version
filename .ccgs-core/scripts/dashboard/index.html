@@ -83,6 +83,21 @@
 
         <!-- DASHBOARD VIEW -->
         <div class="view-section active" id="dashboard-view">
+            <!-- Smart Action Banner -->
+            <div class="smart-banner" id="smart-banner" style="display: none;">
+                <div class="smart-banner-content">
+                    <svg width="24" height="24" fill="none" stroke="var(--purple)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <div class="smart-text">
+                        <span class="smart-label">AI RECOMMENDED ACTION</span>
+                        <span class="smart-desc" id="smart-action-desc">Loading suggestions...</span>
+                    </div>
+                </div>
+                <button class="smart-btn" id="smart-copy-btn" onclick="copySmartAction()">
+                    <span id="smart-action-cmd" class="smart-cmd">/help</span>
+                    <svg id="smart-copy-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                </button>
+            </div>
+            
             <!-- Stage Tracker -->
             <div class="card stage-tracker" id="stage-tracker" style="display: none;">
                 <h2 data-i18n="stage_title" style="margin-bottom: 1.5rem;">Project Stage</h2>
@@ -311,6 +326,9 @@
             </div>
         </div>
     </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
 
     <script src="app.js"></script>
 </body>
