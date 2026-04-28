@@ -465,21 +465,32 @@
                             // 检查是否处于待确认伪状态（上一次拖拽产生的）
                             const pendingKey = 'kb_pending_' + story.id;
                             const pendingInfo = sessionStorage.getItem(pendingKey);
+                            let effectiveCol = null; // 如果有 pending 则覆盖真实分列
+                            
                             if (pendingInfo) {
                                 const pending = JSON.parse(pendingInfo);
-                                // 如果真实状态已匹配目标列 → 固化（清除伪状态）
                                 const realCol = _getColumnForStatus(story.status);
+                                const age = Date.now() - pending.timestamp;
+                                const PENDING_TTL = 5 * 60 * 1000; // 5 分钟超时
+                                
                                 if (realCol === pending.targetCol) {
+                                    // 真实状态已匹配目标列 → 固化（清除伪状态）
+                                    sessionStorage.removeItem(pendingKey);
+                                } else if (age > PENDING_TTL) {
+                                    // 超时 → 弹回原列，清除伪状态
                                     sessionStorage.removeItem(pendingKey);
                                 } else {
-                                    // 真实状态未匹配 → 弹回原列，清除伪状态
-                                    sessionStorage.removeItem(pendingKey);
+                                    // 仍在等待确认 → 保持在目标列 + 保持 pending 样式
+                                    effectiveCol = pending.targetCol;
+                                    card.classList.add('kb-pending');
                                 }
                             }
                             
-                            if (['done', 'completed', 'closed', 'verified'].includes(status)) {
+                            // 按 effectiveCol（若有 pending）或真实 status 分列
+                            const targetCol = effectiveCol || _getColumnForStatus(status);
+                            if (targetCol === 'done') {
                                 colDone.appendChild(card);
-                            } else if (['in progress', 'doing', 'wip', 'review'].includes(status)) {
+                            } else if (targetCol === 'inprogress') {
                                 colInProg.appendChild(card);
                             } else {
                                 colTodo.appendChild(card);
