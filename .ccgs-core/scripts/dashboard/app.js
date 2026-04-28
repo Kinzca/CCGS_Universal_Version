@@ -418,7 +418,7 @@
                         if(sprintsEmpty) sprintsEmpty.style.display = 'none';
                         colTodo.innerHTML = ''; colInProg.innerHTML = ''; colDone.innerHTML = '';
                         
-                        // --- Story D-034: Global Topological Sorting ---
+                        // --- Story D-034: Global Topological Sorting (with ID Priority) ---
                         const inDegree = new Map();
                         const graph = new Map();
                         data.stories.forEach(s => {
@@ -435,24 +435,31 @@
                         });
                         let queue = [];
                         inDegree.forEach((deg, id) => { if (deg === 0) queue.push(id); });
-                        const topoRanks = new Map();
-                        let currentRank = 0;
+                        
+                        const topoOrder = new Map();
+                        let orderIndex = 0;
+                        
                         while(queue.length > 0) {
-                            let nextQueue = [];
-                            for (const id of queue) {
-                                topoRanks.set(id, currentRank);
-                                graph.get(id).forEach(dependentId => {
-                                    let d = inDegree.get(dependentId) - 1;
-                                    inDegree.set(dependentId, d);
-                                    if (d === 0) nextQueue.push(dependentId);
-                                });
-                            }
-                            queue = nextQueue;
-                            currentRank++;
+                            // Sort queue by ID ascending to act as a priority queue
+                            queue.sort((a, b) => {
+                                const idA = parseInt((a.match(/(\d+)$/) || [0, 0])[1], 10);
+                                const idB = parseInt((b.match(/(\d+)$/) || [0, 0])[1], 10);
+                                return idA - idB;
+                            });
+                            
+                            const id = queue.shift();
+                            topoOrder.set(id, orderIndex++);
+                            
+                            graph.get(id).forEach(dependentId => {
+                                let d = inDegree.get(dependentId) - 1;
+                                inDegree.set(dependentId, d);
+                                if (d === 0) queue.push(dependentId);
+                            });
                         }
+                        
                         // 兜底：处理环依赖
                         data.stories.forEach(s => {
-                            if (!topoRanks.has(s.id)) topoRanks.set(s.id, 9999);
+                            if (!topoOrder.has(s.id)) topoOrder.set(s.id, 9999);
                         });
 
                         // 排序: Epic -> 拓扑序 -> ID 数字升序
@@ -461,9 +468,9 @@
                             const epicB = b.epic || 'zzzz';
                             if (epicA !== epicB) return epicA.localeCompare(epicB);
                             
-                            const rankA = topoRanks.get(a.id);
-                            const rankB = topoRanks.get(b.id);
-                            if (rankA !== rankB) return rankA - rankB;
+                            const orderA = topoOrder.get(a.id);
+                            const orderB = topoOrder.get(b.id);
+                            if (orderA !== orderB) return orderA - orderB;
                             
                             const idA = parseInt((a.id.match(/(\d+)$/) || [0, 0])[1], 10);
                             const idB = parseInt((b.id.match(/(\d+)$/) || [0, 0])[1], 10);
