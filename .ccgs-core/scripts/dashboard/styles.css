@@ -208,7 +208,13 @@
             box-shadow: 0 4px 24px -1px var(--shadow-color);
             display: flex;
             flex-direction: column;
-            transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+            transition: background 0.4s, border-color 0.4s, box-shadow 0.4s, transform 0.4s;
+        }
+        
+        .card[onclick]:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px -4px var(--shadow-color);
+            border-color: var(--cyan);
         }
 
         .card h2 {
@@ -469,10 +475,6 @@
         .stage-container {
             display: flex; justify-content: space-between; align-items: center; position: relative; padding: 0 1rem;
         }
-        .stage-container::before {
-            content: ''; position: absolute; top: 15px; left: 2rem; right: 2rem; height: 3px;
-            background: var(--bg-hover); z-index: 0;
-        }
         .stage-step {
             position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
             flex: 1; text-align: center; color: var(--text-muted); transition: color 0.3s;
@@ -492,9 +494,12 @@
         .stage-step.completed .stage-label {
             color: #10B981;
         }
-        .stage-step.completed::after {
+        .stage-step::after {
             content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 3px;
-            background: #10B981; z-index: -1;
+            background: var(--glass-border); z-index: -1;
+        }
+        .stage-step.completed::after {
+            background: #10B981;
         }
         .stage-step:last-child::after { display: none; }
         .stage-step.current .stage-icon {

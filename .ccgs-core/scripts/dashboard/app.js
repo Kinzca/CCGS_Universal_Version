@@ -136,6 +136,15 @@
             });
         });
 
+        // Global function for dashboard cards to switch views
+        window.switchView = function(viewId) {
+            const navItems = document.querySelectorAll('.nav-item');
+            const targetNav = Array.from(navItems).find(nav => nav.dataset.target === viewId);
+            if (targetNav) {
+                targetNav.click();
+            }
+        };
+
         // Theme Toggle Logic
         const themeToggle = document.getElementById('theme-toggle');
         const themeBtns = themeToggle.querySelectorAll('span');
