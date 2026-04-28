@@ -328,9 +328,6 @@
             padding: 1.2rem;
             cursor: grab;
             transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            min-height: 140px;
         }
         .kanban-card:hover {
             transform: translateY(-2px);
@@ -347,7 +344,6 @@
         }
         .kb-title { 
             font-size: 0.95rem; font-weight: 500; margin-bottom: 12px; line-height: 1.4; color: var(--text-main); 
-            flex-grow: 1;
             min-height: 2.8em;
             display: -webkit-box;
             -webkit-line-clamp: 2;
