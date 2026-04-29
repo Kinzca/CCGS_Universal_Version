@@ -423,20 +423,19 @@
                 <h2 data-i18n="gate_modal_title">Gate Check Details</h2>
                 <button onclick="document.getElementById('gate-modal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
             </div>
-            <div id="gate-modal-body" style="max-height: 60vh; overflow-y: auto;">
-                <!-- Filled by JS -->
+            <div id="gate-modal-body" style="max-height: 60vh; overflow-y: aut    <!-- Unified Side Panel (D-017) -->
+    <div id="unified-panel-overlay" class="panel-overlay"></div>
+    <div id="unified-side-panel" class="side-panel">
+        <div class="panel-header" style="flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                <div id="sp-breadcrumbs" style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 4px; flex-wrap: wrap;"></div>
+                <button id="unified-sp-close-btn" title="Close Panel">&times;</button>
             </div>
+            <h2 id="unified-sp-title" style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--text-main); line-height: 1.4; padding-right: 1rem;">Details</h2>
         </div>
-    </div>
-
-    <!-- GDD Side Panel -->
-    <div id="gdd-panel-overlay" class="panel-overlay" style="display: none;"></div>
-    <div id="gdd-side-panel" class="side-panel">
-        <div class="panel-header">
-            <h2 id="gdd-sp-title">GDD Details</h2>
-            <button id="gdd-sp-close-btn" title="Close Panel">&times;</button>
-        </div>
-        <div class="panel-body">
+        
+        <!-- GDD Content Template -->
+        <div id="sp-content-gdd" class="panel-body" style="display: none;">
             <div class="sp-meta-grid">
                 <div class="sp-meta-item" style="grid-column: span 2;">
                     <span class="sp-meta-label">File</span>
@@ -451,31 +450,18 @@
                     <span class="sp-meta-value" id="gdd-sp-chapters-count">-</span>
                 </div>
             </div>
-            
             <div class="sp-actions">
                 <h3 class="sp-section-title">Chapter Overview</h3>
-                <div id="gdd-sp-chapter-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);">
-                    <!-- Chapters injected by JS -->
-                </div>
+                <div id="gdd-sp-chapter-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);"></div>
             </div>
-            
             <div class="sp-actions" style="margin-top: 1.5rem;">
                 <h3 class="sp-section-title">📎 关联 ADR</h3>
-                <div id="gdd-sp-adr-list" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);">
-                    <!-- ADRs injected by JS (D-016) -->
-                </div>
+                <div id="gdd-sp-adr-list" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);"></div>
             </div>
         </div>
-    </div>
 
-    <!-- ADR Side Panel -->
-    <div id="adr-panel-overlay" class="panel-overlay" style="display: none;"></div>
-    <div id="adr-side-panel" class="side-panel">
-        <div class="panel-header">
-            <h2 id="adr-sp-title">ADR Details</h2>
-            <button id="adr-sp-close-btn" title="Close Panel">&times;</button>
-        </div>
-        <div class="panel-body">
+        <!-- ADR Content Template -->
+        <div id="sp-content-adr" class="panel-body" style="display: none;">
             <div class="sp-meta-grid">
                 <div class="sp-meta-item" style="grid-column: span 2;">
                     <span class="sp-meta-label">File</span>
@@ -486,27 +472,14 @@
                     <span class="sp-meta-value" id="adr-sp-status">-</span>
                 </div>
             </div>
-            
             <div class="sp-actions">
                 <h3 class="sp-section-title">Associated GDDs</h3>
-                <div id="adr-sp-gdd-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);">
-                    <!-- GDDs injected by JS -->
-                </div>
+                <div id="adr-sp-gdd-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);"></div>
             </div>
         </div>
-    </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
-
-    <!-- Story Side Panel -->
-    <div id="story-panel-overlay" class="panel-overlay" style="display: none;"></div>
-    <div id="story-side-panel" class="side-panel">
-        <div class="panel-header">
-            <h2 id="sp-title">Story Details</h2>
-            <button id="sp-close-btn" title="Close Panel">&times;</button>
-        </div>
-        <div class="panel-body">
+        <!-- Story Content Template -->
+        <div id="sp-content-story" class="panel-body" style="display: none;">
             <div class="sp-meta-grid">
                 <div class="sp-meta-item">
                     <span class="sp-meta-label">ID</span>
@@ -521,7 +494,6 @@
                     <span class="sp-meta-value" id="sp-status">-</span>
                 </div>
             </div>
-            
             <div class="sp-actions">
                 <h3 class="sp-section-title">Workflow Skills</h3>
                 <button class="sp-action-btn" id="sp-btn-ready">
@@ -548,6 +520,9 @@
                 </button>
             </div>
         </div>
+    <!-- Toast Container -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
     <!-- Scripts -->
     <script src="app.js?v=21"></script>
 </body>

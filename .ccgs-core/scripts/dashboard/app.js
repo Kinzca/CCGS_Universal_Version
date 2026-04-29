@@ -1116,68 +1116,10 @@
             });
         };
 
-        // Story Side Panel Logic
+        // Story Side Panel Logic (Delegated to Unified Panel)
         window.showStoryPanel = function(story) {
-            document.getElementById('sp-id').innerText = story.id;
-            document.getElementById('sp-epic').innerText = story.epic;
-            document.getElementById('sp-status').innerText = story.status.toUpperCase();
-            document.getElementById('sp-title').innerText = story.title;
-            
-            // Set up copy handlers
-            const btnReady = document.getElementById('sp-btn-ready');
-            const btnDev = document.getElementById('sp-btn-dev');
-            const btnReview = document.getElementById('sp-btn-review');
-            const btnBranch = document.getElementById('sp-btn-branch');
-            const btnPath = document.getElementById('sp-btn-path');
-            
-            // Helper for copy
-            const setupCopyBtn = (btn, text, toastPrefix) => {
-                // Clear old listeners by cloning
-                const newBtn = btn.cloneNode(true);
-                btn.parentNode.replaceChild(newBtn, btn);
-                newBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(text).then(() => {
-                        window.showToast(toastPrefix + text, 'success');
-                        closeStoryPanel();
-                    }).catch(() => {
-                        window.showToast('剪贴板写入失败', 'info');
-                    });
-                });
-                return newBtn;
-            };
-            
-            const path = `CCGS-Data/production/epics/**/${story.id}.md`;
-            setupCopyBtn(btnReady, `/story-readiness ${path}`, '🔍 ');
-            setupCopyBtn(btnDev, `/dev-story ${path}`, '▶️ ');
-            setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
-            setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
-            setupCopyBtn(btnPath, path, '🔗 ');
-            
-            // Show panel
-            document.getElementById('story-panel-overlay').style.display = 'block';
-            document.getElementById('story-side-panel').style.display = 'flex';
-            // Trigger reflow
-            void document.getElementById('story-panel-overlay').offsetWidth;
-            document.getElementById('story-panel-overlay').classList.add('show');
-            document.getElementById('story-side-panel').classList.add('show');
+            window.openUnifiedPanel('story', story, `Story: ${story.title}`);
         };
-
-        const closeStoryPanel = function() {
-            const overlay = document.getElementById('story-panel-overlay');
-            const panel = document.getElementById('story-side-panel');
-            overlay.classList.remove('show');
-            panel.classList.remove('show');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                panel.style.display = 'none';
-            }, 300); // Wait for transition
-        };
-
-        // Attach close events
-        const overlay = document.getElementById('story-panel-overlay');
-        if(overlay) overlay.addEventListener('click', closeStoryPanel);
-        const closeBtn = document.getElementById('sp-close-btn');
-        if(closeBtn) closeBtn.addEventListener('click', closeStoryPanel);
 
         // History Drawer Implementation (Story D-013)
         window._renderHistoryDrawer = function(historyData, currentSprintData) {
@@ -1502,35 +1444,125 @@
         }
         // No spotlight logic here
 
-// --- GDD Side Panel ---
-window.openGddModal = function(index) {
-    if (!window.currentGddFiles || !window.currentGddFiles[index]) return;
+// =========================================================
+// Unified Side Panel Logic (D-017)
+// =========================================================
+
+window._panelHistory = [];
+window._panelJustOpened = false;
+let _mouseDownClientX = 0;
+let _mouseDownClientY = 0;
+
+document.addEventListener('mousedown', (e) => {
+    _mouseDownClientX = e.clientX;
+    _mouseDownClientY = e.clientY;
+});
+
+document.addEventListener('click', (e) => {
+    if (window._panelJustOpened) return;
+    const panel = document.getElementById('unified-side-panel');
+    if (!panel || !panel.classList.contains('show')) return;
+    if (panel.contains(e.target)) return;
     
-    const gdd = window.currentGddFiles[index];
+    const dx = Math.abs(e.clientX - _mouseDownClientX);
+    const dy = Math.abs(e.clientY - _mouseDownClientY);
+    if (dx > 5 || dy > 5) return; // Was a drag
     
-    document.getElementById('gdd-sp-title').textContent = gdd.title;
+    window.closeUnifiedPanel();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        window.closeUnifiedPanel();
+    }
+});
+
+window.closeUnifiedPanel = function() {
+    window._panelHistory = [];
+    const panel = document.getElementById('unified-side-panel');
+    const main = document.querySelector('.main-content');
+    
+    if (panel) panel.classList.remove('show');
+    if (main) main.classList.remove('with-panel');
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('unified-sp-close-btn');
+    if (closeBtn) closeBtn.addEventListener('click', window.closeUnifiedPanel);
+});
+
+window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
+    window._panelJustOpened = true;
+    setTimeout(() => { window._panelJustOpened = false; }, 0);
+
+    if (pushHistory) {
+        window._panelHistory.push({ type, payload, title });
+    }
+    
+    // Render breadcrumbs
+    const bcEl = document.getElementById('sp-breadcrumbs');
+    if (bcEl) {
+        bcEl.innerHTML = window._panelHistory.map((h, i) => {
+            const isLast = i === window._panelHistory.length - 1;
+            if (isLast) return `<span style="color: var(--cyan);">${h.title}</span>`;
+            return `<span style="cursor: pointer; color: var(--text-muted); transition: color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'" onclick="window.goBackPanel(${i})">${h.title}</span><span style="margin: 0 4px; color: var(--text-muted);">›</span>`;
+        }).join('');
+    }
+    
+    document.getElementById('unified-sp-title').textContent = title;
+    
+    // Hide all templates
+    const templates = ['gdd', 'adr', 'story'];
+    templates.forEach(t => {
+        const el = document.getElementById(`sp-content-${t}`);
+        if (el) el.style.display = 'none';
+    });
+    
+    if (type === 'gdd') {
+        document.getElementById('sp-content-gdd').style.display = 'block';
+        _renderGddContent(payload);
+    } else if (type === 'adr') {
+        document.getElementById('sp-content-adr').style.display = 'block';
+        _renderAdrContent(payload);
+    } else if (type === 'story') {
+        document.getElementById('sp-content-story').style.display = 'block';
+        _renderStoryContent(payload);
+    }
+    
+    const panel = document.getElementById('unified-side-panel');
+    const main = document.querySelector('.main-content');
+    if (panel) panel.classList.add('show');
+    if (main) main.classList.add('with-panel');
+};
+
+window.goBackPanel = function(index) {
+    if (index < 0 || index >= window._panelHistory.length - 1) return;
+    const target = window._panelHistory[index];
+    window._panelHistory = window._panelHistory.slice(0, index + 1); // Truncate history
+    window.openUnifiedPanel(target.type, target.payload, target.title, false);
+};
+
+// Content renderers
+function _renderGddContent(gdd) {
     document.getElementById('gdd-sp-filename').textContent = gdd.filename;
     document.getElementById('gdd-sp-progress').textContent = gdd.percent + '%';
     document.getElementById('gdd-sp-chapters-count').textContent = gdd.completed_chapters + ' / ' + gdd.total_chapters;
     
     const chapterList = document.getElementById('gdd-sp-chapter-list');
     if (gdd.chapters && gdd.chapters.length > 0) {
-        chapterList.innerHTML = gdd.chapters.map(c => {
-            return `<div style="display: flex; align-items: center; gap: 8px;">
+        chapterList.innerHTML = gdd.chapters.map(c => `
+            <div style="display: flex; align-items: center; gap: 8px;">
                 <svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>${c}</span>
-            </div>`;
-        }).join('');
+            </div>`).join('');
     } else {
         chapterList.innerHTML = '<span style="color: var(--text-muted);">No chapters extracted.</span>';
     }
     
-    // D-016: 渲染关联 ADR 列表（反向追溯）
     const adrListEl = document.getElementById('gdd-sp-adr-list');
     if (adrListEl) {
         if (gdd.associated_adrs && gdd.associated_adrs.length > 0) {
             adrListEl.innerHTML = gdd.associated_adrs.map(adr => {
-                // 查找该 ADR 在 currentAdrFiles 中的索引以支持点击跳转
                 const adrIndex = (window.currentAdrFiles || []).findIndex(a => a.filename === adr.filename);
                 const statusColor = adr.status === 'Accepted' ? '#10b981' : adr.status === 'Deprecated' ? '#ef4444' : '#fbbf24';
                 const clickAttr = adrIndex >= 0 ? `onclick="window.openAdrPanel(${adrIndex})" style="cursor: pointer;"` : '';
@@ -1543,38 +1575,10 @@ window.openGddModal = function(index) {
             adrListEl.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">此 GDD 暂无关联 ADR</span>';
         }
     }
-    
-    // Show panel
-    document.getElementById('gdd-panel-overlay').style.display = 'block';
-    document.getElementById('gdd-side-panel').style.display = 'flex';
-    // Trigger reflow
-    void document.getElementById('gdd-panel-overlay').offsetWidth;
-    document.getElementById('gdd-panel-overlay').classList.add('show');
-    document.getElementById('gdd-side-panel').classList.add('show');
-};
+}
 
-// Close logic for GDD panel
-document.getElementById('gdd-sp-close-btn').addEventListener('click', () => {
-    document.getElementById('gdd-panel-overlay').classList.remove('show');
-    document.getElementById('gdd-side-panel').classList.remove('show');
-    setTimeout(() => {
-        document.getElementById('gdd-panel-overlay').style.display = 'none';
-        document.getElementById('gdd-side-panel').style.display = 'none';
-    }, 300);
-});
-document.getElementById('gdd-panel-overlay').addEventListener('click', () => {
-    document.getElementById('gdd-sp-close-btn').click();
-});
-
-// --- ADR Side Panel ---
-window.openAdrPanel = function(index) {
-    if (!window.currentAdrFiles || !window.currentAdrFiles[index]) return;
-    
-    const adr = window.currentAdrFiles[index];
-    
-    document.getElementById('adr-sp-title').textContent = adr.title;
+function _renderAdrContent(adr) {
     document.getElementById('adr-sp-filename').textContent = adr.filename;
-    
     const statusEl = document.getElementById('adr-sp-status');
     statusEl.textContent = adr.status;
     if (adr.status === 'Accepted') statusEl.style.color = '#10b981';
@@ -1585,7 +1589,6 @@ window.openAdrPanel = function(index) {
     const gddList = document.getElementById('adr-sp-gdd-list');
     if (adr.associated_gdds && adr.associated_gdds.length > 0) {
         gddList.innerHTML = adr.associated_gdds.map(g => {
-            // D-016: 查找该 GDD 在 currentGddFiles 中的索引以支持点击跳转
             const gddIndex = (window.currentGddFiles || []).findIndex(f => f.filename === g);
             const clickAttr = gddIndex >= 0 ? `onclick="window.openGddModal(${gddIndex})" style="cursor: pointer;"` : '';
             return `<div ${clickAttr} class="sp-link-item" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; transition: background 0.15s;">
@@ -1596,28 +1599,52 @@ window.openAdrPanel = function(index) {
     } else {
         gddList.innerHTML = '<span style="color: var(--text-muted);">None</span>';
     }
+}
+
+function _renderStoryContent(story) {
+    document.getElementById('sp-id').innerText = story.id;
+    document.getElementById('sp-epic').innerText = story.epic;
+    document.getElementById('sp-status').innerText = story.status.toUpperCase();
     
-    // Show panel
-    document.getElementById('adr-panel-overlay').style.display = 'block';
-    document.getElementById('adr-side-panel').style.display = 'flex';
-    // Trigger reflow
-    void document.getElementById('adr-panel-overlay').offsetWidth;
-    document.getElementById('adr-panel-overlay').classList.add('show');
-    document.getElementById('adr-side-panel').classList.add('show');
+    const btnReady = document.getElementById('sp-btn-ready');
+    const btnDev = document.getElementById('sp-btn-dev');
+    const btnReview = document.getElementById('sp-btn-review');
+    const btnBranch = document.getElementById('sp-btn-branch');
+    const btnPath = document.getElementById('sp-btn-path');
+    
+    const setupCopyBtn = (btn, text, toastPrefix) => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(text).then(() => {
+                window.showToast(toastPrefix + text, 'success');
+                window.closeUnifiedPanel();
+            }).catch(() => {
+                window.showToast('剪贴板写入失败', 'info');
+            });
+        });
+    };
+    
+    const path = `CCGS-Data/production/epics/**/${story.id}.md`;
+    setupCopyBtn(btnReady, `/story-readiness ${path}`, '🔍 ');
+    setupCopyBtn(btnDev, `/dev-story ${path}`, '▶️ ');
+    setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
+    setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
+    setupCopyBtn(btnPath, path, '🔗 ');
+}
+
+// Re-route legacy entry points
+window.openGddModal = function(index) {
+    if (!window.currentGddFiles || !window.currentGddFiles[index]) return;
+    const gdd = window.currentGddFiles[index];
+    window.openUnifiedPanel('gdd', gdd, `GDD: ${gdd.title}`);
 };
 
-// Close logic for ADR panel
-document.getElementById('adr-sp-close-btn').addEventListener('click', () => {
-    document.getElementById('adr-panel-overlay').classList.remove('show');
-    document.getElementById('adr-side-panel').classList.remove('show');
-    setTimeout(() => {
-        document.getElementById('adr-panel-overlay').style.display = 'none';
-        document.getElementById('adr-side-panel').style.display = 'none';
-    }, 300);
-});
-document.getElementById('adr-panel-overlay').addEventListener('click', () => {
-    document.getElementById('adr-sp-close-btn').click();
-});
+window.openAdrPanel = function(index) {
+    if (!window.currentAdrFiles || !window.currentAdrFiles[index]) return;
+    const adr = window.currentAdrFiles[index];
+    window.openUnifiedPanel('adr', adr, `ADR: ${adr.title}`);
+};
 
 // --- Design Hub Sub-tabs ---
 document.getElementById('btn-gdd-view').addEventListener('click', (e) => {
