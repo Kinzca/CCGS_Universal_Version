@@ -337,7 +337,7 @@
                         const storyCount = sw.affected_stories ? sw.affected_stories.length : 0;
                         const bannerText = document.getElementById('shockwave-banner-text');
                         if (bannerText) {
-                            bannerText.textContent = \`⚠️ 检测到 \${sw.source_gdd} 已修改 · 影响 \${adrCount} 个 ADR · \${storyCount} 个 Story\`;
+                            bannerText.textContent = `⚠️ 检测到 ${sw.source_gdd} 已修改 · 影响 ${adrCount} 个 ADR · ${storyCount} 个 Story`;
                         }
                         if (shockwaveBanner) shockwaveBanner.style.display = 'flex';
                     } else {
@@ -1997,7 +1997,7 @@ window.showShockwavePanel = function(e) {
     adrsContainer.innerHTML = '';
     if (sw.affected_adrs && sw.affected_adrs.length > 0) {
         sw.affected_adrs.forEach(adr => {
-            adrsContainer.innerHTML += \`<div style="background: var(--bg-hover); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">\${adr}</div>\`;
+            adrsContainer.innerHTML += `<div style="background: var(--bg-hover); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">${adr}</div>`;
         });
     } else {
         adrsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">None</span>';
@@ -2007,7 +2007,7 @@ window.showShockwavePanel = function(e) {
     storiesContainer.innerHTML = '';
     if (sw.affected_stories && sw.affected_stories.length > 0) {
         sw.affected_stories.forEach(story => {
-            storiesContainer.innerHTML += \`<div style="background: var(--bg-hover); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">\${story}</div>\`;
+            storiesContainer.innerHTML += `<div style="background: var(--bg-hover); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">${story}</div>`;
         });
     } else {
         storiesContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">None</span>';
@@ -2015,11 +2015,11 @@ window.showShockwavePanel = function(e) {
     
     const propagateBtn = document.getElementById('sw-btn-propagate');
     const propagateText = document.getElementById('sw-propagate-text');
-    if (propagateText) propagateText.textContent = \`/propagate-design-change \${sw.source_gdd}\`;
+    if (propagateText) propagateText.textContent = `/propagate-design-change ${sw.source_gdd}`;
     
     if (propagateBtn) {
         propagateBtn.onclick = function() {
-            navigator.clipboard.writeText(\`/propagate-design-change \${sw.source_gdd}\`).then(() => {
+            navigator.clipboard.writeText(`/propagate-design-change ${sw.source_gdd}`).then(() => {
                 window.showToast('📋 Copied!', 'success');
             });
         };
