@@ -323,16 +323,17 @@
                         const designGrid = document.getElementById('design-grid');
                         const emptyDesign = document.getElementById('empty-design');
                         if (data.gdd_coverage.files && data.gdd_coverage.files.length > 0) {
+                            window.currentGddFiles = data.gdd_coverage.files; // Store for modal
                             if (emptyDesign) emptyDesign.style.display = 'none';
                             if (designGrid) {
                                 designGrid.style.display = 'grid';
-                                designGrid.innerHTML = data.gdd_coverage.files.map(f => {
+                                designGrid.innerHTML = data.gdd_coverage.files.map((f, i) => {
                                     const chaptersHtml = f.chapters && f.chapters.length > 0 
                                         ? `<div class="gdd-chapters">${f.chapters.map(c => `<div class="gdd-chapter-item"><svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> <span>${c}</span></div>`).join('')}</div>`
                                         : '';
                                         
                                     return `
-                                        <div class="gdd-card">
+                                        <div class="gdd-card" onclick="window.openGddModal(${i})" style="cursor: pointer;">
                                             <div class="gdd-header">
                                                 <div>
                                                     <h3 class="gdd-title">${f.title}</h3>
@@ -343,7 +344,7 @@
                                                 <div class="gdd-progress-bar" style="width: ${f.percent}%"></div>
                                             </div>
                                             <div class="gdd-stats">
-                                                <span>${f.chapters.length} / 4 Chapters</span>
+                                                <span>${f.completed_chapters} / ${f.total_chapters} Chapters Completed</span>
                                                 <span style="color: var(--cyan); font-weight: bold;">${f.percent}%</span>
                                             </div>
                                             ${chaptersHtml}
@@ -1446,3 +1447,43 @@
             }
         }
         // No spotlight logic here
+
+// --- GDD Modal ---
+window.openGddModal = function(index) {
+    if (!window.currentGddFiles || !window.currentGddFiles[index]) return;
+    
+    const gdd = window.currentGddFiles[index];
+    const modal = document.getElementById('gdd-modal');
+    const title = document.getElementById('gdd-modal-title');
+    const filename = document.getElementById('gdd-modal-filename');
+    const body = document.getElementById('gdd-modal-body');
+    
+    if (title) title.textContent = gdd.title;
+    if (filename) filename.textContent = gdd.filename;
+    
+    if (body) {
+        // Very basic markdown formatting for better readability
+        let content = gdd.content || "No content found.";
+        
+        // Escape HTML tags to prevent XSS and layout breaking
+        content = content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        // Highlight headers
+        content = content.replace(/^(###\s.*)$/gm, '<strong style="color: var(--cyan); font-size: 1.1rem; display: block; margin-top: 1rem;">$1</strong>');
+        content = content.replace(/^(##\s.*)$/gm, '<strong style="color: var(--purple); font-size: 1.3rem; display: block; margin-top: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">$1</strong>');
+        content = content.replace(/^(#\s.*)$/gm, '<strong style="color: var(--text-main); font-size: 1.6rem; display: block; margin-top: 2rem;">$1</strong>');
+        
+        // Bold text
+        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Lists
+        content = content.replace(/^(\s*-\s.*)$/gm, '<span style="color: var(--text-main);">$1</span>');
+        
+        // Blockquotes
+        content = content.replace(/^(>.*)$/gm, '<span style="color: var(--text-muted); border-left: 3px solid var(--cyan); padding-left: 10px; display: block; margin: 5px 0; background: var(--bg-hover);">$1</span>');
+        
+        body.innerHTML = content;
+    }
+    
+    if (modal) modal.style.display = 'flex';
+};

@@ -436,27 +436,49 @@ def gather_data():
 
     if os.path.exists(gdd_dir):
         for filename in os.listdir(gdd_dir):
-            if filename.endswith(".md"):
+            if filename.endswith(".md") and filename[0].isdigit():
                 file_path = os.path.join(gdd_dir, filename)
                 title = filename.replace(".md", "")
                 chapters = []
+                raw_content = ""
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
-                        for line in f:
-                            if line.startswith("# "):
-                                title = line[2:].strip()
-                            elif line.startswith("## "):
-                                chapters.append(line[3:].strip())
+                        lines = f.readlines()
+                        raw_content = "".join(lines)
+                        
+                        current_chapter = None
+                        chapter_has_content = False
+                        
+                        for line in lines:
+                            stripped = line.strip()
+                            if stripped.startswith("# "):
+                                title = stripped[2:]
+                            elif stripped.startswith("## "):
+                                if current_chapter is not None:
+                                    chapters.append({"name": current_chapter, "has_content": chapter_has_content})
+                                current_chapter = stripped[3:]
+                                chapter_has_content = False
+                            elif current_chapter is not None and stripped and not stripped.startswith("#"):
+                                chapter_has_content = True
+                                
+                        if current_chapter is not None:
+                            chapters.append({"name": current_chapter, "has_content": chapter_has_content})
+                            
                 except Exception as e:
                     print(f"Warning: Failed to read {filename}: {e}")
                 
-                # Assume standard 4 chapters for 100% completion
-                percent = min(100, int((len(chapters) / 4) * 100))
+                total_chaps = len(chapters)
+                completed_chaps = sum(1 for c in chapters if c["has_content"])
+                percent = int((completed_chaps / total_chaps) * 100) if total_chaps > 0 else 0
+                
                 gdd_files.append({
                     "filename": filename,
                     "title": title,
-                    "chapters": chapters,
-                    "percent": percent
+                    "chapters": [c["name"] for c in chapters],
+                    "total_chapters": total_chaps,
+                    "completed_chapters": completed_chaps,
+                    "percent": percent,
+                    "content": raw_content
                 })
                 total_gdds += 1
                 if percent == 100:
