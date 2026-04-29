@@ -2454,8 +2454,8 @@ window._renderStoryMatrix = function(forcedEpic) {
 
             const currentViewId = getCurrentViewId();
 
-            // J/K
-            if (key === 'j' || key === 'k') {
+            // J/K/H/L Navigation (2D Grid for Kanban, 1D for Lists)
+            if (['j', 'k', 'h', 'l', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
                 if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view' && currentViewId !== 'design-view') return;
                 
                 focusedElements = getItems();
@@ -2464,8 +2464,54 @@ window._renderStoryMatrix = function(forcedEpic) {
                 if (focusedIndex === -1) {
                     focusedIndex = 0;
                 } else {
-                    if (key === 'j') focusedIndex = Math.min(focusedIndex + 1, focusedElements.length - 1);
-                    if (key === 'k') focusedIndex = Math.max(focusedIndex - 1, 0);
+                    const currentEl = focusedElements[focusedIndex];
+                    const currentCol = currentEl.closest('.kanban-col, .adr-column');
+                    
+                    const isUp = key === 'k' || key === 'arrowup';
+                    const isDown = key === 'j' || key === 'arrowdown';
+                    const isLeft = key === 'h' || key === 'arrowleft';
+                    const isRight = key === 'l' || key === 'arrowright';
+
+                    if (!currentCol) {
+                        // 1D list (e.g. Quality view)
+                        if (isDown) focusedIndex = Math.min(focusedIndex + 1, focusedElements.length - 1);
+                        if (isUp) focusedIndex = Math.max(focusedIndex - 1, 0);
+                        // Left/Right do nothing in 1D list
+                    } else {
+                        // 2D Kanban Navigation
+                        const allCols = Array.from(currentCol.parentElement.querySelectorAll('.kanban-col, .adr-column'));
+                        const colIndex = allCols.indexOf(currentCol);
+                        const colCards = Array.from(currentCol.querySelectorAll('.kanban-card:not([style*="display: none"])'));
+                        const cardIndex = colCards.indexOf(currentEl);
+
+                        let nextCard = currentEl;
+
+                        if (isDown) {
+                            if (cardIndex < colCards.length - 1) nextCard = colCards[cardIndex + 1];
+                        } else if (isUp) {
+                            if (cardIndex > 0) nextCard = colCards[cardIndex - 1];
+                        } else if (isLeft || isRight) {
+                            let targetColIndex = colIndex;
+                            let found = false;
+                            while (!found) {
+                                targetColIndex += isLeft ? -1 : 1;
+                                if (targetColIndex < 0 || targetColIndex >= allCols.length) break;
+                                
+                                const targetCol = allCols[targetColIndex];
+                                const targetCards = Array.from(targetCol.querySelectorAll('.kanban-card:not([style*="display: none"])'));
+                                if (targetCards.length > 0) {
+                                    // Try to preserve vertical position index, clamp to available cards
+                                    nextCard = targetCards[Math.min(cardIndex, targetCards.length - 1)];
+                                    found = true;
+                                }
+                            }
+                        }
+                        
+                        const newGlobalIndex = focusedElements.indexOf(nextCard);
+                        if (newGlobalIndex !== -1) {
+                            focusedIndex = newGlobalIndex;
+                        }
+                    }
                 }
                 updateFocusUI();
                 e.preventDefault();
