@@ -1487,3 +1487,45 @@ body.light-mode #search-results li .path,
 body.light-mode #search-results li .snippet {
     color: var(--text-muted-light);
 }
+
+.search-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+.search-icon {
+    color: var(--text-muted);
+}
+#search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.1rem;
+    outline: none;
+    width: 100%;
+}
+#search-input::placeholder {
+    color: var(--text-muted);
+}
+#search-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    right: 16px;
+}
+.shortcut-hint {
+    background: var(--bg-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
