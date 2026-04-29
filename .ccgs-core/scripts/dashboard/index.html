@@ -379,18 +379,34 @@
         </div>
     </div>
 
-    <!-- GDD Reading Modal -->
-    <div id="gdd-modal" class="modal" style="display: none; z-index: 1000;">
-        <div class="modal-content" style="max-width: 800px; width: 90%; height: 85vh; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
-                <div>
-                    <h2 id="gdd-modal-title" style="margin: 0; color: var(--cyan);">GDD Title</h2>
-                    <div id="gdd-modal-filename" style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace; margin-top: 4px;">filename.md</div>
+    <!-- GDD Side Panel -->
+    <div id="gdd-panel-overlay" class="panel-overlay" style="display: none;"></div>
+    <div id="gdd-side-panel" class="side-panel">
+        <div class="panel-header">
+            <h2 id="gdd-sp-title">GDD Details</h2>
+            <button id="gdd-sp-close-btn" title="Close Panel">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="sp-meta-grid">
+                <div class="sp-meta-item" style="grid-column: span 2;">
+                    <span class="sp-meta-label">File</span>
+                    <span class="sp-meta-value" id="gdd-sp-filename" style="font-family: monospace;">-</span>
                 </div>
-                <button onclick="document.getElementById('gdd-modal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 2rem; cursor: pointer; padding: 0 10px;">&times;</button>
+                <div class="sp-meta-item">
+                    <span class="sp-meta-label">Progress</span>
+                    <span class="sp-meta-value" id="gdd-sp-progress" style="color: var(--cyan); font-weight: bold;">-</span>
+                </div>
+                <div class="sp-meta-item">
+                    <span class="sp-meta-label">Chapters</span>
+                    <span class="sp-meta-value" id="gdd-sp-chapters-count">-</span>
+                </div>
             </div>
-            <div id="gdd-modal-body" style="flex: 1; overflow-y: auto; padding-right: 10px; font-size: 0.95rem; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; font-family: monospace;">
-                <!-- Filled by JS -->
+            
+            <div class="sp-actions">
+                <h3 class="sp-section-title">Chapter Overview</h3>
+                <div id="gdd-sp-chapter-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);">
+                    <!-- Chapters injected by JS -->
+                </div>
             </div>
         </div>
     </div>
@@ -448,6 +464,6 @@
             </div>
         </div>
     <!-- Scripts -->
-    <script src="app.js?v=19"></script>
+    <script src="app.js?v=20"></script>
 </body>
 </html>

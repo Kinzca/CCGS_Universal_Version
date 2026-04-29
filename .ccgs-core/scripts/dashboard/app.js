@@ -1448,42 +1448,47 @@
         }
         // No spotlight logic here
 
-// --- GDD Modal ---
+// --- GDD Side Panel ---
 window.openGddModal = function(index) {
     if (!window.currentGddFiles || !window.currentGddFiles[index]) return;
     
     const gdd = window.currentGddFiles[index];
-    const modal = document.getElementById('gdd-modal');
-    const title = document.getElementById('gdd-modal-title');
-    const filename = document.getElementById('gdd-modal-filename');
-    const body = document.getElementById('gdd-modal-body');
     
-    if (title) title.textContent = gdd.title;
-    if (filename) filename.textContent = gdd.filename;
+    document.getElementById('gdd-sp-title').textContent = gdd.title;
+    document.getElementById('gdd-sp-filename').textContent = gdd.filename;
+    document.getElementById('gdd-sp-progress').textContent = gdd.percent + '%';
+    document.getElementById('gdd-sp-chapters-count').textContent = gdd.completed_chapters + ' / ' + gdd.total_chapters;
     
-    if (body) {
-        // Very basic markdown formatting for better readability
-        let content = gdd.content || "No content found.";
-        
-        // Escape HTML tags to prevent XSS and layout breaking
-        content = content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        
-        // Highlight headers
-        content = content.replace(/^(###\s.*)$/gm, '<strong style="color: var(--cyan); font-size: 1.1rem; display: block; margin-top: 1rem;">$1</strong>');
-        content = content.replace(/^(##\s.*)$/gm, '<strong style="color: var(--purple); font-size: 1.3rem; display: block; margin-top: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">$1</strong>');
-        content = content.replace(/^(#\s.*)$/gm, '<strong style="color: var(--text-main); font-size: 1.6rem; display: block; margin-top: 2rem;">$1</strong>');
-        
-        // Bold text
-        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Lists
-        content = content.replace(/^(\s*-\s.*)$/gm, '<span style="color: var(--text-main);">$1</span>');
-        
-        // Blockquotes
-        content = content.replace(/^(>.*)$/gm, '<span style="color: var(--text-muted); border-left: 3px solid var(--cyan); padding-left: 10px; display: block; margin: 5px 0; background: var(--bg-hover);">$1</span>');
-        
-        body.innerHTML = content;
+    const chapterList = document.getElementById('gdd-sp-chapter-list');
+    if (gdd.chapters && gdd.chapters.length > 0) {
+        chapterList.innerHTML = gdd.chapters.map(c => {
+            return `<div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>${c}</span>
+            </div>`;
+        }).join('');
+    } else {
+        chapterList.innerHTML = '<span style="color: var(--text-muted);">No chapters extracted.</span>';
     }
     
-    if (modal) modal.style.display = 'flex';
+    // Show panel
+    document.getElementById('gdd-panel-overlay').style.display = 'block';
+    document.getElementById('gdd-side-panel').style.display = 'flex';
+    // Trigger reflow
+    void document.getElementById('gdd-panel-overlay').offsetWidth;
+    document.getElementById('gdd-panel-overlay').classList.add('show');
+    document.getElementById('gdd-side-panel').classList.add('show');
 };
+
+// Close logic for GDD panel
+document.getElementById('gdd-sp-close-btn').addEventListener('click', () => {
+    document.getElementById('gdd-panel-overlay').classList.remove('show');
+    document.getElementById('gdd-side-panel').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('gdd-panel-overlay').style.display = 'none';
+        document.getElementById('gdd-side-panel').style.display = 'none';
+    }, 300);
+});
+document.getElementById('gdd-panel-overlay').addEventListener('click', () => {
+    document.getElementById('gdd-sp-close-btn').click();
+});

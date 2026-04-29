@@ -440,11 +440,9 @@ def gather_data():
                 file_path = os.path.join(gdd_dir, filename)
                 title = filename.replace(".md", "")
                 chapters = []
-                raw_content = ""
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         lines = f.readlines()
-                        raw_content = "".join(lines)
                         
                         current_chapter = None
                         chapter_has_content = False
@@ -477,8 +475,7 @@ def gather_data():
                     "chapters": [c["name"] for c in chapters],
                     "total_chapters": total_chaps,
                     "completed_chapters": completed_chaps,
-                    "percent": percent,
-                    "content": raw_content
+                    "percent": percent
                 })
                 total_gdds += 1
                 if percent == 100:
