@@ -337,19 +337,19 @@
                         
                         <div style="flex-grow: 1;">
                             <div class="health-stats-row">
-                                <div class="health-stat-box" style="border-top-color: var(--cyan)" onclick="window._filterBugs('All')" style="cursor: pointer;">
+                                <div class="health-stat-box" style="border-top-color: var(--cyan); cursor: pointer;" onclick="window._filterBugs('All')">
                                     <span class="stat-label" data-i18n="qh_total">Total Bugs</span>
                                     <span class="stat-num cyan-text" id="qh-total">0</span>
                                 </div>
-                                <div class="health-stat-box" style="border-top-color: #ef4444" onclick="window._filterBugs('Critical')" style="cursor: pointer;">
+                                <div class="health-stat-box" style="border-top-color: #ef4444; cursor: pointer;" onclick="window._filterBugs('Critical')">
                                     <span class="stat-label" data-i18n="qh_crit">Critical</span>
                                     <span class="stat-num red-text" id="qh-critical">0</span>
                                 </div>
-                                <div class="health-stat-box" style="border-top-color: #eab308" onclick="window._filterBugs('Medium')" style="cursor: pointer;">
+                                <div class="health-stat-box" style="border-top-color: #eab308; cursor: pointer;" onclick="window._filterBugs('Medium')">
                                     <span class="stat-label" data-i18n="qh_med">Medium</span>
                                     <span class="stat-num yellow-text" id="qh-medium">0</span>
                                 </div>
-                                <div class="health-stat-box" style="border-top-color: var(--purple)" onclick="window._filterBugs('Low')" style="cursor: pointer;">
+                                <div class="health-stat-box" style="border-top-color: var(--purple); cursor: pointer;" onclick="window._filterBugs('Low')">
                                     <span class="stat-label" data-i18n="qh_low">Low</span>
                                     <span class="stat-num purple-text" id="qh-low">0</span>
                                 </div>
@@ -371,12 +371,24 @@
                         <!-- Rows populated by JS -->
                     </div>
                 </div>
-            </div>
-            
-            <div class="empty-tab" id="quality-empty" style="display: none; grid-column: 1 / -1; margin: auto;">
+
+            <div class="empty-tab" id="quality-empty" style="display: none; grid-column: 1 / -1; margin: auto; padding: 3rem 0;">
                 <svg width="64" height="64" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <h2 data-i18n="empty_quality_title">Zero Active Bugs</h2>
                 <p data-i18n="empty_quality_desc">🎉 目前没有已知缺陷，最近一次质量报告通过。</p>
+            </div>
+
+            <div class="card story-matrix-container" style="margin-top: 2rem;">
+                <div class="triage-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin-bottom: 0;" data-i18n="story_matrix_title">STORY ACCEPTANCE MATRIX</h2>
+                    <select id="matrix-epic-filter" style="background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--glass-border); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;" onchange="window._renderStoryMatrix()">
+                        <option value="All" data-i18n="all_epics">All Epics</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                <div id="story-matrix-grid" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Matrix rows populated by JS -->
+                </div>
             </div>
         </div>
 

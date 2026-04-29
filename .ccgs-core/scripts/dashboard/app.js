@@ -817,6 +817,7 @@
                     }
                     
                     // Active Bugs Triage
+                    window._allStories = data.stories || [];
                     window._allBugs = data.bugs || [];
                     const qualityContent = document.getElementById('quality-content');
                     const qualityEmpty = document.getElementById('quality-empty');
@@ -830,6 +831,7 @@
                         if(qualityEmpty) qualityEmpty.style.display = 'none';
                         window._renderBugsTriage();
                     }
+                    window._renderStoryMatrix();
 
                     // Activity Timeline 渲染
                     const timelineCard = document.getElementById('activity-timeline-card');
@@ -1738,6 +1740,7 @@ function _generateBugPieChart(crit, med, low) {
     svg += createSlice(crit, '#ef4444', 'Critical', filter === 'All' || filter === 'Critical');
     svg += createSlice(med, '#eab308', 'Medium', filter === 'All' || filter === 'Medium');
     svg += createSlice(low, 'var(--purple)', 'Low', filter === 'All' || filter === 'Low');
+    svg += `<text x="50" y="50" font-family="sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">${total}</text>`;
     svg += '</svg>';
     return svg;
 }
@@ -1775,3 +1778,88 @@ document.getElementById('btn-adr-view').addEventListener('click', (e) => {
     document.getElementById('gdd-container').style.display = 'none';
     document.getElementById('adr-container').style.display = 'block';
 });
+
+window._currentMatrixEpic = 'All';
+
+window._renderStoryMatrix = function(forcedEpic) {
+    if (forcedEpic !== undefined) {
+        window._currentMatrixEpic = forcedEpic;
+    } else {
+        const selectEl = document.getElementById('matrix-epic-filter');
+        if (selectEl) {
+            window._currentMatrixEpic = selectEl.value;
+        }
+    }
+
+    const grid = document.getElementById('story-matrix-grid');
+    const selectEl = document.getElementById('matrix-epic-filter');
+    if (!grid || !window._allStories) return;
+
+    const stories = window._allStories;
+    
+    // Update Epic dropdown
+    if (selectEl && selectEl.options.length <= 1) {
+        const epics = new Set();
+        stories.forEach(s => {
+            if (s.epic) epics.add(s.epic);
+        });
+        const epicsArr = Array.from(epics).sort();
+        epicsArr.forEach(epic => {
+            const opt = document.createElement('option');
+            opt.value = epic;
+            opt.textContent = epic;
+            selectEl.appendChild(opt);
+        });
+        selectEl.value = window._currentMatrixEpic;
+    }
+
+    // Filter stories
+    const filteredStories = stories.filter(s => {
+        if (window._currentMatrixEpic === 'All') return true;
+        return s.epic === window._currentMatrixEpic;
+    });
+
+    grid.innerHTML = '';
+    
+    if (filteredStories.length === 0) {
+        grid.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;" data-i18n="matrix_no_stories">No stories found.</div>';
+        return;
+    }
+
+    filteredStories.forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'matrix-story-row';
+        row.style.background = 'var(--bg-hover)';
+        row.style.border = '1px solid var(--glass-border)';
+        row.style.borderRadius = '6px';
+        row.style.padding = '1rem';
+        row.style.marginBottom = '0.5rem';
+
+        let headerHtml = `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <div style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">
+                <span style="color: var(--cyan); margin-right: 0.5rem;">${s.id}</span>
+                ${s.title}
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px;">
+                ${s.epic || 'Unknown Epic'}
+            </div>
+        </div>`;
+
+        let acHtml = '<div style="display: flex; flex-direction: column; gap: 0.3rem;">';
+        if (s.ac_list && s.ac_list.length > 0) {
+            s.ac_list.forEach(ac => {
+                const icon = ac.done ? '<span style="color: #10B981; margin-right: 0.5rem;">✅</span>' : '<span style="color: #ef4444; margin-right: 0.5rem;">❌</span>';
+                const textColor = ac.done ? 'var(--text-main)' : 'var(--text-muted)';
+                acHtml += `<div style="font-size: 0.85rem; color: ${textColor}; display: flex; align-items: flex-start;">
+                    ${icon}<span style="flex: 1;">${ac.text}</span>
+                </div>`;
+            });
+        } else {
+            acHtml += '<div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">No acceptance criteria found.</div>';
+        }
+        acHtml += '</div>';
+
+        row.innerHTML = headerHtml + acHtml;
+        grid.appendChild(row);
+    });
+};

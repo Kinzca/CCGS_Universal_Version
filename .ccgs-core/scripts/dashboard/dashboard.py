@@ -262,7 +262,25 @@ def gather_data():
         # Append story data for Kanban board
         deps_val = fm.get('dependencies', [])
         deps = deps_val if isinstance(deps_val, list) else []
-        
+        # Extract Acceptance Criteria metrics
+        ac_list = []
+        try:
+            with open(sf, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Find Acceptance Criteria section
+                import re
+                ac_match = re.search(r'##\s*Acceptance Criteria\s*(.*?)(?:\n##\s*[A-Za-z]|$)', content, re.DOTALL | re.IGNORECASE)
+                if ac_match:
+                    ac_text = ac_match.group(1)
+                    for line in ac_text.split('\n'):
+                        line = line.strip()
+                        if line.startswith('- [ ]') or line.startswith('* [ ]'):
+                            ac_list.append({"text": line[5:].strip(), "done": False})
+                        elif line.startswith('- [x]') or line.startswith('* [x]') or line.startswith('- [X]') or line.startswith('* [X]'):
+                            ac_list.append({"text": line[5:].strip(), "done": True})
+        except Exception:
+            pass
+
         data["stories"].append({
             "id": os.path.basename(sf).replace('.md', ''),
             "title": fm.get('title', 'Untitled Story'),
@@ -271,7 +289,10 @@ def gather_data():
             "status": status,
             "epic": epic_label,
             "dependencies": deps,
-            "path": sf
+            "path": sf,
+            "ac_list": ac_list,
+            "ac_total": len(ac_list),
+            "ac_done": sum(1 for ac in ac_list if ac["done"])
         })
         
         total_pts += pts
@@ -322,7 +343,28 @@ def gather_data():
         if 'triage' in bf.lower(): continue # skip bug-triage
         name = os.path.basename(bf).replace('.md', '')
         fm = extract_markdown_fields(bf)
-        title = fm.get('title', 'Untitled Bug Report')
+        title = fm.get('title')
+        # If title is just the ID or empty, try to find a better title in the file
+        if not title or title.strip() == name:
+            better_title = None
+            try:
+                with open(bf, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if line.startswith('**Title**:') or line.startswith('**Title**:'):
+                            better_title = line.split(':', 1)[1].strip()
+                            break
+                        elif line.startswith('# ') and not better_title:
+                            # Use H1 as fallback if no **Title**: found yet
+                            h1_text = line.strip()[2:].strip()
+                            if h1_text.lower() not in ['bug report', 'bug']:
+                                better_title = h1_text
+            except Exception:
+                pass
+            if better_title:
+                title = better_title
+            
+        if not title:
+            title = 'Untitled Bug Report'
         priority = fm.get('priority', 'Medium').capitalize()
         status = fm.get('status', 'Open')
         normalized_bug_status = normalize_status(status)
