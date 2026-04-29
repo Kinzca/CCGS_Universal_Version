@@ -2350,11 +2350,17 @@ window._renderStoryMatrix = function(forcedEpic) {
             updateFocusUI();
         };
 
+        function getCurrentViewId() {
+            const activeNav = document.querySelector('.nav-item.active');
+            return activeNav ? activeNav.dataset.target : null;
+        }
+
         function getItems() {
-            if (!window.currentViewId) return [];
-            if (window.currentViewId === 'sprints-view') {
+            const currentViewId = getCurrentViewId();
+            if (!currentViewId) return [];
+            if (currentViewId === 'sprints-view') {
                 return Array.from(document.querySelectorAll('.kanban-card:not([style*="display: none"])'));
-            } else if (window.currentViewId === 'quality-view') {
+            } else if (currentViewId === 'quality-view') {
                 return Array.from(document.querySelectorAll('.triage-row:not([style*="display: none"])'));
             }
             return [];
@@ -2437,18 +2443,15 @@ window._renderStoryMatrix = function(forcedEpic) {
                 const views = ['dashboard-view', 'design-view', 'sprints-view', 'quality-view'];
                 const idx = parseInt(e.key) - 1;
                 window.switchView(views[idx]);
-                // Update nav state
-                const navIds = ['btn-dashboard', 'btn-design', 'btn-sprints', 'btn-quality'];
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                const targetNav = document.getElementById(navIds[idx]);
-                if (targetNav) targetNav.classList.add('active');
                 e.preventDefault();
                 return;
             }
 
+            const currentViewId = getCurrentViewId();
+
             // J/K
             if (e.key === 'j' || e.key === 'k') {
-                if (window.currentViewId !== 'sprints-view' && window.currentViewId !== 'quality-view') return;
+                if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view') return;
                 
                 focusedElements = getItems();
                 if (focusedElements.length === 0) return;
@@ -2466,7 +2469,7 @@ window._renderStoryMatrix = function(forcedEpic) {
 
             // Enter, D, R
             if (e.key === 'Enter' || e.key === 'd' || e.key === 'r') {
-                if (window.currentViewId !== 'sprints-view' && window.currentViewId !== 'quality-view') return;
+                if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view') return;
 
                 let target = null;
                 if (focusedIndex >= 0 && focusedIndex < focusedElements.length) {
@@ -2481,7 +2484,7 @@ window._renderStoryMatrix = function(forcedEpic) {
                     return;
                 }
 
-                if (window.currentViewId === 'sprints-view') {
+                if (currentViewId === 'sprints-view') {
                     const storyId = target.dataset.storyId;
                     if (e.key === 'Enter') {
                         const copyBtn = target.querySelector('.kb-copy-btn');
@@ -2500,7 +2503,7 @@ window._renderStoryMatrix = function(forcedEpic) {
                             window._dismissSmartFocus(storyId);
                         });
                     }
-                } else if (window.currentViewId === 'quality-view') {
+                } else if (currentViewId === 'quality-view') {
                     if (e.key === 'Enter') {
                         target.click();
                     } else if (e.key === 'd' || e.key === 'r') {
