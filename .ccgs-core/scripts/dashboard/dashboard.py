@@ -669,6 +669,7 @@ def gather_data():
             if current_head != _shockwave_cache['last_head']:
                 _shockwave_cache['mtimes'] = {}
                 _shockwave_cache['last_head'] = current_head
+                print(f"[Shockwave] HEAD changed to {current_head[:8]}, cleared mtime cache")
                 
             gdd_dir = os.path.join(DATA_DIR, "design", "gdd")
             if not os.path.exists(gdd_dir):
@@ -684,6 +685,9 @@ def gather_data():
                 if _shockwave_cache['mtimes'].get(filename) != mtime:
                     _shockwave_cache['mtimes'][filename] = mtime
                     changed_gdds.append((filename, gdd))
+            
+            if changed_gdds:
+                print(f"[Shockwave] changed_gdds: {[f for f,_ in changed_gdds]}")
                     
             for filename, filepath in changed_gdds:
                 diff_res = subprocess.run(
@@ -693,7 +697,10 @@ def gather_data():
                 
                 _shockwave_cache['active'] = [sw for sw in _shockwave_cache['active'] if sw['source_gdd'] != filename]
                 
-                if diff_res.stdout.strip():
+                has_diff = bool(diff_res.stdout.strip())
+                print(f"[Shockwave] {filename}: has_diff={has_diff}, diff_len={len(diff_res.stdout)}")
+                
+                if has_diff:
                     affected_adrs = []
                     affected_stories = []
                     gdd_base = filename.replace('.md', '')
@@ -774,6 +781,67 @@ def gather_data():
     _cached_data = json.dumps(data)
     _last_data_update = time.time()
 
+def search_markdown_files(query, max_results=20):
+    if not query:
+        return []
+        
+    query_lower = query.lower()
+    results = []
+    
+    # 优先搜索的文件目录
+    search_dirs = [
+        os.path.join(DATA_DIR, "design"),
+        os.path.join(DATA_DIR, "production"),
+        os.path.join(DATA_DIR, "project-docs")
+    ]
+    
+    for sdir in search_dirs:
+        if not os.path.exists(sdir):
+            continue
+        for root, _, files in os.walk(sdir):
+            for file in files:
+                if not file.endswith('.md'):
+                    continue
+                    
+                filepath = os.path.join(root, file)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        
+                    # Title match
+                    title_match = query_lower in file.lower()
+                    content_idx = content.lower().find(query_lower)
+                    
+                    if title_match or content_idx != -1:
+                        snippet = ""
+                        if content_idx != -1:
+                            start = max(0, content_idx - 30)
+                            end = min(len(content), content_idx + len(query) + 30)
+                            snippet = content[start:end].replace('\n', ' ').strip()
+                            if start > 0: snippet = "..." + snippet
+                            if end < len(content): snippet = snippet + "..."
+                            
+                        # Highlighting wrapper
+                        # Front-end will do better highlighting, but we provide base text
+                        
+                        rel_path = os.path.relpath(filepath, PROJECT_ROOT)
+                        results.append({
+                            "title": file,
+                            "path": filepath, # Return absolute path for IDE open
+                            "relPath": rel_path,
+                            "snippet": snippet or "Match in filename",
+                            "isTitleMatch": title_match
+                        })
+                        
+                        if len(results) >= max_results:
+                            return results
+                except Exception:
+                    pass
+                    
+    # Sort results: title matches first
+    results.sort(key=lambda x: not x["isTitleMatch"])
+    return results
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
@@ -786,6 +854,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             self.wfile.write(_cached_data.encode('utf-8'))
+        elif self.path.startswith('/api/search'):
+            from urllib.parse import urlparse, parse_qs
+            query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
+            
+            search_results = search_markdown_files(query)
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(json.dumps(search_results).encode('utf-8'))
         else:
             super().do_GET()
         

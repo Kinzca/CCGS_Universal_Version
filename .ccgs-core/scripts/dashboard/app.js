@@ -2139,3 +2139,201 @@ window._renderStoryMatrix = function(forcedEpic) {
         grid.appendChild(row);
     });
 };
+
+// Story D-026: Global Search (Cmd+K)
+(function() {
+    const modal = document.getElementById('search-modal');
+    if (!modal) return;
+    const input = document.getElementById('search-input');
+    const resultsUl = document.getElementById('search-results');
+    const emptyState = document.getElementById('search-empty');
+    const spinner = document.getElementById('search-spinner');
+    
+    let searchTimeout = null;
+    let resultsData = [];
+    let activeIndex = -1;
+
+    function openModal() {
+        modal.classList.add('open');
+        input.value = '';
+        input.focus();
+        resultsUl.innerHTML = '';
+        emptyState.style.display = 'none';
+        resultsData = [];
+        activeIndex = -1;
+    }
+
+    function closeModal() {
+        modal.classList.remove('open');
+        input.blur();
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault(); // Prevent browser search
+            if (modal.classList.contains('open')) closeModal();
+            else openModal();
+        }
+        
+        // Focus trap & navigation
+        if (modal.classList.contains('open')) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeModal();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (resultsData.length > 0) {
+                    activeIndex = (activeIndex + 1) % resultsData.length;
+                    updateActiveState();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (resultsData.length > 0) {
+                    activeIndex = (activeIndex - 1 + resultsData.length) % resultsData.length;
+                    updateActiveState();
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                executeSearchAction(e.metaKey || e.ctrlKey);
+            } else if (['1','2','3','4'].includes(e.key)) {
+                // Prevent global tab switching when typing numbers in search
+                e.stopPropagation();
+            }
+        }
+    }, { capture: true }); // Use capture to intercept before global shortcuts
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    input.addEventListener('input', (e) => {
+        const query = e.target.value;
+        // Feature isolation: skip commands
+        if (query.trim().startsWith('/')) {
+            resultsUl.innerHTML = '';
+            emptyState.style.display = 'none';
+            return;
+        }
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+        
+        if (!query.trim()) {
+            resultsUl.innerHTML = '';
+            emptyState.style.display = 'none';
+            spinner.style.display = 'none';
+            return;
+        }
+
+        spinner.style.display = 'block';
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/search?q=${encodeURIComponent(query)}`)
+                .then(r => r.json())
+                .then(data => {
+                    spinner.style.display = 'none';
+                    resultsData = data || [];
+                    activeIndex = resultsData.length > 0 ? 0 : -1;
+                    renderResults();
+                })
+                .catch(err => {
+                    spinner.style.display = 'none';
+                    console.error("Search failed:", err);
+                });
+        }, 300);
+    });
+
+    function renderResults() {
+        resultsUl.innerHTML = '';
+        if (resultsData.length === 0) {
+            emptyState.style.display = 'block';
+            return;
+        }
+        emptyState.style.display = 'none';
+        
+        resultsData.forEach((item, index) => {
+            const li = document.createElement('li');
+            if (index === activeIndex) li.classList.add('active');
+            
+            // Highlight matching text in title and snippet
+            const query = input.value.trim().toLowerCase();
+            const highlightText = (text) => {
+                if (!query) return text;
+                const idx = text.toLowerCase().indexOf(query);
+                if (idx === -1) return text;
+                return text.substring(0, idx) + `<span style="color: var(--cyan); font-weight: bold;">${text.substring(idx, idx + query.length)}</span>` + text.substring(idx + query.length);
+            };
+
+            li.innerHTML = `
+                <div class="title">${highlightText(item.title)}</div>
+                <div class="path">${item.relPath}</div>
+                <div class="snippet">${highlightText(item.snippet)}</div>
+            `;
+            
+            li.addEventListener('click', (e) => {
+                activeIndex = index;
+                executeSearchAction(e.metaKey || e.ctrlKey);
+            });
+            
+            li.addEventListener('mouseenter', () => {
+                activeIndex = index;
+                updateActiveState(false); // Don't scroll on mouse hover
+            });
+            
+            resultsUl.appendChild(li);
+        });
+        
+        scrollIntoView();
+    }
+
+    function updateActiveState(doScroll = true) {
+        Array.from(resultsUl.children).forEach((li, idx) => {
+            if (idx === activeIndex) li.classList.add('active');
+            else li.classList.remove('active');
+        });
+        if (doScroll) scrollIntoView();
+    }
+
+    function scrollIntoView() {
+        if (activeIndex >= 0) {
+            const activeEl = resultsUl.children[activeIndex];
+            if (activeEl) {
+                activeEl.scrollIntoView({ block: 'nearest' });
+            }
+        }
+    }
+
+    function executeSearchAction(ideMode) {
+        if (activeIndex < 0 || activeIndex >= resultsData.length) return;
+        const item = resultsData[activeIndex];
+        closeModal();
+        
+        if (ideMode) {
+            if (window.openInIDE) window.openInIDE(item.path);
+        } else {
+            // Find in current data if possible
+            if (window.currentData) {
+                if (item.relPath.includes('/gdd/')) {
+                    const gdd = window.currentData.gdds.find(g => g.filename === item.title);
+                    if (gdd) { window.openUnifiedPanel('gdd', gdd, `GDD: ${gdd.title}`); return; }
+                } else if (item.relPath.includes('/architecture/')) {
+                    const adr = window.currentData.adrs.find(a => a.filename === item.title);
+                    if (adr) { window.openUnifiedPanel('adr', adr, `ADR: ${adr.title}`); return; }
+                } else if (item.relPath.includes('/epics/')) {
+                    for (const epic of window.currentData.sprint.epics) {
+                        const story = epic.stories.find(s => s.id === item.title.replace('.md', ''));
+                        if (story) { window.openUnifiedPanel('story', story, `Story: ${story.title}`); return; }
+                    }
+                }
+            }
+            // Fallback generic display using story template to at least show the path and snippet
+            const mockData = {
+                title: item.title,
+                id: 'Search Result',
+                epic: item.relPath,
+                status: 'Found',
+                ac_list: [{ done: true, text: item.snippet }],
+                path: item.path
+            };
+            window.openUnifiedPanel('story', mockData, item.title);
+        }
+    }
+})();
