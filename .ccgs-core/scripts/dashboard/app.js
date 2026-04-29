@@ -681,43 +681,6 @@
                                 });
                             });
 
-                            // Story D-032 / D-033: Hovering the lock icon highlights connected dependencies
-                            const lockContainer = card.querySelector('.kb-lock-icon-container');
-                            if (lockContainer) {
-                                lockContainer.addEventListener('mouseenter', () => {
-                                    const myDeps = story.dependencies || [];
-                                    const dependingOnMe = [];
-                                    if (data && data.stories) {
-                                        data.stories.forEach(s => {
-                                            if (s.dependencies && s.dependencies.includes(story.id)) {
-                                                dependingOnMe.push(s.id);
-                                            }
-                                        });
-                                    }
-                                    const allConnected = [...myDeps, ...dependingOnMe];
-                                    if (allConnected.length > 0) {
-                                        window._activeHoverSource = card;
-                                        window._activeHoverDeps = myDeps; 
-                                        window._activeHoverDependents = dependingOnMe;
-                                        
-                                        allConnected.forEach(depId => {
-                                            const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
-                                            if (depCard) {
-                                                depCard.classList.add('kb-dep-highlight');
-                                            }
-                                        });
-                                        _drawDependencyLines(card, myDeps, dependingOnMe);
-                                    }
-                                });
-                                lockContainer.addEventListener('mouseleave', () => {
-                                    window._activeHoverSource = null;
-                                    window._activeHoverDeps = null;
-                                    window._activeHoverDependents = null;
-                                    document.querySelectorAll('.kb-dep-highlight').forEach(el => el.classList.remove('kb-dep-highlight'));
-                                    const svgLayer = document.getElementById('dependency-svg-layer');
-                                    if (svgLayer) svgLayer.innerHTML = '';
-                                });
-                            }
 
                             // 点击卡片主体滑出详情侧边栏 (防误触)
                             let startX = 0, startY = 0;
@@ -730,7 +693,7 @@
                                 const dy = e.clientY - startY;
                                 const dist = Math.sqrt(dx*dx + dy*dy);
                                 // 如果移动距离小于 5 像素且未点到复制按钮，视为点击 (非拖拽)
-                                if (dist < 5 && !e.target.closest('.kb-copy-btn') && !e.target.closest('.kb-lock-icon-container')) {
+                                if (dist < 5 && !e.target.closest('.kb-copy-btn')) {
                                     if (typeof window.showStoryPanel === 'function') {
                                         window.showStoryPanel(story);
                                     }
@@ -832,6 +795,7 @@
                     // Active Bugs Triage
                     window._allStories = data.stories || [];
                     window._allBugs = data.bugs || [];
+                    window._cachedData = data;
                     const qualityContent = document.getElementById('quality-content');
                     const qualityEmpty = document.getElementById('quality-empty');
                     
@@ -1364,77 +1328,7 @@
             }
         });
 
-        // ---------------------------------------------------------
-        // Story D-032: Dependency Interaction Functions
-        // ---------------------------------------------------------
-        
-        window.addEventListener('scroll', () => {
-            if (window._activeHoverSource && (window._activeHoverDeps || window._activeHoverDependents)) {
-                _drawDependencyLines(window._activeHoverSource, window._activeHoverDeps, window._activeHoverDependents);
-            }
-        }, true); // Use capture to catch scroll events on any internal div
-
-        function _drawDependencyLines(sourceCard, myDeps, dependingOnMe) {
-            let svgLayer = document.getElementById('dependency-svg-layer');
-            if (!svgLayer) {
-                svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svgLayer.id = 'dependency-svg-layer';
-                document.body.appendChild(svgLayer);
-            }
-            svgLayer.innerHTML = `<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#F59E0B" /></marker></defs>`;
-            
-            const board = document.querySelector('.kanban-board');
-            if (!board) return;
-            const boardRect = board.getBoundingClientRect();
-            
-            // Limit to board dimensions
-            svgLayer.style.left = boardRect.left + 'px';
-            svgLayer.style.top = boardRect.top + 'px';
-            svgLayer.style.width = boardRect.width + 'px';
-            svgLayer.style.height = boardRect.height + 'px';
-
-            const sourceRect = sourceCard.getBoundingClientRect();
-            const sourceMidY = sourceRect.top + sourceRect.height / 2 - boardRect.top;
-            
-            // Draw lines TO things I depend on (myDeps)
-            if (myDeps) {
-                const startX = sourceRect.left - boardRect.left;
-                myDeps.forEach(depId => {
-                    const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
-                    if (depCard) {
-                        const depRect = depCard.getBoundingClientRect();
-                        const endX = depRect.right - boardRect.left;
-                        const endY = depRect.top + depRect.height / 2 - boardRect.top;
-                        const controlX1 = startX - 50;
-                        const controlX2 = endX + 50;
-                        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        path.setAttribute('d', `M ${startX} ${sourceMidY} C ${controlX1} ${sourceMidY}, ${controlX2} ${endY}, ${endX} ${endY}`);
-                        path.setAttribute('class', 'dep-arrow-line');
-                        svgLayer.appendChild(path);
-                    }
-                });
-            }
-            
-            // Draw lines FROM things depending on me (dependingOnMe)
-            if (dependingOnMe) {
-                const endXForThem = sourceRect.right - boardRect.left;
-                dependingOnMe.forEach(depId => {
-                    const depCard = document.querySelector(`.kanban-card[data-story-id="${depId}"]`);
-                    if (depCard) {
-                        const depRect = depCard.getBoundingClientRect();
-                        const startXForThem = depRect.left - boardRect.left;
-                        const startYForThem = depRect.top + depRect.height / 2 - boardRect.top;
-                        const controlX1 = startXForThem - 50;
-                        const controlX2 = endXForThem + 50;
-                        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        path.setAttribute('d', `M ${startXForThem} ${startYForThem} C ${controlX1} ${startYForThem}, ${controlX2} ${sourceMidY}, ${endXForThem} ${sourceMidY}`);
-                        path.setAttribute('class', 'dep-arrow-line');
-                        svgLayer.appendChild(path);
-                    }
-                });
-            }
-        }
-        // No spotlight logic here
+        // （已移除 D-032 连线交互 — 依赖信息统一在侧边栏展示）
 
 // =========================================================
 // Unified Side Panel Logic (D-017)
@@ -1474,12 +1368,12 @@ window.closeUnifiedPanel = function() {
     const overlay = document.getElementById('unified-panel-overlay');
     const panel = document.getElementById('unified-side-panel');
     
-    if (overlay) overlay.classList.remove('show');
+    if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
     if (panel) panel.classList.remove('show');
-    
-    setTimeout(() => {
-        if (overlay) overlay.style.display = 'none';
-    }, 300);
+    document.body.classList.remove('panel-open');
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1538,6 +1432,7 @@ window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
         overlay.classList.add('show');
     }
     if (panel) panel.classList.add('show');
+    document.body.classList.add('panel-open');
 };
 
 window.goBackPanel = function(index) {
@@ -1609,7 +1504,54 @@ function _renderAdrContent(adr) {
 function _renderStoryContent(story) {
     document.getElementById('sp-id').innerText = story.id;
     document.getElementById('sp-epic').innerText = story.epic;
-    document.getElementById('sp-status').innerText = story.status.toUpperCase();
+    
+    // 着重显示状态
+    const statusEl = document.getElementById('sp-status');
+    const ls = story.status.toLowerCase();
+    statusEl.innerText = story.status.toUpperCase();
+    statusEl.style.padding = '2px 6px';
+    statusEl.style.borderRadius = '4px';
+    statusEl.style.display = 'inline-block';
+    statusEl.style.fontWeight = 'bold';
+    
+    // 根据状态给不同颜色背景着重显示
+    if (['done', 'completed', 'closed', 'verified'].includes(ls)) {
+        statusEl.style.background = 'rgba(16, 185, 129, 0.1)';
+        statusEl.style.color = '#10B981';
+        statusEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+    } else if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(ls)) {
+        statusEl.style.background = 'rgba(245, 158, 11, 0.1)';
+        statusEl.style.color = '#F59E0B';
+        statusEl.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+    } else if (['ready', 'approved', 'assigned'].includes(ls)) {
+        statusEl.style.background = 'rgba(59, 130, 246, 0.1)';
+        statusEl.style.color = '#3B82F6';
+        statusEl.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+    } else { // todo
+        statusEl.style.background = 'rgba(156, 163, 175, 0.1)';
+        statusEl.style.color = 'var(--text-main)';
+        statusEl.style.border = '1px solid rgba(156, 163, 175, 0.3)';
+    }
+
+    // 处理锁定原因
+    const lockedReasonEl = document.getElementById('sp-locked-reason');
+    if (ls === 'todo') {
+        const myDeps = story.dependencies || [];
+        const hasUnfinishedDeps = myDeps.some(depId => {
+            const dep = (window._cachedData && window._cachedData.stories || []).find(s => s.id === depId);
+            return dep && dep.status.toLowerCase() !== 'done';
+        });
+        
+        if (hasUnfinishedDeps) {
+            lockedReasonEl.style.display = 'block';
+            lockedReasonEl.innerHTML = '🔒 <strong>禁止拖拽</strong>：等待前置依赖完成';
+        } else {
+            lockedReasonEl.style.display = 'block';
+            lockedReasonEl.innerHTML = '🔒 <strong>禁止拖拽</strong>：需先执行 /story-readiness 就绪检查';
+        }
+    } else {
+        lockedReasonEl.style.display = 'none';
+    }
     
     const btnReady = document.getElementById('sp-btn-ready');
     const btnDev = document.getElementById('sp-btn-dev');
@@ -1638,24 +1580,30 @@ function _renderStoryContent(story) {
     setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
     setupCopyBtn(btnPath, path, '🔗 ');
     
-    // 智能推荐：根据 Story 当前状态高亮最合适的下一步按钮
-    const ls = story.status.toLowerCase();
+    // 智能推荐
     newBtnReady.classList.remove('recommended');
     newBtnDev.classList.remove('recommended');
     newBtnReview.classList.remove('recommended');
     
     if (['done', 'completed', 'closed', 'verified'].includes(ls)) {
-        // 已完成 → 推荐 code-review（复用 review 按钮）
         newBtnReview.classList.add('recommended');
     } else if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(ls)) {
         newBtnReview.classList.add('recommended');
     } else if (['ready', 'approved', 'assigned'].includes(ls)) {
         newBtnDev.classList.add('recommended');
     } else {
-        // todo → 推荐 story-readiness
         newBtnReady.classList.add('recommended');
     }
 }
+
+/// 依赖钻入函数：在侧边栏中打开依赖 Story 的详情（支持面包屑导航）
+window._drillIntoStory = function(storyId) {
+    if (!window._cachedData || !window._cachedData.stories) return;
+    const story = window._cachedData.stories.find(s => s.id === storyId);
+    if (story) {
+        window.openUnifiedPanel('story', story, story.title, true);
+    }
+};
 
 window._currentBugFilter = 'All';
 
@@ -1734,14 +1682,35 @@ window._renderBugsTriage = function() {
         row.className = `triage-row ${borderClass}`;
         row.style.cursor = 'pointer';
         row.onclick = () => window.openUnifiedPanel('bug', bug, `Bug: ${bug.title}`);
+        
+        // Add Hotfix Button for D-021
+        let hotfixHtml = '';
+        if (p === 'critical' || p === 'blocker' || p === 'high' || p === 'p1' || p === 'p2' || p.includes('p1')) {
+            hotfixHtml = `<button class="ghost-hotfix-btn" title="Copy Hotfix Command" onclick="event.stopPropagation(); window.copyHotfix('${bug.id}')">🚨</button>`;
+        }
+
         row.innerHTML = `
             <div class="tr-id">${bug.id}</div>
             <div><span class="bug-priority ${prioClass}">${bug.priority}</span></div>
             <div class="tr-title">${bug.title}</div>
-            <div class="tr-status">${bug.status}</div>
+            <div class="tr-status" style="display:flex; align-items:center; gap:8px;">
+                ${bug.status}
+                ${hotfixHtml}
+            </div>
             <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">QA</div>
         `;
         triageRows.appendChild(row);
+    });
+};
+
+window.copyHotfix = function(bugId) {
+    const cmd = `/hotfix ${bugId}`;
+    navigator.clipboard.writeText(cmd).then(() => {
+        if (window.showToast) {
+            window.showToast(`已复制：${cmd}`);
+        }
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
     });
 };
 

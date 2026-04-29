@@ -513,99 +513,11 @@
             align-items: center;
             justify-content: center;
             color: #F59E0B;
-            cursor: pointer;
+            cursor: default;
             z-index: 2;
-            transition: transform 0.2s;
-        }
-        .kb-lock-icon-container:hover {
-            transform: scale(1.1);
         }
         
-        .kanban-card.kb-dep-highlight {
-            border-color: #F59E0B !important;
-            box-shadow: 0 0 12px rgba(245, 158, 11, 0.4) !important;
-            animation: kb-pulse 1.5s infinite;
-            z-index: 5;
-        }
-        @keyframes kb-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-        }
 
-        #dependency-svg-layer {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .dep-arrow-line {
-            stroke: #F59E0B;
-            stroke-width: 2;
-            stroke-dasharray: 6, 4;
-            fill: none;
-            marker-end: url(#arrowhead);
-            opacity: 0.8;
-            animation: dash-anim 0.5s linear infinite;
-        }
-        @keyframes dash-anim {
-            to { stroke-dashoffset: -10; }
-        }
-
-        .dep-popover {
-            position: absolute;
-            width: 280px;
-            background: var(--card-bg);
-            border: 1px solid #F59E0B;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            z-index: 100;
-            font-size: 0.85rem;
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        body.light-mode .dep-popover {
-            background: var(--card-bg-light);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-        .dep-popover-header {
-            font-weight: 600;
-            color: #F59E0B;
-            border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-            padding-bottom: 6px;
-            margin-bottom: 4px;
-        }
-        .dep-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            line-height: 1.4;
-        }
-        .dep-status-icon {
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        .dep-copy-btn {
-            margin-top: 8px;
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            color: #F59E0B;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        .dep-copy-btn:hover {
-            background: rgba(245, 158, 11, 0.2);
-        }
         
         .kb-copy-btn {
             background: rgba(255,255,255,0.05);
@@ -1005,6 +917,16 @@
         .gate-item:last-child { border-bottom: none; padding-bottom: 0; }
         
         /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
         .toast {
             min-width: 250px;
             background: var(--sidebar-bg);
@@ -1026,6 +948,28 @@
             transform: translateX(0);
             opacity: 1;
         }
+
+/* Ghost Hotfix Button (D-021) */
+.ghost-hotfix-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.2s, transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    font-size: 1.1rem;
+    padding: 2px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.ghost-hotfix-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+.ghost-hotfix-btn:active {
+    transform: scale(0.95);
+}
 
 /* === Story Side Panel === */
 .panel-overlay {
