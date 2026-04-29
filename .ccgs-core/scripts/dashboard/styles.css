@@ -1428,8 +1428,12 @@ body.light-mode .kanban-col-empty-msg { color: var(--text-color-muted-light); }
 
 /* Story D-026: Search Modal */
 #search-modal {
+    display: none;
     align-items: flex-start;
     padding-top: 10vh;
+}
+#search-modal.open {
+    display: flex;
 }
 #search-modal .modal-content {
     width: 90%;
