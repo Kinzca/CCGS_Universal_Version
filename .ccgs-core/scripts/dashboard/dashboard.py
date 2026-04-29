@@ -75,7 +75,6 @@ def extract_markdown_fields(filepath):
                         break
                 if end_idx != -1:
                     frontmatter = {}
-                    import re
                     for i in range(1, end_idx):
                         fm_line = lines[i].strip()
                         if fm_line and ':' in fm_line:
@@ -290,7 +289,6 @@ def gather_data():
             with open(sf, 'r', encoding='utf-8') as f:
                 content = f.read()
                 # Find Acceptance Criteria section
-                import re
                 ac_match = re.search(r'##\s*Acceptance Criteria\s*(.*?)(?:\n##\s*[A-Za-z]|$)', content, re.DOTALL | re.IGNORECASE)
                 if ac_match:
                     ac_text = ac_match.group(1)
@@ -349,7 +347,6 @@ def gather_data():
                 with open(retro_file, 'r', encoding='utf-8') as f:
                     content = f.read()
                     # 尝试匹配 "| Sprint 1 | 6 | 5 |" 等表格行
-                    import re
                     match = re.search(r'\|\s*Sprint.*?\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|', content)
                     if match:
                         t_pts = int(match.group(1))
@@ -732,7 +729,6 @@ def open_browser():
 
 def repair_metadata():
     print(f"Repairing metadata in {DATA_DIR}...")
-    import re
     
     # 1. repair stage.txt
     stage_path = os.path.join(DATA_DIR, "production", "tracking", "stage.txt")
