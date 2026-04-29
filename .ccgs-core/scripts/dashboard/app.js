@@ -358,6 +358,54 @@
                         }
                     }
                     
+                    if(data.adr_coverage) {
+                        const adrKanban = document.getElementById('adr-kanban');
+                        const emptyAdr = document.getElementById('empty-adr');
+                        if (data.adr_coverage.files && data.adr_coverage.files.length > 0) {
+                            window.currentAdrFiles = data.adr_coverage.files;
+                            if (emptyAdr) emptyAdr.style.display = 'none';
+                            if (adrKanban) {
+                                adrKanban.style.display = 'grid';
+                                
+                                const listProposed = document.getElementById('adr-list-proposed');
+                                const listAccepted = document.getElementById('adr-list-accepted');
+                                const listDeprecated = document.getElementById('adr-list-deprecated');
+                                
+                                let proposedHtml = '';
+                                let acceptedHtml = '';
+                                let deprecatedHtml = '';
+                                
+                                data.adr_coverage.files.forEach((adr, i) => {
+                                    const adrNumMatch = adr.filename.match(/adr-(\d+)/);
+                                    const adrNum = adrNumMatch ? adrNumMatch[1] : '';
+                                    
+                                    const cardHtml = `
+                                        <div class="kanban-card" onclick="window.openAdrPanel(${i})" style="cursor: pointer; position: relative;">
+                                            <div style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace; margin-bottom: 4px;">ADR-${adrNum}</div>
+                                            <h4 style="margin: 0 0 8px 0; color: var(--text-main); font-size: 0.95rem;">${adr.title}</h4>
+                                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+                                                <span style="font-size: 0.75rem; color: var(--text-muted); padding: 2px 6px; background: var(--bg-hover); border-radius: 4px;">
+                                                    ${adr.gdd_count} GDD${adr.gdd_count !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `;
+                                    
+                                    if (adr.status === 'Accepted') acceptedHtml += cardHtml;
+                                    else if (adr.status === 'Deprecated') deprecatedHtml += cardHtml;
+                                    else proposedHtml += cardHtml; // Default to proposed
+                                });
+                                
+                                if(listProposed) listProposed.innerHTML = proposedHtml;
+                                if(listAccepted) listAccepted.innerHTML = acceptedHtml;
+                                if(listDeprecated) listDeprecated.innerHTML = deprecatedHtml;
+                            }
+                        } else {
+                            if (emptyAdr) emptyAdr.style.display = 'flex';
+                            if (adrKanban) adrKanban.style.display = 'none';
+                        }
+                    }
+                    
                     if(data.test_coverage) {
                         const testOffset = circumference - (data.test_coverage.percent / 100) * circumference;
                         const testRing = document.getElementById('test-ring');
@@ -1491,4 +1539,68 @@ document.getElementById('gdd-sp-close-btn').addEventListener('click', () => {
 });
 document.getElementById('gdd-panel-overlay').addEventListener('click', () => {
     document.getElementById('gdd-sp-close-btn').click();
+});
+
+// --- ADR Side Panel ---
+window.openAdrPanel = function(index) {
+    if (!window.currentAdrFiles || !window.currentAdrFiles[index]) return;
+    
+    const adr = window.currentAdrFiles[index];
+    
+    document.getElementById('adr-sp-title').textContent = adr.title;
+    document.getElementById('adr-sp-filename').textContent = adr.filename;
+    
+    const statusEl = document.getElementById('adr-sp-status');
+    statusEl.textContent = adr.status;
+    if (adr.status === 'Accepted') statusEl.style.color = '#10b981';
+    else if (adr.status === 'Proposed') statusEl.style.color = '#fbbf24';
+    else if (adr.status === 'Deprecated') statusEl.style.color = '#ef4444';
+    else statusEl.style.color = 'var(--text-main)';
+    
+    const gddList = document.getElementById('adr-sp-gdd-list');
+    if (adr.associated_gdds && adr.associated_gdds.length > 0) {
+        gddList.innerHTML = adr.associated_gdds.map(g => {
+            return `<div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                <span>${g}</span>
+            </div>`;
+        }).join('');
+    } else {
+        gddList.innerHTML = '<span style="color: var(--text-muted);">None</span>';
+    }
+    
+    // Show panel
+    document.getElementById('adr-panel-overlay').style.display = 'block';
+    document.getElementById('adr-side-panel').style.display = 'flex';
+    // Trigger reflow
+    void document.getElementById('adr-panel-overlay').offsetWidth;
+    document.getElementById('adr-panel-overlay').classList.add('show');
+    document.getElementById('adr-side-panel').classList.add('show');
+};
+
+// Close logic for ADR panel
+document.getElementById('adr-sp-close-btn').addEventListener('click', () => {
+    document.getElementById('adr-panel-overlay').classList.remove('show');
+    document.getElementById('adr-side-panel').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('adr-panel-overlay').style.display = 'none';
+        document.getElementById('adr-side-panel').style.display = 'none';
+    }, 300);
+});
+document.getElementById('adr-panel-overlay').addEventListener('click', () => {
+    document.getElementById('adr-sp-close-btn').click();
+});
+
+// --- Design Hub Sub-tabs ---
+document.getElementById('btn-gdd-view').addEventListener('click', (e) => {
+    document.getElementById('btn-gdd-view').classList.add('active');
+    document.getElementById('btn-adr-view').classList.remove('active');
+    document.getElementById('gdd-container').style.display = 'block';
+    document.getElementById('adr-container').style.display = 'none';
+});
+document.getElementById('btn-adr-view').addEventListener('click', (e) => {
+    document.getElementById('btn-adr-view').classList.add('active');
+    document.getElementById('btn-gdd-view').classList.remove('active');
+    document.getElementById('gdd-container').style.display = 'none';
+    document.getElementById('adr-container').style.display = 'block';
 });

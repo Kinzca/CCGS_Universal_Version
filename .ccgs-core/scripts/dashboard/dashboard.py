@@ -490,6 +490,76 @@ def gather_data():
         "covered": completed_gdds,
         "percent": int((completed_gdds / total_gdds) * 100) if total_gdds > 0 else 0
     }
+    
+    # 8. Parse ADRs
+    adr_dir = os.path.join(DATA_DIR, "project-docs", "architecture")
+    adr_files = []
+    
+    if os.path.exists(adr_dir):
+        for filename in os.listdir(adr_dir):
+            if filename.startswith("adr-") and filename.endswith(".md"):
+                file_path = os.path.join(adr_dir, filename)
+                title = filename.replace(".md", "")
+                status = "Unknown"
+                gdd_count = 0
+                associated_gdds = []
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                        
+                        in_status_section = False
+                        in_gdd_section = False
+                        
+                        for line in lines:
+                            stripped = line.strip()
+                            if stripped.startswith("# "):
+                                title = stripped[2:]
+                                
+                            if stripped.startswith("## Status"):
+                                in_status_section = True
+                                in_gdd_section = False
+                                continue
+                            elif stripped.startswith("## GDD Requirements Addressed"):
+                                in_gdd_section = True
+                                in_status_section = False
+                                continue
+                            elif stripped.startswith("## "):
+                                in_status_section = False
+                                in_gdd_section = False
+                                continue
+                                
+                            if in_status_section and stripped:
+                                if "Accepted" in stripped or "accepted" in stripped.lower():
+                                    status = "Accepted"
+                                elif "Proposed" in stripped or "proposed" in stripped.lower():
+                                    status = "Proposed"
+                                elif "Deprecated" in stripped or "deprecated" in stripped.lower():
+                                    status = "Deprecated"
+                                    
+                            if in_gdd_section and stripped.startswith("|"):
+                                if ".md" in stripped and not stripped.startswith("| GDD System") and not stripped.startswith("|-"):
+                                    gdd_count += 1
+                                    match = re.search(r'([0-9a-zA-Z-]+\.md)', stripped)
+                                    if match:
+                                        associated_gdds.append(match.group(1))
+                                        
+                except Exception as e:
+                    print(f"Warning: Failed to read {filename}: {e}")
+                    
+                adr_files.append({
+                    "filename": filename,
+                    "title": title,
+                    "status": status,
+                    "gdd_count": gdd_count,
+                    "associated_gdds": associated_gdds
+                })
+        adr_files.sort(key=lambda x: x["filename"])
+        
+    data["adr_coverage"] = {
+        "files": adr_files,
+        "total": len(adr_files)
+    }
         
     coverage_report = os.path.join(DATA_DIR, "production", "qa", "coverage.txt")
     if os.path.exists(coverage_report):

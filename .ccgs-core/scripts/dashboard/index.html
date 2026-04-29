@@ -198,15 +198,67 @@
         <div class="view-section" id="design-view">
             <div class="empty-tab" id="empty-design">
                 <svg width="64" height="64" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                <h2 data-i18n="empty_design_title">Design Repository Empty</h2>
-                <p data-i18n="empty_design_desc">There are no Game Design Documents (GDD) or Technical Architecture diagrams found in the current workspace.</p>
-                <button class="skill-btn" onclick="prompt('Run this command in the agent terminal:','/design-system')">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Run /design-system
-                </button>
+            <!-- Segmented Control for GDD / ADR -->
+            <div class="design-segmented-control" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
+                <button class="tab-btn active" id="btn-gdd-view" style="padding: 6px 16px; border-radius: 20px; font-size: 0.9rem;">GDD 文档库</button>
+                <button class="tab-btn" id="btn-adr-view" style="padding: 6px 16px; border-radius: 20px; font-size: 0.9rem;">架构决策 ADR</button>
             </div>
-            <div class="design-grid" id="design-grid" style="display: none; width: 100%;">
-                <!-- GDD cards populated by JS -->
+
+            <!-- GDD Container -->
+            <div id="gdd-container">
+                <div class="empty-tab" id="empty-design">
+                    <div class="empty-icon">🎨</div>
+                    <h2 data-i18n="design_hub_empty_title">Design Hub Empty</h2>
+                    <p data-i18n="design_hub_empty_desc">No Game Design Documents found in CCGS-Data/design/gdd/.</p>
+                    <div class="empty-actions">
+                        <button class="skill-btn outline-btn" onclick="copySkill('/brainstorm')">⚡ /brainstorm</button>
+                    </div>
+                </div>
+                
+                <div class="design-grid" id="design-grid" style="display: none; width: 100%;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <!-- ADR Container -->
+            <div id="adr-container" style="display: none;">
+                <div class="empty-tab" id="empty-adr" style="display: none;">
+                    <div class="empty-icon">🏗️</div>
+                    <h2>暂无架构决策</h2>
+                    <p>No Architecture Decision Records found in CCGS-Data/project-docs/architecture/.</p>
+                    <div class="empty-actions">
+                        <button class="skill-btn outline-btn" onclick="copySkill('/architecture-decision')">⚡ /architecture-decision</button>
+                    </div>
+                </div>
+
+                <div class="adr-kanban" id="adr-kanban" style="display: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start;">
+                    <!-- Proposed Column -->
+                    <div class="adr-column">
+                        <div class="adr-column-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: bold; color: #fbbf24;">
+                            <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #fbbf24;"></span>
+                            Proposed
+                        </div>
+                        <div class="adr-list" id="adr-list-proposed" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                    </div>
+                    
+                    <!-- Accepted Column -->
+                    <div class="adr-column">
+                        <div class="adr-column-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: bold; color: #10b981;">
+                            <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #10b981;"></span>
+                            Accepted
+                        </div>
+                        <div class="adr-list" id="adr-list-accepted" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                    </div>
+
+                    <!-- Deprecated Column -->
+                    <div class="adr-column">
+                        <div class="adr-column-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: bold; color: #ef4444;">
+                            <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ef4444;"></span>
+                            Deprecated
+                        </div>
+                        <div class="adr-list" id="adr-list-deprecated" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -410,7 +462,35 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- ADR Side Panel -->
+    <div id="adr-panel-overlay" class="panel-overlay" style="display: none;"></div>
+    <div id="adr-side-panel" class="side-panel">
+        <div class="panel-header">
+            <h2 id="adr-sp-title">ADR Details</h2>
+            <button id="adr-sp-close-btn" title="Close Panel">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="sp-meta-grid">
+                <div class="sp-meta-item" style="grid-column: span 2;">
+                    <span class="sp-meta-label">File</span>
+                    <span class="sp-meta-value" id="adr-sp-filename" style="font-family: monospace;">-</span>
+                </div>
+                <div class="sp-meta-item">
+                    <span class="sp-meta-label">Status</span>
+                    <span class="sp-meta-value" id="adr-sp-status">-</span>
+                </div>
+            </div>
+            
+            <div class="sp-actions">
+                <h3 class="sp-section-title">Associated GDDs</h3>
+                <div id="adr-sp-gdd-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);">
+                    <!-- GDDs injected by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
 
