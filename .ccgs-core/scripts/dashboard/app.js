@@ -2359,9 +2359,12 @@ window._renderStoryMatrix = function(forcedEpic) {
             const currentViewId = getCurrentViewId();
             if (!currentViewId) return [];
             if (currentViewId === 'sprints-view') {
-                return Array.from(document.querySelectorAll('.kanban-card:not([style*="display: none"])'));
+                return Array.from(document.querySelectorAll('#sprints-view .kanban-card:not([style*="display: none"])'));
             } else if (currentViewId === 'quality-view') {
-                return Array.from(document.querySelectorAll('.triage-row:not([style*="display: none"])'));
+                return Array.from(document.querySelectorAll('#quality-view .triage-row:not([style*="display: none"])'));
+            } else if (currentViewId === 'design-view') {
+                // If we want to support Design view ADR cards later
+                return Array.from(document.querySelectorAll('#design-view .kanban-card:not([style*="display: none"])'));
             }
             return [];
         }
@@ -2453,7 +2456,7 @@ window._renderStoryMatrix = function(forcedEpic) {
 
             // J/K
             if (key === 'j' || key === 'k') {
-                if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view') return;
+                if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view' && currentViewId !== 'design-view') return;
                 
                 focusedElements = getItems();
                 if (focusedElements.length === 0) return;
@@ -2471,7 +2474,7 @@ window._renderStoryMatrix = function(forcedEpic) {
 
             // Enter, D, R
             if (key === 'enter' || key === 'd' || key === 'r') {
-                if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view') return;
+                if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view' && currentViewId !== 'design-view') return;
 
                 let target = null;
                 if (focusedIndex >= 0 && focusedIndex < focusedElements.length) {
@@ -2505,7 +2508,7 @@ window._renderStoryMatrix = function(forcedEpic) {
                             window._dismissSmartFocus(storyId);
                         });
                     }
-                } else if (currentViewId === 'quality-view') {
+                } else if (currentViewId === 'quality-view' || currentViewId === 'design-view') {
                     if (key === 'enter') {
                         target.click();
                     } else if (key === 'd' || key === 'r') {
