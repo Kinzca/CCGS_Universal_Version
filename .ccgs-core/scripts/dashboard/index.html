@@ -378,7 +378,7 @@
                 <p data-i18n="empty_quality_desc">🎉 目前没有已知缺陷，最近一次质量报告通过。</p>
             </div>
 
-            <div class="card story-matrix-container" style="margin-top: 2rem;">
+            <div class="card story-matrix-container" style="margin-top: 1rem; flex-grow: 1; min-height: 250px; display: flex; flex-direction: column; overflow: hidden;">
                 <div class="triage-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h2 style="margin-bottom: 0;" data-i18n="story_matrix_title">STORY ACCEPTANCE MATRIX</h2>
                     <select id="matrix-epic-filter" style="background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--glass-border); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;" onchange="window._renderStoryMatrix()">
@@ -386,7 +386,7 @@
                         <!-- Options populated by JS -->
                     </select>
                 </div>
-                <div id="story-matrix-grid" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div id="story-matrix-grid" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; flex-grow: 1; padding-right: 10px;">
                     <!-- Matrix rows populated by JS -->
                 </div>
             </div>
