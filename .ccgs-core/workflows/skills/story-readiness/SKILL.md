@@ -3,7 +3,7 @@ name: story-readiness
 description: "Validate that a story file is implementation-ready. Checks for embedded GDD requirements, ADR references, engine notes, clear acceptance criteria, and no open design questions. Produces READY / NEEDS WORK / BLOCKED verdict with specific gaps. Use when user says 'is this story ready', 'can I start on this story', 'is story X ready to implement'."
 argument-hint: "[story-file-path or 'all' or 'sprint']"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Task
+allowed-tools: Read, Glob, Grep, Edit, Task
 model: haiku
 ---
 
@@ -209,6 +209,20 @@ a story that is BLOCKED may also have NEEDS WORK items — list both.
 
 ---
 
+## 4b. Update Story Status on READY Verdict
+
+If the verdict is **READY**, update the story file's frontmatter:
+
+1. Change `status: "Todo"` to `status: "Ready"`
+2. Confirm in conversation: "Story status updated to Ready."
+
+If the verdict is NEEDS WORK or BLOCKED, **do not change the status** — it
+remains at its current value (typically Todo).
+
+This is the only file write this skill performs. All other checks are read-only.
+
+---
+
 ## 5. Output Format
 
 ### Single story output
@@ -267,7 +281,8 @@ Markdown 编号列表`
 
 ## 6. Collaborative Protocol
 
-This skill is read-only. It never proposes edits or asks to write files.
+This skill only modifies the story file's `status` field (Section 4b). All
+other operations are read-only.
 
 After reporting findings, offer:
 
@@ -275,8 +290,8 @@ After reporting findings, offer:
 draft the missing sections for your approval."
 
 If the user says yes for a specific story, draft only the missing sections
-in conversation. Do not use Write or Edit tools — the user (or
-`/create-stories`) handles writing.
+in conversation. The user (or `/create-stories`) handles writing the
+content changes.
 
 **Redirect rules:**
 - If a story file does not exist at all: "This story file is missing entirely.

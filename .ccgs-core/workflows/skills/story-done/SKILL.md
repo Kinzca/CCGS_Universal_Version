@@ -327,7 +327,23 @@ the completion notes?"
 If yes, edit the story file:
 
 1. Update the status field: `Status: Complete`
-2. Add a `## Completion Notes` section at the bottom:
+
+2. **Sync Acceptance Criteria checkboxes with Phase 3 verification results:**
+
+   For each acceptance criterion in the story's `## Acceptance Criteria` section,
+   apply the verification result from Phase 3:
+
+   - **PASS** (auto-verified or manually confirmed "Yes"): change `- [ ]` to `- [x]`
+   - **FAIL**: leave as `- [ ]` — do NOT check failed criteria
+   - **DEFERRED** (requires playtest): leave as `- [ ]` — do NOT check unverified criteria
+
+   > **CRITICAL**: Never bulk-check all criteria without verification. Each
+   > `- [x]` must correspond to a specific passing result from Phase 3. A
+   > checked box is a factual assertion that the criterion was verified and
+   > passed — not a hopeful estimate. The STORY ACCEPTANCE MATRIX on the
+   > Dashboard reads these checkboxes directly to render ✅/❌ status.
+
+3. Add a `## Completion Notes` section at the bottom:
 
 Markdown 编号列表`markdown
 ## Completion Notes
@@ -338,10 +354,11 @@ Markdown 编号列表`markdown
 **Code Review**: [Pending / Complete / Skipped]
 Markdown 编号列表`
 
-3. If advisory deviations exist, ask: "Should I log these as tech debt in
+
+4. If advisory deviations exist, ask: "Should I log these as tech debt in
    `docs/tech-debt-register.md`?"
 
-4. **Update `CCGS-Data/production/sprint-status.yaml`** (if it exists):
+5. **Update `CCGS-Data/production/sprint-status.yaml`** (if it exists):
    - Find the entry matching this story's file path or ID
    - Set `status: done` and `completed: [today's date]`
    - Update the top-level `updated` field

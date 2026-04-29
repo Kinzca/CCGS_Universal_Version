@@ -132,7 +132,7 @@ def extract_markdown_fields(filepath):
     return result
 
 def normalize_status(raw):
-    """将任意 Markdown status 格式归一化为三态: todo / in_progress / done
+    """将任意 Markdown status 格式归一化为四态: todo / ready / in_progress / done
     
     覆盖的格式方言：
     - 大小写变体: complete / Complete / COMPLETE
@@ -153,11 +153,14 @@ def normalize_status(raw):
     
     done_keywords = ['done', 'complete', 'completed', 'closed', 'verified', 'passed', 'resolved', 'created']
     wip_keywords = ['in progress', 'in_progress', 'doing', 'wip', 'review', 'in review']
+    ready_keywords = ['ready', 'approved', 'assigned']
     
     if any(kw in cleaned for kw in done_keywords):
         return 'done'
     elif any(kw in cleaned for kw in wip_keywords):
         return 'in_progress'
+    elif any(kw in cleaned for kw in ready_keywords):
+        return 'ready'
     else:
         return 'todo'
 

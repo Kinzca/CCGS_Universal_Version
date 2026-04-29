@@ -38,6 +38,20 @@ If not found, ask: "Which story are we implementing?" Glob
 
 ---
 
+## Phase 1b: Mark Story as In Progress
+
+After locating the story file (and before loading full context), update the
+story file's frontmatter status:
+
+1. Change `status:` to `status: "In Progress"`
+2. Confirm in conversation: "Story status updated to In Progress."
+
+This ensures the Dashboard and Sprint tracking accurately reflect that
+implementation has begun. If the status is already "In Progress" or
+"Complete", skip this step silently.
+
+---
+
 ## Phase 2: Load Full Context
 
 **Before loading any context, verify required files exist.** Extract the ADR path from the story's `ADR Governing Implementation` field, then check:
