@@ -197,27 +197,31 @@
 
         // IDE Preference Toggle (D-029)
         const ideToggle = document.getElementById('ide-toggle');
-        const ideBtns = ideToggle.querySelectorAll('span');
-        ideBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                ideBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentIDE = btn.dataset.ide;
-                localStorage.setItem('ccgs_ide_preference', currentIDE);
+        if (ideToggle) {
+            const ideBtns = ideToggle.querySelectorAll('span');
+            ideBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    ideBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentIDE = btn.dataset.ide;
+                    localStorage.setItem('ccgs_ide_preference', currentIDE);
+                });
             });
-        });
+        }
 
         // Default Tab Toggle (D-029)
         const tabToggle = document.getElementById('default-tab-toggle');
-        const tabBtns = tabToggle.querySelectorAll('span');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentDefaultTab = btn.dataset.tab;
-                localStorage.setItem('ccgs_default_tab', currentDefaultTab);
+        if (tabToggle) {
+            const tabBtns = tabToggle.querySelectorAll('span');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDefaultTab = btn.dataset.tab;
+                    localStorage.setItem('ccgs_default_tab', currentDefaultTab);
+                });
             });
-        });
+        }
 
         let failCount = 0;
         const connWarning = document.getElementById('connection-warning');
