@@ -428,13 +428,49 @@ def gather_data():
             print(f"Warning: 无法解析 {latest_gate}: {e}")
             
     data["gate_check"] = gate_data
-    # 7. Parse GDD & Test Coverage (Stubs)
-    tr_registry = os.path.join(DATA_DIR, "project-docs", "architecture", "tr-registry.yaml")
-    if os.path.exists(tr_registry):
-        # Placeholder for actual parsing
-        data["gdd_coverage"]["total"] = 12
-        data["gdd_coverage"]["covered"] = 5
-        data["gdd_coverage"]["percent"] = int((5 / 12) * 100)
+    # 7. Parse GDD
+    gdd_dir = os.path.join(DATA_DIR, "design", "gdd")
+    gdd_files = []
+    total_gdds = 0
+    completed_gdds = 0
+
+    if os.path.exists(gdd_dir):
+        for filename in os.listdir(gdd_dir):
+            if filename.endswith(".md"):
+                file_path = os.path.join(gdd_dir, filename)
+                title = filename.replace(".md", "")
+                chapters = []
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            if line.startswith("# "):
+                                title = line[2:].strip()
+                            elif line.startswith("## "):
+                                chapters.append(line[3:].strip())
+                except Exception as e:
+                    print(f"Warning: Failed to read {filename}: {e}")
+                
+                # Assume standard 4 chapters for 100% completion
+                percent = min(100, int((len(chapters) / 4) * 100))
+                gdd_files.append({
+                    "filename": filename,
+                    "title": title,
+                    "chapters": chapters,
+                    "percent": percent
+                })
+                total_gdds += 1
+                if percent == 100:
+                    completed_gdds += 1
+                    
+        # Sort files alphabetically by filename
+        gdd_files.sort(key=lambda x: x["filename"])
+
+    data["gdd_coverage"] = {
+        "files": gdd_files,
+        "total": total_gdds,
+        "covered": completed_gdds,
+        "percent": int((completed_gdds / total_gdds) * 100) if total_gdds > 0 else 0
+    }
         
     coverage_report = os.path.join(DATA_DIR, "production", "qa", "coverage.txt")
     if os.path.exists(coverage_report):

@@ -318,6 +318,43 @@
                             }, 300);
                         }
                         if(gddMeta) gddMeta.innerHTML = `<strong>${data.gdd_coverage.covered}</strong> / ${data.gdd_coverage.total} TRs`;
+
+                        // Story D-014: Render Design Hub (GDD files)
+                        const designGrid = document.getElementById('design-grid');
+                        const emptyDesign = document.getElementById('empty-design');
+                        if (data.gdd_coverage.files && data.gdd_coverage.files.length > 0) {
+                            if (emptyDesign) emptyDesign.style.display = 'none';
+                            if (designGrid) {
+                                designGrid.style.display = 'grid';
+                                designGrid.innerHTML = data.gdd_coverage.files.map(f => {
+                                    const chaptersHtml = f.chapters && f.chapters.length > 0 
+                                        ? `<div class="gdd-chapters">${f.chapters.map(c => `<div class="gdd-chapter-item"><svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> <span>${c}</span></div>`).join('')}</div>`
+                                        : '';
+                                        
+                                    return `
+                                        <div class="gdd-card">
+                                            <div class="gdd-header">
+                                                <div>
+                                                    <h3 class="gdd-title">${f.title}</h3>
+                                                    <div class="gdd-filename">${f.filename}</div>
+                                                </div>
+                                            </div>
+                                            <div class="gdd-progress-container">
+                                                <div class="gdd-progress-bar" style="width: ${f.percent}%"></div>
+                                            </div>
+                                            <div class="gdd-stats">
+                                                <span>${f.chapters.length} / 4 Chapters</span>
+                                                <span style="color: var(--cyan); font-weight: bold;">${f.percent}%</span>
+                                            </div>
+                                            ${chaptersHtml}
+                                        </div>
+                                    `;
+                                }).join('');
+                            }
+                        } else {
+                            if (emptyDesign) emptyDesign.style.display = 'flex';
+                            if (designGrid) designGrid.style.display = 'none';
+                        }
                     }
                     
                     if(data.test_coverage) {

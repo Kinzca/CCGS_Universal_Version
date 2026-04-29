@@ -204,6 +204,92 @@
             gap: 1.5rem;
         }
 
+        /* Design Grid */
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            align-content: start;
+        }
+
+        .gdd-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .gdd-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -4px var(--shadow-color);
+            border-color: var(--purple);
+        }
+
+        .gdd-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .gdd-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0;
+            word-break: break-all;
+        }
+
+        .gdd-filename {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-family: monospace;
+        }
+
+        .gdd-progress-container {
+            width: 100%;
+            height: 6px;
+            background: var(--ring-empty);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .gdd-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--purple), var(--cyan));
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .gdd-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .gdd-chapters {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--glass-border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        
+        .gdd-chapter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         .card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
