@@ -336,6 +336,10 @@
                             document.getElementById('smart-action-desc').textContent = data.suggested_action.desc;
                             document.getElementById('smart-action-cmd').textContent = data.suggested_action.command;
                             window._currentSmartCommand = data.suggested_action.command;
+                            
+                            // Story D-023: Extract target story ID
+                            const match = data.suggested_action.command.match(/(story-[^/.]+)\.md/i);
+                            window._currentRecommendedStoryId = match ? match[1] : null;
                         }
                     }
                     
@@ -693,6 +697,14 @@
                                         <svg class="kb-lock-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                     </div>
                                 `;
+                            }
+                            
+                            // Story D-023: Apply Focus State
+                            if (window._currentRecommendedStoryId && story.id === window._currentRecommendedStoryId) {
+                                if (!window._dismissedFocusStories) window._dismissedFocusStories = new Set();
+                                if (!window._dismissedFocusStories.has(story.id)) {
+                                    card.classList.add('smart-focus');
+                                }
                             }
                             
                             card.innerHTML = `
@@ -1090,6 +1102,31 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         };
+
+        // Story D-023: Scroll to Recommended Story
+        window.scrollToRecommendedStory = function() {
+            if (!window._currentRecommendedStoryId) return;
+            window.switchView('sprints-view');
+            setTimeout(() => {
+                const targetCard = document.querySelector(`.kanban-card[data-story-id="${window._currentRecommendedStoryId}"]`);
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+        };
+
+        // Story D-023: Dismiss Focus on Interaction
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.kanban-card.smart-focus');
+            if (card) {
+                const storyId = card.dataset.storyId;
+                if (storyId) {
+                    if (!window._dismissedFocusStories) window._dismissedFocusStories = new Set();
+                    window._dismissedFocusStories.add(storyId);
+                    card.classList.remove('smart-focus');
+                }
+            }
+        });
 
         // Smart Action Copy Interaction
         window.copySmartAction = function() {
