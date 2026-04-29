@@ -1740,7 +1740,7 @@ function _generateBugPieChart(crit, med, low) {
     svg += createSlice(crit, '#ef4444', 'Critical', filter === 'All' || filter === 'Critical');
     svg += createSlice(med, '#eab308', 'Medium', filter === 'All' || filter === 'Medium');
     svg += createSlice(low, 'var(--purple)', 'Low', filter === 'All' || filter === 'Low');
-    svg += `<text x="50" y="50" font-family="sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">${total}</text>`;
+    svg += `<text x="50" y="50" font-family="sans-serif" font-size="24" font-weight="bold" fill="var(--text-main)" text-anchor="middle" dominant-baseline="central">${total}</text>`;
     svg += '</svg>';
     return svg;
 }
