@@ -14,6 +14,11 @@ PORT = 8080
 CACHE_TTL = 5
 _last_data_update = 0
 _cached_data = None
+_shockwave_cache = {
+    'mtimes': {},
+    'active': [],
+    'last_head': None
+}
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 CWD = os.getcwd()
 if os.path.exists(os.path.join(CWD, "CCGS-Data")):
@@ -654,7 +659,73 @@ def gather_data():
         except:
             pass
 
-    # 8. 活动时间线 — 通过 git log 采集最近 20 条提交记录
+    # 8.2 冲击波检测 (Shockwave Detection)
+    def detect_shockwaves():
+        global _shockwave_cache
+        try:
+            head_res = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True, cwd=PROJECT_ROOT)
+            current_head = head_res.stdout.strip() if head_res.returncode == 0 else None
+            
+            if current_head != _shockwave_cache['last_head']:
+                _shockwave_cache['mtimes'] = {}
+                _shockwave_cache['last_head'] = current_head
+                
+            gdd_dir = os.path.join(DATA_DIR, "design", "gdd")
+            if not os.path.exists(gdd_dir):
+                return []
+                
+            gdd_files_list = glob.glob(os.path.join(gdd_dir, "*.md"))
+            changed_gdds = []
+            
+            for gdd in gdd_files_list:
+                if "index" in gdd.lower() or "concept" in gdd.lower() or "pillars" in gdd.lower(): continue
+                filename = os.path.basename(gdd)
+                mtime = os.path.getmtime(gdd)
+                if _shockwave_cache['mtimes'].get(filename) != mtime:
+                    _shockwave_cache['mtimes'][filename] = mtime
+                    changed_gdds.append((filename, gdd))
+                    
+            for filename, filepath in changed_gdds:
+                diff_res = subprocess.run(
+                    ['git', 'diff', 'HEAD', '--', filepath],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT
+                )
+                
+                _shockwave_cache['active'] = [sw for sw in _shockwave_cache['active'] if sw['source_gdd'] != filename]
+                
+                if diff_res.stdout.strip():
+                    affected_adrs = []
+                    affected_stories = []
+                    gdd_base = filename.replace('.md', '')
+                    
+                    for adr in adr_files:
+                        if filename in adr.get("associated_gdds", []):
+                            affected_adrs.append(adr["filename"].replace('.md', ''))
+                            
+                    story_files = glob.glob(os.path.join(DATA_DIR, "production", "epics", "**", "story-*.md"), recursive=True)
+                    for story in story_files:
+                        try:
+                            with open(story, 'r', encoding='utf-8') as f:
+                                content = f.read()
+                                if filename in content or gdd_base in content:
+                                    affected_stories.append(os.path.basename(story).replace('.md', ''))
+                        except: pass
+                        
+                    if affected_adrs or affected_stories:
+                        _shockwave_cache['active'].append({
+                            "source_gdd": filename,
+                            "affected_adrs": affected_adrs,
+                            "affected_stories": affected_stories
+                        })
+                        
+            return _shockwave_cache['active']
+        except Exception as e:
+            print(f"Warning: Shockwave detection failed: {e}")
+            return []
+
+    data["shockwaves"] = detect_shockwaves()
+
+    # 8.3 活动时间线 — 通过 git log 采集最近 20 条提交记录
     def collect_activity_timeline():
         """采集项目根目录的 git 提交历史，超时 5s 并完整容错"""
         events = []
