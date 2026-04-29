@@ -166,6 +166,7 @@ def normalize_status(raw):
 
 def gather_data():
     data = {
+        "project_root": PROJECT_ROOT,
         "sprint": {
             "name": "N/A",
             "progress": 0,
@@ -291,6 +292,10 @@ def gather_data():
             "priority": fm.get('priority', 'Medium').capitalize(),
             "status": status,
             "epic": epic_label,
+            "type": fm.get('type', 'Feature'),
+            "owner": fm.get('owner', 'Unassigned'),
+            "estimate": fm.get('estimate', 'N/A'),
+            "phase": fm.get('phase', 'N/A'),
             "dependencies": deps,
             "path": sf,
             "ac_list": ac_list,
@@ -517,6 +522,7 @@ def gather_data():
                 
                 gdd_files.append({
                     "filename": filename,
+                    "path": file_path,
                     "title": title,
                     "chapters": [c["name"] for c in chapters],
                     "total_chapters": total_chaps,
@@ -595,6 +601,7 @@ def gather_data():
                     
                 adr_files.append({
                     "filename": filename,
+                    "path": file_path,
                     "title": title,
                     "status": status,
                     "gdd_count": gdd_count,

@@ -19,6 +19,8 @@
 
                 'flex': 'Flexible', 'std': 'Standard', 'strict': 'Strict',
                 'set_theme': 'Theme Accents', 'set_theme_desc': 'Select the global primary color accent for your project workspace. (Auto-saved)',
+                'set_ide': 'IDE Preference', 'set_ide_desc': 'Choose which IDE to open files in from the Dashboard. (Auto-saved)',
+                'set_default_tab': 'Default Tab', 'set_default_tab_desc': 'Select the default view shown when Dashboard loads. (Auto-saved)',
                 'status_connected': 'Connected', 'status_disconnected': 'Offline', 'warn_disconnected': 'Disconnected from server. Retrying...',
 
                 'no_data': 'No Active Sprint Data', 'empty_bugs': 'All clear! No active bugs.', 'empty_kanban': 'Empty Column',
@@ -43,6 +45,8 @@
 
                 'flex': '宽松', 'std': '标准', 'strict': '严格',
                 'set_theme': '强调色配置', 'set_theme_desc': '为当前的工作空间选择一个专属的霓虹强调色。（已自动保存）',
+                'set_ide': 'IDE 偏好', 'set_ide_desc': '选择从管理面板打开文件时使用的 IDE。（已自动保存）',
+                'set_default_tab': '默认页签', 'set_default_tab_desc': '选择当管理面板加载时默认展示的视图。（已自动保存）',
                 'status_connected': '已连接', 'status_disconnected': '已断开', 'warn_disconnected': '已与服务器断开连接，正在尝试重连...',
 
                 'no_data': '当前无冲刺数据', 'empty_bugs': '完美！无任何待处理缺陷。', 'empty_kanban': '该列暂无任务',
@@ -54,6 +58,8 @@
         let currentLang = localStorage.getItem('ccgs_lang') || 'en';
         let currentMode = localStorage.getItem('ccgs_mode') || 'dark';
         let currentColor = localStorage.getItem('ccgs_color') || '#06B6D4';
+        let currentIDE = localStorage.getItem('ccgs_ide_preference') || 'antigravity';
+        let currentDefaultTab = localStorage.getItem('ccgs_default_tab') || 'dashboard-view';
 
         if (currentMode === 'light') {
             document.body.classList.add('light-mode');
@@ -75,6 +81,21 @@
                 s.classList.remove('active');
                 if(s.dataset.color === currentColor) s.classList.add('active');
             });
+            // IDE 选择器初始化
+            document.querySelectorAll('#ide-toggle span').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.ide === currentIDE) s.classList.add('active');
+            });
+            // 默认页签初始化
+            document.querySelectorAll('#default-tab-toggle span').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.tab === currentDefaultTab) s.classList.add('active');
+            });
+            // 自动跳转到默认页签
+            if (currentDefaultTab && currentDefaultTab !== 'dashboard-view') {
+                const targetNav = document.querySelector(`.nav-item[data-target="${currentDefaultTab}"]`);
+                if (targetNav) targetNav.click();
+            }
             
             // Set initial language strings
             setLang(currentLang);
@@ -171,6 +192,30 @@
                 localStorage.setItem('ccgs_color', color);
                 document.documentElement.style.setProperty('--cyan', color);
                 document.documentElement.style.setProperty('--cyan-glow', color + '66');
+            });
+        });
+
+        // IDE Preference Toggle (D-029)
+        const ideToggle = document.getElementById('ide-toggle');
+        const ideBtns = ideToggle.querySelectorAll('span');
+        ideBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                ideBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentIDE = btn.dataset.ide;
+                localStorage.setItem('ccgs_ide_preference', currentIDE);
+            });
+        });
+
+        // Default Tab Toggle (D-029)
+        const tabToggle = document.getElementById('default-tab-toggle');
+        const tabBtns = tabToggle.querySelectorAll('span');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDefaultTab = btn.dataset.tab;
+                localStorage.setItem('ccgs_default_tab', currentDefaultTab);
             });
         });
 
@@ -1442,9 +1487,38 @@ window.goBackPanel = function(index) {
     window.openUnifiedPanel(target.type, target.payload, target.title, false);
 };
 
+window.getIDEPreference = function() {
+    return localStorage.getItem('ccgs_ide_preference') || 'antigravity';
+};
+
+window.openInIDE = function(absolutePath) {
+    if (!absolutePath) return;
+    const ide = window.getIDEPreference();
+    const url = `${ide}://file${absolutePath}`;
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
 // Content renderers
 function _renderGddContent(gdd) {
     document.getElementById('gdd-sp-filename').textContent = gdd.filename;
+    
+    const ideBtn = document.getElementById('gdd-sp-btn-ide');
+    if (gdd.path) {
+        ideBtn.style.opacity = '';
+        ideBtn.style.pointerEvents = 'auto';
+        ideBtn.onclick = (e) => { e.stopPropagation(); window.openInIDE(gdd.path); };
+    } else {
+        ideBtn.style.opacity = '0.2';
+        ideBtn.style.pointerEvents = 'none';
+        ideBtn.onclick = null;
+    }
+
     document.getElementById('gdd-sp-progress').textContent = gdd.percent + '%';
     document.getElementById('gdd-sp-chapters-count').textContent = gdd.completed_chapters + ' / ' + gdd.total_chapters;
     
@@ -1479,6 +1553,18 @@ function _renderGddContent(gdd) {
 
 function _renderAdrContent(adr) {
     document.getElementById('adr-sp-filename').textContent = adr.filename;
+
+    const ideBtn = document.getElementById('adr-sp-btn-ide');
+    if (adr.path) {
+        ideBtn.style.opacity = '';
+        ideBtn.style.pointerEvents = 'auto';
+        ideBtn.onclick = (e) => { e.stopPropagation(); window.openInIDE(adr.path); };
+    } else {
+        ideBtn.style.opacity = '0.2';
+        ideBtn.style.pointerEvents = 'none';
+        ideBtn.onclick = null;
+    }
+
     const statusEl = document.getElementById('adr-sp-status');
     statusEl.textContent = adr.status;
     if (adr.status === 'Accepted') statusEl.style.color = '#10b981';
@@ -1579,6 +1665,17 @@ function _renderStoryContent(story) {
     const newBtnReview = setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
     setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
     setupCopyBtn(btnPath, path, '🔗 ');
+    
+    const ideBtn = document.getElementById('sp-btn-ide');
+    if (story.path) {
+        ideBtn.style.opacity = '';
+        ideBtn.style.pointerEvents = 'auto';
+        ideBtn.onclick = (e) => { e.stopPropagation(); window.openInIDE(story.path); };
+    } else {
+        ideBtn.style.opacity = '0.2';
+        ideBtn.style.pointerEvents = 'none';
+        ideBtn.onclick = null;
+    }
     
     // 智能推荐
     newBtnReady.classList.remove('recommended');
@@ -1762,6 +1859,17 @@ function _renderBugContent(bug) {
     document.getElementById('bug-sp-priority').innerText = bug.priority;
     document.getElementById('bug-sp-status').innerText = bug.status;
     document.getElementById('bug-sp-filename').innerText = bug.path ? bug.path.split('/').pop() : '-';
+
+    const ideBtn = document.getElementById('bug-sp-btn-ide');
+    if (bug.path) {
+        ideBtn.style.opacity = '';
+        ideBtn.style.pointerEvents = 'auto';
+        ideBtn.onclick = (e) => { e.stopPropagation(); window.openInIDE(bug.path); };
+    } else {
+        ideBtn.style.opacity = '0.2';
+        ideBtn.style.pointerEvents = 'none';
+        ideBtn.onclick = null;
+    }
 }
 
 // Re-route legacy entry points
