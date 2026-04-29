@@ -498,8 +498,8 @@
                         if(stageTracker) stageTracker.style.display = 'none';
                     }
 
-                    // Sprints Kanban
-                    const colTodo = document.getElementById('col-todo');
+                    // Sprints Kanban（三列模型：BACKLOG | IN PROGRESS | DONE）
+                    const colBacklog = document.getElementById('col-backlog');
                     const colInProg = document.getElementById('col-inprogress');
                     const colDone = document.getElementById('col-done');
                     const kanbanBoard = document.getElementById('kanban-board');
@@ -508,7 +508,7 @@
                     if (data.stories && data.stories.length > 0) {
                         if(kanbanBoard) kanbanBoard.style.display = 'grid';
                         if(sprintsEmpty) sprintsEmpty.style.display = 'none';
-                        colTodo.innerHTML = ''; colInProg.innerHTML = ''; colDone.innerHTML = '';
+                        colBacklog.innerHTML = ''; colInProg.innerHTML = ''; colDone.innerHTML = '';
                         
                         // --- Story D-034: Global Topological Sorting (with ID Priority) ---
                         const inDegree = new Map();
@@ -569,7 +569,7 @@
                             return idA - idB;
                         });
 
-                        let lastEpicTodo = null;
+                        let lastEpicBacklog = null;
                         let lastEpicInProg = null;
                         let lastEpicDone = null;
                         // --- End D-034 Sort Logic ---
@@ -586,11 +586,14 @@
                             
                             // 状态色：根据分列状态设置左边框颜色
                             const status = story.status;
+                            const lowerStatus = status.toLowerCase();
                             let statusColor = 'var(--cyan)';  // 默认 TODO
-                            if (['done', 'completed', 'closed', 'verified'].includes(status)) {
+                            if (['done', 'completed', 'closed', 'verified'].includes(lowerStatus)) {
                                 statusColor = '#10b981';
-                            } else if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(status)) {
+                            } else if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(lowerStatus)) {
                                 statusColor = 'var(--purple)';
+                            } else if (['ready', 'approved', 'assigned'].includes(lowerStatus)) {
+                                statusColor = '#3B82F6';
                             }
                             card.style.borderLeft = `4px solid ${statusColor}`;
                             
@@ -601,7 +604,9 @@
                             
                             // 依赖检查 (Story D-032 / UX Fix)
                             const incompleteDeps = [];
-                            const isSelfDone = ['done', 'completed', 'closed', 'verified'].includes(story.status.toLowerCase());
+                            const isSelfDone = ['done', 'completed', 'closed', 'verified'].includes(lowerStatus);
+                            const isSelfInProgress = ['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(lowerStatus);
+                            const isSelfReady = ['ready', 'approved', 'assigned'].includes(lowerStatus);
                             if (!isSelfDone && story.dependencies && story.dependencies.length > 0) {
                                 story.dependencies.forEach(depId => {
                                     const depStory = data.stories.find(s => s.id === depId);
@@ -610,20 +615,32 @@
                                     }
                                 });
                             }
-                            const isLocked = incompleteDeps.length > 0;
+                            const hasDepLock = incompleteDeps.length > 0;
+                            // TODO 状态的卡片也视为锁定（需先执行 /story-readiness）
+                            const isTodoLock = !isSelfDone && !isSelfInProgress && !isSelfReady && !hasDepLock;
+                            const isLocked = hasDepLock || isTodoLock;
                             
                             if (isLocked) {
                                 card.classList.add('kb-locked');
                                 card.draggable = false;
                                 card.dataset.locked = 'true';
-                                card.dataset.incompleteDeps = JSON.stringify(incompleteDeps);
+                                if (hasDepLock) {
+                                    card.dataset.incompleteDeps = JSON.stringify(incompleteDeps);
+                                    card.dataset.lockReason = 'dependency';
+                                } else {
+                                    card.dataset.lockReason = 'todo';
+                                }
                             }
                             card.dataset.allDeps = JSON.stringify(story.dependencies || []);
 
+                            // 锁图标：依赖锁和 TODO 锁使用相同 🔒 视觉，仅 Tooltip 不同
                             let lockHtml = '';
                             if (isLocked) {
+                                const lockTooltip = hasDepLock
+                                    ? '存在未完成的前置依赖'
+                                    : '需要先执行 /story-readiness 通过就绪检查';
                                 lockHtml = `
-                                    <div class="kb-lock-icon-container" title="存在未完成的依赖">
+                                    <div class="kb-lock-icon-container" title="${lockTooltip}">
                                         <svg class="kb-lock-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                     </div>
                                 `;
@@ -647,16 +664,11 @@
                                 </div>
                             `;
                             
-                            // 📋 复制按钮：点击复制该卡片对应的 Skill 指令
+                            // 📋 复制按钮：根据 Story 当前状态智能推荐最合适的 Skill 指令
                             const copyBtn = card.querySelector('.kb-copy-btn');
                             copyBtn.addEventListener('click', function(e) {
                                 e.stopPropagation();
-                                // 根据卡片当前所在列决定指令
-                                const parent = card.parentElement;
-                                let col = 'todo';
-                                if (parent && parent.id === 'col-inprogress') col = 'inprogress';
-                                else if (parent && parent.id === 'col-done') col = 'done';
-                                const cmd = _getSkillCommand(story.id, col);
+                                const cmd = _getRecommendedCommand(story.id, story.status);
                                 navigator.clipboard.writeText(cmd).then(() => {
                                     window.showToast('📋 ' + cmd, 'success');
                                     // 按钮微动效：短暂变为 ✅
@@ -783,9 +795,10 @@
                                 if (lastEpicInProg !== null && lastEpicInProg !== epicFull) needsSeparator = true;
                                 lastEpicInProg = epicFull;
                             } else {
-                                targetEl = colTodo;
-                                if (lastEpicTodo !== null && lastEpicTodo !== epicFull) needsSeparator = true;
-                                lastEpicTodo = epicFull;
+                                // BACKLOG 列：合并 todo + ready
+                                targetEl = colBacklog;
+                                if (lastEpicBacklog !== null && lastEpicBacklog !== epicFull) needsSeparator = true;
+                                lastEpicBacklog = epicFull;
                             }
 
                             if (needsSeparator) {
@@ -800,7 +813,7 @@
                         });
                         
                         // 为三列容器绑定 dragover/dragleave/drop 事件
-                        _setupDropZone(colTodo, 'todo');
+                        _setupDropZone(colBacklog, 'backlog');
                         _setupDropZone(colInProg, 'inprogress');
                         _setupDropZone(colDone, 'done');
                         
@@ -886,11 +899,12 @@
         fetchData();
         setInterval(fetchData, 30000);
 
-        // 拖拽辅助：根据 story.status 判断卡片应归属的列
+        // 列归属：根据 story.status 判断卡片应归属的列（三列模型）
         function _getColumnForStatus(status) {
-            if (['done', 'completed', 'closed', 'verified'].includes(status)) return 'done';
-            if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(status)) return 'inprogress';
-            return 'todo';
+            const lowerStatus = status.toLowerCase();
+            if (['done', 'completed', 'closed', 'verified'].includes(lowerStatus)) return 'done';
+            if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(lowerStatus)) return 'inprogress';
+            return 'backlog'; // todo + ready 合并到 BACKLOG 列
         }
 
         // 拖拽辅助：根据目标列生成对应的 Skill 指令
@@ -899,6 +913,16 @@
             if (targetCol === 'inprogress') return '/dev-story ' + path;
             if (targetCol === 'done') return '/story-done ' + path;
             return '/story-readiness ' + path;
+        }
+
+        // 智能推荐：根据 Story 当前状态推荐最合适的下一步 Skill 指令
+        function _getRecommendedCommand(storyId, status) {
+            const path = 'CCGS-Data/production/epics/**/' + storyId + '.md';
+            const ls = status.toLowerCase();
+            if (['done', 'completed', 'closed', 'verified'].includes(ls)) return '/code-review ' + path;
+            if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(ls)) return '/story-done ' + path;
+            if (['ready', 'approved', 'assigned'].includes(ls)) return '/dev-story ' + path;
+            return '/story-readiness ' + path; // todo → 先做就绪检查
         }
 
         // 拖拽辅助：为列容器绑定 drop zone 事件
@@ -1288,7 +1312,7 @@
             });
 
             // Update columns empty state
-            ['todo', 'inprogress', 'done'].forEach(colId => {
+            ['backlog', 'inprogress', 'done'].forEach(colId => {
                 const colBody = document.getElementById('col-' + colId);
                 if (colBody) {
                     // Remove existing empty message if any
@@ -1604,14 +1628,33 @@ function _renderStoryContent(story) {
                 window.showToast('剪贴板写入失败', 'info');
             });
         });
+        return newBtn;
     };
     
     const path = `CCGS-Data/production/epics/**/${story.id}.md`;
-    setupCopyBtn(btnReady, `/story-readiness ${path}`, '🔍 ');
-    setupCopyBtn(btnDev, `/dev-story ${path}`, '▶️ ');
-    setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
+    const newBtnReady = setupCopyBtn(btnReady, `/story-readiness ${path}`, '🔍 ');
+    const newBtnDev = setupCopyBtn(btnDev, `/dev-story ${path}`, '▶️ ');
+    const newBtnReview = setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
     setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
     setupCopyBtn(btnPath, path, '🔗 ');
+    
+    // 智能推荐：根据 Story 当前状态高亮最合适的下一步按钮
+    const ls = story.status.toLowerCase();
+    newBtnReady.classList.remove('recommended');
+    newBtnDev.classList.remove('recommended');
+    newBtnReview.classList.remove('recommended');
+    
+    if (['done', 'completed', 'closed', 'verified'].includes(ls)) {
+        // 已完成 → 推荐 code-review（复用 review 按钮）
+        newBtnReview.classList.add('recommended');
+    } else if (['in progress', 'in_progress', 'doing', 'wip', 'review'].includes(ls)) {
+        newBtnReview.classList.add('recommended');
+    } else if (['ready', 'approved', 'assigned'].includes(ls)) {
+        newBtnDev.classList.add('recommended');
+    } else {
+        // todo → 推荐 story-readiness
+        newBtnReady.classList.add('recommended');
+    }
 }
 
 window._currentBugFilter = 'All';
