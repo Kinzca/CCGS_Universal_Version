@@ -1508,8 +1508,7 @@ body.light-mode .kanban-col-empty-msg { color: var(--text-color-muted-light); }
     border-top-color: var(--cyan);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    position: absolute;
-    right: 16px;
+    flex-shrink: 0;
 }
 .shortcut-hint {
     background: #f3f4f6;
