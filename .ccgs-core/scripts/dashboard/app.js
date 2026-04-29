@@ -349,7 +349,12 @@
                         const banner = document.getElementById('smart-banner');
                         if(banner) {
                             banner.style.display = 'flex';
-                            document.getElementById('smart-action-desc').textContent = data.suggested_action.desc;
+                            const inputElem = document.getElementById('smart-action-input');
+                            if (inputElem) {
+                                inputElem.placeholder = data.suggested_action.desc;
+                                // Save default in case the input is cleared
+                                window._defaultSmartCommand = data.suggested_action.command;
+                            }
                             document.getElementById('smart-action-cmd').textContent = data.suggested_action.command;
                             window._currentSmartCommand = data.suggested_action.command;
                             
@@ -2563,6 +2568,77 @@ window._renderStoryMatrix = function(forcedEpic) {
                 }
                 e.preventDefault();
             }
+        });
+    })();
+
+    // --- Story D-028: Fast Triage Input ---
+    (function initSmartInput() {
+        const SKILL_MAP = [
+            { keywords: ['bug', '缺陷', '报错', 'error'], command: '/bug-report' },
+            { keywords: ['design', '设计', 'gdd', '概念'], command: '/design-system' },
+            { keywords: ['brainstorm', '头脑风暴', '想法', 'idea'], command: '/brainstorm' },
+            { keywords: ['arch', '架构', 'adr', '决策'], command: '/architecture-decision' },
+            { keywords: ['epic', '史诗', '阶段'], command: '/create-epics' },
+            { keywords: ['story', '故事', '任务', '拆分'], command: '/create-stories' },
+            { keywords: ['dev', '开发', '编码', '实现'], command: '/dev-story' },
+            { keywords: ['review', '审查', '代码审查', 'cr'], command: '/code-review' },
+            { keywords: ['qa', '测试', '验证', '用例'], command: '/team-qa' },
+            { keywords: ['help', '帮助', '求助', 'sos'], command: '/help' },
+            { keywords: ['status', '状态', '进度', 'sprint'], command: '/sprint-status' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputElem = document.getElementById('smart-action-input');
+            const cmdElem = document.getElementById('smart-action-cmd');
+            const copyBtn = document.getElementById('smart-copy-btn');
+            
+            if (!inputElem || !cmdElem || !copyBtn) return;
+
+            // Handle '/' to focus
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement !== inputElem) {
+                    const banner = document.getElementById('smart-banner');
+                    if (banner && banner.style.display !== 'none') {
+                        inputElem.focus();
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            // Handle typing to match keywords
+            inputElem.addEventListener('input', (e) => {
+                const val = e.target.value.toLowerCase().trim();
+                
+                if (!val) {
+                    // Revert to default
+                    cmdElem.textContent = window._defaultSmartCommand || '/help';
+                    window._currentSmartCommand = window._defaultSmartCommand || '/help';
+                    return;
+                }
+
+                // Find best match
+                let bestMatch = '/help'; // fallback
+                for (const rule of SKILL_MAP) {
+                    if (rule.keywords.some(kw => val.includes(kw))) {
+                        bestMatch = rule.command;
+                        break; // pick the first matched rule
+                    }
+                }
+                
+                cmdElem.textContent = bestMatch;
+                window._currentSmartCommand = bestMatch;
+            });
+
+            // Handle Enter to submit (copy)
+            inputElem.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    copyBtn.click();
+                    inputElem.blur();
+                } else if (e.key === 'Escape') {
+                    inputElem.blur();
+                }
+            });
         });
     })();
 })();

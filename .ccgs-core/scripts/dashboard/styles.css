@@ -745,6 +745,16 @@
         .smart-desc {
             font-size: 0.95rem; font-weight: 500; color: var(--text-main);
         }
+        .smart-desc-input {
+            font-size: 0.95rem; font-weight: 500; color: var(--text-main);
+            background: transparent; border: none; outline: none;
+            width: 100%; min-width: 300px;
+            font-family: inherit;
+        }
+        .smart-desc-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.8;
+        }
         .smart-btn {
             background: var(--bg-card); border: 1px solid var(--glass-border);
             border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-main);
