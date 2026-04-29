@@ -332,7 +332,8 @@ def gather_data():
                 "id": name, 
                 "title": title, 
                 "priority": priority, 
-                "status": status
+                "status": status,
+                "path": bf
             })
             
     # Sort bugs by priority: Critical > High > Medium > Low

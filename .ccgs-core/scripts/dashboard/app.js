@@ -817,53 +817,19 @@
                     }
                     
                     // Active Bugs Triage
-                    const triageRows = document.getElementById('triage-rows');
+                    window._allBugs = data.bugs || [];
                     const qualityContent = document.getElementById('quality-content');
                     const qualityEmpty = document.getElementById('quality-empty');
-                    let countCrit = 0, countMed = 0, countLow = 0;
                     
-                    if (!data.bugs || data.bugs.length === 0 || data.bugs[0].id === 'CLEAN') {
+                    if (window._allBugs.length === 0 || window._allBugs[0].id === 'CLEAN') {
                         document.getElementById('qh-total').textContent = 0;
                         if(qualityContent) qualityContent.style.display = 'none';
                         if(qualityEmpty) qualityEmpty.style.display = 'flex';
                     } else {
-                        document.getElementById('qh-total').textContent = data.bugs.length;
                         if(qualityContent) qualityContent.style.display = 'contents';
                         if(qualityEmpty) qualityEmpty.style.display = 'none';
-                        triageRows.innerHTML = '';
-                        
-                        data.bugs.forEach(bug => {
-                            let borderClass = 'border-purple';
-                            let prioClass = 'priority-low';
-                            const p = bug.priority.toLowerCase();
-                            
-                            if (p === 'critical' || p === 'high') {
-                                borderClass = 'border-red';
-                                prioClass = 'priority-high';
-                                countCrit++;
-                            } else if (p === 'medium') {
-                                borderClass = 'border-yellow';
-                                prioClass = 'priority-low';
-                                countMed++;
-                            } else {
-                                countLow++;
-                            }
-
-                            const row = document.createElement('div');
-                            row.className = `triage-row ${borderClass}`;
-                            row.innerHTML = `
-                                <div class="tr-id">${bug.id}</div>
-                                <div><span class="bug-priority ${prioClass}">${bug.priority}</span></div>
-                                <div class="tr-title">${bug.title}</div>
-                                <div class="tr-status">${bug.status}</div>
-                                <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">TD</div>
-                            `;
-                            triageRows.appendChild(row);
-                        });
+                        window._renderBugsTriage();
                     }
-                    document.getElementById('qh-critical').textContent = countCrit;
-                    document.getElementById('qh-medium').textContent = countMed;
-                    document.getElementById('qh-low').textContent = countLow;
 
                     // Activity Timeline 渲染
                     const timelineCard = document.getElementById('activity-timeline-card');
@@ -1516,7 +1482,7 @@ window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
     document.getElementById('unified-sp-title').textContent = title;
     
     // Hide all templates
-    const templates = ['gdd', 'adr', 'story'];
+    const templates = ['gdd', 'adr', 'story', 'bug'];
     templates.forEach(t => {
         const el = document.getElementById(`sp-content-${t}`);
         if (el) el.style.display = 'none';
@@ -1531,6 +1497,9 @@ window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
     } else if (type === 'story') {
         document.getElementById('sp-content-story').style.display = 'block';
         _renderStoryContent(payload);
+    } else if (type === 'bug') {
+        document.getElementById('sp-content-bug').style.display = 'block';
+        _renderBugContent(payload);
     }
     
     const overlay = document.getElementById('unified-panel-overlay');
@@ -1641,6 +1610,143 @@ function _renderStoryContent(story) {
     setupCopyBtn(btnReview, `/story-done ${path}`, '✅ ');
     setupCopyBtn(btnBranch, `feature/${story.id}`, '🌿 ');
     setupCopyBtn(btnPath, path, '🔗 ');
+}
+
+window._currentBugFilter = 'All';
+
+window._filterBugs = function(level) {
+    if (window._currentBugFilter === level) {
+        window._currentBugFilter = 'All';
+    } else {
+        window._currentBugFilter = level;
+    }
+    
+    const banner = document.getElementById('bug-filter-banner');
+    const nameEl = document.getElementById('bug-filter-name');
+    if (window._currentBugFilter === 'All') {
+        if (banner) banner.style.display = 'none';
+    } else {
+        if (banner) banner.style.display = 'block';
+        if (nameEl) nameEl.textContent = window._currentBugFilter;
+    }
+    
+    window._renderBugsTriage();
+};
+
+window._renderBugsTriage = function() {
+    const triageRows = document.getElementById('triage-rows');
+    const pieContainer = document.getElementById('bug-pie-chart-container');
+    
+    if (!triageRows || !window._allBugs) return;
+    
+    let countCrit = 0, countMed = 0, countLow = 0;
+    
+    window._allBugs.forEach(bug => {
+        const p = bug.priority.toLowerCase();
+        if (p === 'critical' || p === 'high') countCrit++;
+        else if (p === 'medium') countMed++;
+        else countLow++;
+    });
+    
+    const elQhTotal = document.getElementById('qh-total');
+    if(elQhTotal) elQhTotal.textContent = window._allBugs.length;
+    const elQhCrit = document.getElementById('qh-critical');
+    if(elQhCrit) elQhCrit.textContent = countCrit;
+    const elQhMed = document.getElementById('qh-medium');
+    if(elQhMed) elQhMed.textContent = countMed;
+    const elQhLow = document.getElementById('qh-low');
+    if(elQhLow) elQhLow.textContent = countLow;
+    
+    if (pieContainer) {
+        pieContainer.innerHTML = _generateBugPieChart(countCrit, countMed, countLow);
+    }
+    
+    triageRows.innerHTML = '';
+    
+    const filteredBugs = window._allBugs.filter(bug => {
+        if (window._currentBugFilter === 'All') return true;
+        const p = bug.priority.toLowerCase();
+        if (window._currentBugFilter === 'Critical' && (p === 'critical' || p === 'high')) return true;
+        if (window._currentBugFilter === 'Medium' && p === 'medium') return true;
+        if (window._currentBugFilter === 'Low' && p !== 'critical' && p !== 'high' && p !== 'medium') return true;
+        return false;
+    });
+    
+    filteredBugs.forEach(bug => {
+        let borderClass = 'border-purple';
+        let prioClass = 'priority-low';
+        const p = bug.priority.toLowerCase();
+        
+        if (p === 'critical' || p === 'high') {
+            borderClass = 'border-red';
+            prioClass = 'priority-high';
+        } else if (p === 'medium') {
+            borderClass = 'border-yellow';
+            prioClass = 'priority-low';
+        }
+
+        const row = document.createElement('div');
+        row.className = `triage-row ${borderClass}`;
+        row.style.cursor = 'pointer';
+        row.onclick = () => window.openUnifiedPanel('bug', bug, `Bug: ${bug.title}`);
+        row.innerHTML = `
+            <div class="tr-id">${bug.id}</div>
+            <div><span class="bug-priority ${prioClass}">${bug.priority}</span></div>
+            <div class="tr-title">${bug.title}</div>
+            <div class="tr-status">${bug.status}</div>
+            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">QA</div>
+        `;
+        triageRows.appendChild(row);
+    });
+};
+
+function _generateBugPieChart(crit, med, low) {
+    const total = crit + med + low;
+    if (total === 0) return '<svg width="140" height="140" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--glass-border)" stroke-width="20" /></svg>';
+    
+    let currentAngle = -90;
+    
+    function createSlice(value, color, label, isTargetFilter) {
+        if (value === 0) return '';
+        if (value === total) {
+            const opacity = isTargetFilter ? '1' : '0.8';
+            return `<circle cx="50" cy="50" r="40" fill="transparent" stroke="${color}" stroke-width="20" cursor="pointer" onclick="window._filterBugs('${label}')" style="opacity: ${opacity}; transition: opacity 0.2s;" onmouseover="this.style.opacity=1;" onmouseout="this.style.opacity=${opacity};" />`;
+        }
+        
+        const sliceAngle = (value / total) * 360;
+        const startAngle = currentAngle;
+        const endAngle = currentAngle + sliceAngle;
+        
+        const x1 = 50 + 40 * Math.cos(Math.PI * startAngle / 180);
+        const y1 = 50 + 40 * Math.sin(Math.PI * startAngle / 180);
+        
+        const x2 = 50 + 40 * Math.cos(Math.PI * endAngle / 180);
+        const y2 = 50 + 40 * Math.sin(Math.PI * endAngle / 180);
+        
+        const largeArcFlag = sliceAngle > 180 ? 1 : 0;
+        
+        const d = `M ${x1} ${y1} A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2}`;
+        
+        currentAngle += sliceAngle;
+        
+        const opacity = isTargetFilter ? '1' : '0.8';
+        return `<path d="${d}" fill="transparent" stroke="${color}" stroke-width="20" cursor="pointer" onclick="window._filterBugs('${label}')" class="pie-slice" style="opacity: ${opacity}; transition: opacity 0.2s;" onmouseover="this.style.opacity=1;" onmouseout="this.style.opacity=${opacity};" />`;
+    }
+    
+    const filter = window._currentBugFilter;
+    let svg = '<svg width="140" height="140" viewBox="0 0 100 100">';
+    svg += createSlice(crit, '#ef4444', 'Critical', filter === 'All' || filter === 'Critical');
+    svg += createSlice(med, '#eab308', 'Medium', filter === 'All' || filter === 'Medium');
+    svg += createSlice(low, 'var(--purple)', 'Low', filter === 'All' || filter === 'Low');
+    svg += '</svg>';
+    return svg;
+}
+
+function _renderBugContent(bug) {
+    document.getElementById('bug-sp-id').innerText = bug.id;
+    document.getElementById('bug-sp-priority').innerText = bug.priority;
+    document.getElementById('bug-sp-status').innerText = bug.status;
+    document.getElementById('bug-sp-filename').innerText = bug.path ? bug.path.split('/').pop() : '-';
 }
 
 // Re-route legacy entry points
