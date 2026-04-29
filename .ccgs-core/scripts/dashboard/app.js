@@ -47,6 +47,7 @@
                 'set_theme': '强调色配置', 'set_theme_desc': '为当前的工作空间选择一个专属的霓虹强调色。（已自动保存）',
                 'set_ide': 'IDE 偏好', 'set_ide_desc': '选择从管理面板打开文件时使用的 IDE。（已自动保存）',
                 'set_default_tab': '默认页签', 'set_default_tab_desc': '选择当管理面板加载时默认展示的视图。（已自动保存）',
+                'set_visual_style': '视觉风格', 'set_visual_style_desc': '在经典风格和毛玻璃风格之间切换。（已自动保存）',
                 'status_connected': '已连接', 'status_disconnected': '已断开', 'warn_disconnected': '已与服务器断开连接，正在尝试重连...',
 
                 'no_data': '当前无冲刺数据', 'empty_bugs': '完美！无任何待处理缺陷。', 'empty_kanban': '该列暂无任务',
@@ -60,9 +61,14 @@
         let currentColor = localStorage.getItem('ccgs_color') || '#06B6D4';
         let currentIDE = localStorage.getItem('ccgs_ide_preference') || 'antigravity';
         let currentDefaultTab = localStorage.getItem('ccgs_default_tab') || 'dashboard-view';
+        let currentVisualStyle = localStorage.getItem('ccgs_visual_style') || 'classic';
 
         if (currentMode === 'light') {
             document.body.classList.add('light-mode');
+        }
+        // 页面加载时立即应用视觉风格（避免闪烁）
+        if (currentVisualStyle === 'glass') {
+            document.body.classList.add('style-glass');
         }
         document.documentElement.style.setProperty('--cyan', currentColor);
         document.documentElement.style.setProperty('--cyan-glow', currentColor + '66');
@@ -90,6 +96,11 @@
             document.querySelectorAll('#default-tab-toggle span').forEach(s => {
                 s.classList.remove('active');
                 if(s.dataset.tab === currentDefaultTab) s.classList.add('active');
+            });
+            // 视觉风格初始化
+            document.querySelectorAll('#visual-style-toggle span').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.style === currentVisualStyle) s.classList.add('active');
             });
             // 自动跳转到默认页签
             if (currentDefaultTab && currentDefaultTab !== 'dashboard-view') {
@@ -219,6 +230,26 @@
                     btn.classList.add('active');
                     currentDefaultTab = btn.dataset.tab;
                     localStorage.setItem('ccgs_default_tab', currentDefaultTab);
+                });
+            });
+        }
+
+        // Visual Style Toggle (D-030)
+        const styleToggle = document.getElementById('visual-style-toggle');
+        if (styleToggle) {
+            const styleBtns = styleToggle.querySelectorAll('span');
+            styleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    styleBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentVisualStyle = btn.dataset.style;
+                    localStorage.setItem('ccgs_visual_style', currentVisualStyle);
+                    // 切换 body class
+                    if (currentVisualStyle === 'glass') {
+                        document.body.classList.add('style-glass');
+                    } else {
+                        document.body.classList.remove('style-glass');
+                    }
                 });
             });
         }
