@@ -61,15 +61,12 @@
         let currentColor = localStorage.getItem('ccgs_color') || '#06B6D4';
         let currentIDE = localStorage.getItem('ccgs_ide_preference') || 'antigravity';
         let currentDefaultTab = localStorage.getItem('ccgs_default_tab') || 'dashboard-view';
-        let currentVisualStyle = localStorage.getItem('ccgs_visual_style') || 'classic';
 
         if (currentMode === 'light') {
             document.body.classList.add('light-mode');
         }
-        // 页面加载时立即应用视觉风格（避免闪烁）
-        if (currentVisualStyle === 'glass') {
-            document.body.classList.add('style-glass');
-        }
+        // 直接应用毛玻璃风格（D-030）
+        document.body.classList.add('style-glass');
         document.documentElement.style.setProperty('--cyan', currentColor);
         document.documentElement.style.setProperty('--cyan-glow', currentColor + '66');
         
@@ -96,11 +93,6 @@
             document.querySelectorAll('#default-tab-toggle span').forEach(s => {
                 s.classList.remove('active');
                 if(s.dataset.tab === currentDefaultTab) s.classList.add('active');
-            });
-            // 视觉风格初始化
-            document.querySelectorAll('#visual-style-toggle span').forEach(s => {
-                s.classList.remove('active');
-                if(s.dataset.style === currentVisualStyle) s.classList.add('active');
             });
             // 自动跳转到默认页签
             if (currentDefaultTab && currentDefaultTab !== 'dashboard-view') {
@@ -230,26 +222,6 @@
                     btn.classList.add('active');
                     currentDefaultTab = btn.dataset.tab;
                     localStorage.setItem('ccgs_default_tab', currentDefaultTab);
-                });
-            });
-        }
-
-        // Visual Style Toggle (D-030)
-        const styleToggle = document.getElementById('visual-style-toggle');
-        if (styleToggle) {
-            const styleBtns = styleToggle.querySelectorAll('span');
-            styleBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    styleBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentVisualStyle = btn.dataset.style;
-                    localStorage.setItem('ccgs_visual_style', currentVisualStyle);
-                    // 切换 body class
-                    if (currentVisualStyle === 'glass') {
-                        document.body.classList.add('style-glass');
-                    } else {
-                        document.body.classList.remove('style-glass');
-                    }
                 });
             });
         }
