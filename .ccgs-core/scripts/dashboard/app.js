@@ -2387,8 +2387,10 @@ window._renderStoryMatrix = function(forcedEpic) {
         };
 
         document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+
             // 放行 / 键，但不阻止默认行为 (预留给D-028)
-            if (e.key === '/') return;
+            if (key === '/') return;
 
             const searchModal = document.getElementById('search-modal');
             if (searchModal && searchModal.classList.contains('open')) {
@@ -2398,7 +2400,7 @@ window._renderStoryMatrix = function(forcedEpic) {
 
             const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
             if (isInput) {
-                if (e.key === 'Escape') {
+                if (key === 'escape') {
                     document.activeElement.blur();
                     return;
                 }
@@ -2407,7 +2409,7 @@ window._renderStoryMatrix = function(forcedEpic) {
             }
 
             // ? Help Modal toggle
-            if (e.key === '?') {
+            if (key === '?') {
                 const helpModal = document.getElementById('kb-help-modal');
                 if (helpModal) {
                     if (helpModal.style.display === 'flex') {
@@ -2421,7 +2423,7 @@ window._renderStoryMatrix = function(forcedEpic) {
             }
 
             // Esc
-            if (e.key === 'Escape') {
+            if (key === 'escape') {
                 const helpModal = document.getElementById('kb-help-modal');
                 if (helpModal && helpModal.style.display === 'flex') {
                     helpModal.style.display = 'none';
@@ -2439,9 +2441,9 @@ window._renderStoryMatrix = function(forcedEpic) {
             if (document.body.classList.contains('panel-open')) return;
 
             // 1-4 Tabs
-            if (e.key >= '1' && e.key <= '4') {
+            if (key >= '1' && key <= '4') {
                 const views = ['dashboard-view', 'design-view', 'sprints-view', 'quality-view'];
-                const idx = parseInt(e.key) - 1;
+                const idx = parseInt(key) - 1;
                 window.switchView(views[idx]);
                 e.preventDefault();
                 return;
@@ -2450,7 +2452,7 @@ window._renderStoryMatrix = function(forcedEpic) {
             const currentViewId = getCurrentViewId();
 
             // J/K
-            if (e.key === 'j' || e.key === 'k') {
+            if (key === 'j' || key === 'k') {
                 if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view') return;
                 
                 focusedElements = getItems();
@@ -2459,8 +2461,8 @@ window._renderStoryMatrix = function(forcedEpic) {
                 if (focusedIndex === -1) {
                     focusedIndex = 0;
                 } else {
-                    if (e.key === 'j') focusedIndex = Math.min(focusedIndex + 1, focusedElements.length - 1);
-                    if (e.key === 'k') focusedIndex = Math.max(focusedIndex - 1, 0);
+                    if (key === 'j') focusedIndex = Math.min(focusedIndex + 1, focusedElements.length - 1);
+                    if (key === 'k') focusedIndex = Math.max(focusedIndex - 1, 0);
                 }
                 updateFocusUI();
                 e.preventDefault();
@@ -2468,7 +2470,7 @@ window._renderStoryMatrix = function(forcedEpic) {
             }
 
             // Enter, D, R
-            if (e.key === 'Enter' || e.key === 'd' || e.key === 'r') {
+            if (key === 'enter' || key === 'd' || key === 'r') {
                 if (currentViewId !== 'sprints-view' && currentViewId !== 'quality-view') return;
 
                 let target = null;
@@ -2486,17 +2488,17 @@ window._renderStoryMatrix = function(forcedEpic) {
 
                 if (currentViewId === 'sprints-view') {
                     const storyId = target.dataset.storyId;
-                    if (e.key === 'Enter') {
+                    if (key === 'enter') {
                         const copyBtn = target.querySelector('.kb-copy-btn');
                         if (copyBtn) copyBtn.click();
                         window._dismissSmartFocus(storyId);
-                    } else if (e.key === 'd') {
+                    } else if (key === 'd') {
                         const cmd = `/dev-story CCGS-Data/production/epics/**/${storyId}.md`;
                         navigator.clipboard.writeText(cmd).then(() => {
                             window.showToast('📋 ' + cmd, 'success');
                             window._dismissSmartFocus(storyId);
                         });
-                    } else if (e.key === 'r') {
+                    } else if (key === 'r') {
                         const cmd = `/code-review CCGS-Data/production/epics/**/${storyId}.md`;
                         navigator.clipboard.writeText(cmd).then(() => {
                             window.showToast('📋 ' + cmd, 'success');
@@ -2504,9 +2506,9 @@ window._renderStoryMatrix = function(forcedEpic) {
                         });
                     }
                 } else if (currentViewId === 'quality-view') {
-                    if (e.key === 'Enter') {
+                    if (key === 'enter') {
                         target.click();
-                    } else if (e.key === 'd' || e.key === 'r') {
+                    } else if (key === 'd' || key === 'r') {
                         window.showToast("D/R 快捷指令仅在冲刺页签有效", "info");
                     }
                 }
