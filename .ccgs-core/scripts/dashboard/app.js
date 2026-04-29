@@ -328,6 +328,22 @@
                         if (gateLight) gateLight.style.display = 'none';
                     }
                     
+                    // Shockwave UI (Story D-025)
+                    window._currentShockwaves = data.shockwaves || [];
+                    const shockwaveBanner = document.getElementById('shockwave-global-banner');
+                    if (window._currentShockwaves.length > 0) {
+                        const sw = window._currentShockwaves[0];
+                        const adrCount = sw.affected_adrs ? sw.affected_adrs.length : 0;
+                        const storyCount = sw.affected_stories ? sw.affected_stories.length : 0;
+                        const bannerText = document.getElementById('shockwave-banner-text');
+                        if (bannerText) {
+                            bannerText.textContent = \`⚠️ 检测到 \${sw.source_gdd} 已修改 · 影响 \${adrCount} 个 ADR · \${storyCount} 个 Story\`;
+                        }
+                        if (shockwaveBanner) shockwaveBanner.style.display = 'flex';
+                    } else {
+                        if (shockwaveBanner) shockwaveBanner.style.display = 'none';
+                    }
+                    
                     // Smart Action Banner
                     if (data.suggested_action) {
                         const banner = document.getElementById('smart-banner');
@@ -438,8 +454,27 @@
                                     const adrNumMatch = adr.filename.match(/adr-(\d+)/);
                                     const adrNum = adrNumMatch ? adrNumMatch[1] : '';
                                     
+                                    // Story D-025: Shockwave badge
+                                    let shockwaveBadge = '';
+                                    let borderStyle = '';
+                                    let adrBaseName = adr.filename.replace('.md', '');
+                                    if (window._currentShockwaves && window._currentShockwaves.length > 0) {
+                                        const isAffected = window._currentShockwaves.some(sw => 
+                                            (sw.affected_adrs && sw.affected_adrs.includes(adrBaseName))
+                                        );
+                                        if (isAffected) {
+                                            borderStyle = 'border: 1px solid var(--orange); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);';
+                                            shockwaveBadge = `
+                                                <div class="sw-badge" title="上游 GDD 已变更，需重新验证" onclick="window.showShockwavePanel(event)" style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--orange); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 10;">
+                                                    ⚠️
+                                                </div>
+                                            `;
+                                        }
+                                    }
+                                    
                                     const cardHtml = `
-                                        <div class="kanban-card" onclick="window.openAdrPanel(${i})" style="cursor: pointer; position: relative;">
+                                        <div class="kanban-card" onclick="window.openAdrPanel(${i})" style="cursor: pointer; position: relative; ${borderStyle}">
+                                            ${shockwaveBadge}
                                             <div style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace; margin-bottom: 4px;">ADR-${adrNum}</div>
                                             <h4 style="margin: 0 0 8px 0; color: var(--text-main); font-size: 0.95rem;">${adr.title}</h4>
                                             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
@@ -707,7 +742,25 @@
                                 }
                             }
                             
+                            // Story D-025: Shockwave badge
+                            let shockwaveBadge = '';
+                            if (window._currentShockwaves && window._currentShockwaves.length > 0) {
+                                const isAffected = window._currentShockwaves.some(sw => 
+                                    (sw.affected_stories && sw.affected_stories.includes(story.id))
+                                );
+                                if (isAffected) {
+                                    card.style.border = '1px solid var(--orange)';
+                                    card.style.boxShadow = '0 0 10px rgba(245, 158, 11, 0.3)';
+                                    shockwaveBadge = `
+                                        <div class="sw-badge" title="上游 GDD 已变更，需重新验证" onclick="window.showShockwavePanel(event)" style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--orange); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 10;">
+                                            ⚠️
+                                        </div>
+                                    `;
+                                }
+                            }
+                            
                             card.innerHTML = `
+                                ${shockwaveBadge}
                                 <div class="kb-header">
                                     <span class="kb-id-group">
                                         ${lockHtml}
@@ -1123,15 +1176,20 @@
             }, 100);
         };
 
-        // Story D-023: Dismiss Focus on Interaction
+        // Story D-023/D-025: Action-Bound Dismissal Focus on Interaction
         document.addEventListener('click', (e) => {
             const card = e.target.closest('.kanban-card.smart-focus');
             if (card) {
-                const storyId = card.dataset.storyId;
-                if (storyId) {
-                    if (!window._dismissedFocusStories) window._dismissedFocusStories = new Set();
-                    window._dismissedFocusStories.add(storyId);
-                    card.classList.remove('smart-focus');
+                // Story D-025: Only dismiss if action button was clicked
+                const isActionBtn = e.target.closest('button');
+                if (isActionBtn) {
+                    const storyId = card.dataset.storyId;
+                    if (storyId) {
+                        if (!window._dismissedFocusStories) window._dismissedFocusStories = new Set();
+                        window._dismissedFocusStories.add(storyId);
+                        card.style.transition = 'all 0.3s ease';
+                        card.classList.remove('smart-focus');
+                    }
                 }
             }
         });
@@ -1926,6 +1984,55 @@ window.openGddModal = function(index) {
     if (!window.currentGddFiles || !window.currentGddFiles[index]) return;
     const gdd = window.currentGddFiles[index];
     window.openUnifiedPanel('gdd', gdd, `GDD: ${gdd.title}`);
+};
+
+window.showShockwavePanel = function(e) {
+    if(e) e.stopPropagation();
+    if (!window._currentShockwaves || window._currentShockwaves.length === 0) return;
+    const sw = window._currentShockwaves[0]; 
+    
+    document.getElementById('sw-source-gdd').textContent = sw.source_gdd;
+    
+    const adrsContainer = document.getElementById('sw-affected-adrs');
+    adrsContainer.innerHTML = '';
+    if (sw.affected_adrs && sw.affected_adrs.length > 0) {
+        sw.affected_adrs.forEach(adr => {
+            adrsContainer.innerHTML += \`<div style="background: var(--bg-hover); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">\${adr}</div>\`;
+        });
+    } else {
+        adrsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">None</span>';
+    }
+    
+    const storiesContainer = document.getElementById('sw-affected-stories');
+    storiesContainer.innerHTML = '';
+    if (sw.affected_stories && sw.affected_stories.length > 0) {
+        sw.affected_stories.forEach(story => {
+            storiesContainer.innerHTML += \`<div style="background: var(--bg-hover); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">\${story}</div>\`;
+        });
+    } else {
+        storiesContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">None</span>';
+    }
+    
+    const propagateBtn = document.getElementById('sw-btn-propagate');
+    const propagateText = document.getElementById('sw-propagate-text');
+    if (propagateText) propagateText.textContent = \`/propagate-design-change \${sw.source_gdd}\`;
+    
+    if (propagateBtn) {
+        propagateBtn.onclick = function() {
+            navigator.clipboard.writeText(\`/propagate-design-change \${sw.source_gdd}\`).then(() => {
+                window.showToast('📋 Copied!', 'success');
+            });
+        };
+    }
+    
+    const panels = document.querySelectorAll('.panel-body');
+    panels.forEach(p => p.style.display = 'none');
+    
+    const swPanel = document.getElementById('sp-content-shockwave');
+    if (swPanel) swPanel.style.display = 'block';
+    
+    const sidePanel = document.getElementById('side-panel');
+    if (sidePanel) sidePanel.classList.add('open');
 };
 
 window.openAdrPanel = function(index) {

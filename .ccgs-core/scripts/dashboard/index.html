@@ -81,6 +81,15 @@
             </div>
         </div>
 
+        <!-- Shockwave Global Banner -->
+        <div id="shockwave-global-banner" class="global-warning" style="display: none; background: rgba(245, 158, 11, 0.15); color: var(--orange); padding: 12px 20px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); align-items: center; justify-content: space-between; cursor: pointer; backdrop-filter: blur(8px);" onclick="window.showShockwavePanel()">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span id="shockwave-banner-text" style="font-weight: 500;">⚠️ 检测到 [GDD名] 已修改 · 影响 N 个 ADR · M 个 Story</span>
+            </div>
+            <span style="font-size: 0.85rem; text-decoration: underline;">查看详情</span>
+        </div>
+
         <!-- DASHBOARD VIEW -->
         <div class="view-section active" id="dashboard-view">
             <!-- Smart Action Banner -->
@@ -570,6 +579,38 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Shockwave Content Template -->
+        <div id="sp-content-shockwave" class="panel-body" style="display: none;">
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">变更源 GDD</h3>
+                <div class="sp-meta-item" style="background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 6px; border-left: 3px solid var(--orange);">
+                    <span class="sp-meta-value" id="sw-source-gdd" style="color: var(--orange); font-family: monospace;">-</span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">受影响的架构决策 (ADR)</h3>
+                <div id="sw-affected-adrs" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">受影响的开发任务 (Story)</h3>
+                <div id="sw-affected-stories" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <div class="sp-actions" style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <h3 class="sp-section-title">推荐操作</h3>
+                <button class="sp-action-btn" id="sw-btn-propagate" style="background: rgba(245, 158, 11, 0.15); color: var(--orange); border-color: rgba(245, 158, 11, 0.3);">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    <span id="sw-propagate-text">/propagate-design-change [GDD]</span>
+                </button>
             </div>
         </div>
 
