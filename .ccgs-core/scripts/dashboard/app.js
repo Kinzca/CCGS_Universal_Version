@@ -785,6 +785,7 @@
                                 const cmd = _getRecommendedCommand(story.id, story.status);
                                 navigator.clipboard.writeText(cmd).then(() => {
                                     window.showToast('📋 ' + cmd, 'success');
+                                    if (window._dismissSmartFocus) window._dismissSmartFocus(story.id);
                                     // 按钮微动效：短暂变为 ✅
                                     copyBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
                                     setTimeout(() => {
@@ -2336,4 +2337,178 @@ window._renderStoryMatrix = function(forcedEpic) {
             window.openUnifiedPanel('story', mockData, item.title);
         }
     }
+
+    // --- Story D-027: Keyboard Shortcuts Manager ---
+    (function initKeyboardManager() {
+        let focusedIndex = -1;
+        let focusedElements = [];
+        
+        const origSwitchView = window.switchView;
+        window.switchView = function(viewId) {
+            origSwitchView(viewId);
+            focusedIndex = -1;
+            updateFocusUI();
+        };
+
+        function getItems() {
+            if (!window.currentViewId) return [];
+            if (window.currentViewId === 'sprints-view') {
+                return Array.from(document.querySelectorAll('.kanban-card:not([style*="display: none"])'));
+            } else if (window.currentViewId === 'quality-view') {
+                return Array.from(document.querySelectorAll('.triage-row:not([style*="display: none"])'));
+            }
+            return [];
+        }
+
+        function updateFocusUI() {
+            focusedElements.forEach(el => el.classList.remove('keyboard-focus'));
+            focusedElements = getItems();
+            if (focusedIndex >= 0 && focusedIndex < focusedElements.length) {
+                const el = focusedElements[focusedIndex];
+                el.classList.add('keyboard-focus');
+                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
+        window._dismissSmartFocus = function(storyId) {
+            if (!window._dismissedFocusStories) window._dismissedFocusStories = new Set();
+            window._dismissedFocusStories.add(storyId);
+            document.querySelectorAll('.smart-focus').forEach(el => {
+                if (el.dataset.storyId === storyId) {
+                    el.classList.remove('smart-focus');
+                }
+            });
+        };
+
+        document.addEventListener('keydown', (e) => {
+            // 放行 / 键，但不阻止默认行为 (预留给D-028)
+            if (e.key === '/') return;
+
+            const searchModal = document.getElementById('search-modal');
+            if (searchModal && searchModal.classList.contains('open')) {
+                // If search modal is open, we only want its own listener to handle Esc/Enter/Nav.
+                return;
+            }
+
+            const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+            if (isInput) {
+                if (e.key === 'Escape') {
+                    document.activeElement.blur();
+                    return;
+                }
+                // Cmd+K is handled elsewhere
+                return;
+            }
+
+            // ? Help Modal toggle
+            if (e.key === '?') {
+                const helpModal = document.getElementById('kb-help-modal');
+                if (helpModal) {
+                    if (helpModal.style.display === 'flex') {
+                        helpModal.style.display = 'none';
+                    } else {
+                        helpModal.style.display = 'flex';
+                    }
+                }
+                e.preventDefault();
+                return;
+            }
+
+            // Esc
+            if (e.key === 'Escape') {
+                const helpModal = document.getElementById('kb-help-modal');
+                if (helpModal && helpModal.style.display === 'flex') {
+                    helpModal.style.display = 'none';
+                    e.preventDefault();
+                    return;
+                }
+                if (document.body.classList.contains('panel-open')) {
+                    window.closeUnifiedPanel();
+                    e.preventDefault();
+                    return;
+                }
+                return;
+            }
+            
+            if (document.body.classList.contains('panel-open')) return;
+
+            // 1-4 Tabs
+            if (e.key >= '1' && e.key <= '4') {
+                const views = ['dashboard-view', 'design-view', 'sprints-view', 'quality-view'];
+                const idx = parseInt(e.key) - 1;
+                window.switchView(views[idx]);
+                // Update nav state
+                const navIds = ['btn-dashboard', 'btn-design', 'btn-sprints', 'btn-quality'];
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                const targetNav = document.getElementById(navIds[idx]);
+                if (targetNav) targetNav.classList.add('active');
+                e.preventDefault();
+                return;
+            }
+
+            // J/K
+            if (e.key === 'j' || e.key === 'k') {
+                if (window.currentViewId !== 'sprints-view' && window.currentViewId !== 'quality-view') return;
+                
+                focusedElements = getItems();
+                if (focusedElements.length === 0) return;
+
+                if (focusedIndex === -1) {
+                    focusedIndex = 0;
+                } else {
+                    if (e.key === 'j') focusedIndex = Math.min(focusedIndex + 1, focusedElements.length - 1);
+                    if (e.key === 'k') focusedIndex = Math.max(focusedIndex - 1, 0);
+                }
+                updateFocusUI();
+                e.preventDefault();
+                return;
+            }
+
+            // Enter, D, R
+            if (e.key === 'Enter' || e.key === 'd' || e.key === 'r') {
+                if (window.currentViewId !== 'sprints-view' && window.currentViewId !== 'quality-view') return;
+
+                let target = null;
+                if (focusedIndex >= 0 && focusedIndex < focusedElements.length) {
+                    target = focusedElements[focusedIndex];
+                } else {
+                    target = document.querySelector('.smart-focus');
+                }
+
+                if (!target) {
+                    window.showToast("请先用 J/K 选中一张卡片", "info");
+                    e.preventDefault();
+                    return;
+                }
+
+                if (window.currentViewId === 'sprints-view') {
+                    const storyId = target.dataset.storyId;
+                    if (e.key === 'Enter') {
+                        const copyBtn = target.querySelector('.kb-copy-btn');
+                        if (copyBtn) copyBtn.click();
+                        window._dismissSmartFocus(storyId);
+                    } else if (e.key === 'd') {
+                        const cmd = `/dev-story CCGS-Data/production/epics/**/${storyId}.md`;
+                        navigator.clipboard.writeText(cmd).then(() => {
+                            window.showToast('📋 ' + cmd, 'success');
+                            window._dismissSmartFocus(storyId);
+                        });
+                    } else if (e.key === 'r') {
+                        const cmd = `/code-review CCGS-Data/production/epics/**/${storyId}.md`;
+                        navigator.clipboard.writeText(cmd).then(() => {
+                            window.showToast('📋 ' + cmd, 'success');
+                            window._dismissSmartFocus(storyId);
+                        });
+                    }
+                } else if (window.currentViewId === 'quality-view') {
+                    if (e.key === 'Enter') {
+                        target.click();
+                    } else if (e.key === 'd' || e.key === 'r') {
+                        window.showToast("D/R 快捷指令仅在冲刺页签有效", "info");
+                    }
+                }
+                e.preventDefault();
+            }
+        });
+    })();
 })();

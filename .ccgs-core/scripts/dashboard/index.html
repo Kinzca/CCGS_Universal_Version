@@ -685,6 +685,31 @@
         </div>
     </div>
 
+    <!-- Keyboard Help Modal -->
+    <div id="kb-help-modal" class="modal" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 500px; padding: 24px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 16px;">
+                <h2 style="margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                    <svg width="24" height="24" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    快捷键速查表
+                </h2>
+                <div class="shortcut-hint" style="cursor: pointer;" onclick="document.getElementById('kb-help-modal').style.display='none'">ESC</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">切换页签 (概览/设计/冲刺/质量)</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">1</span> - <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">4</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">全局搜索</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">Cmd/Ctrl + K</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">上下移动卡片焦点</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">J</span> / <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">K</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">复制推荐指令 / 查看详情</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">Enter</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">复制开发指令 (/dev-story)</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">D</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">复制审阅指令 (/code-review)</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">R</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">显示帮助</span> <span style="font-family: monospace; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px;">?</span></div>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--glass-border); padding-top: 12px;">
+                💡 在输入框内时，单键快捷键会自动失效。
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
