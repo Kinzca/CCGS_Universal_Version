@@ -1106,6 +1106,14 @@
         // Story D-023: Scroll to Recommended Story
         window.scrollToRecommendedStory = function() {
             if (!window._currentRecommendedStoryId) return;
+            
+            // Re-enable focus if it was previously dismissed
+            if (window._dismissedFocusStories && window._dismissedFocusStories.has(window._currentRecommendedStoryId)) {
+                window._dismissedFocusStories.delete(window._currentRecommendedStoryId);
+                const targetCard = document.querySelector(`.kanban-card[data-story-id="${window._currentRecommendedStoryId}"]`);
+                if (targetCard) targetCard.classList.add('smart-focus');
+            }
+
             window.switchView('sprints-view');
             setTimeout(() => {
                 const targetCard = document.querySelector(`.kanban-card[data-story-id="${window._currentRecommendedStoryId}"]`);

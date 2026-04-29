@@ -1403,11 +1403,17 @@ body.light-mode .clear-filter-btn { color: var(--text-color-light); }
 body.light-mode .kanban-col-empty-msg { color: var(--text-color-muted-light); }
 
 /* Story D-023: Smart Focus */
+@keyframes smartFocusBreathe {
+    0% { box-shadow: 0 0 0 1px var(--cyan), 0 0 8px rgba(6, 182, 212, 0.2); border-left-color: var(--cyan); }
+    50% { box-shadow: 0 0 0 2px var(--cyan), 0 0 20px rgba(6, 182, 212, 0.8); border-left-color: var(--cyan); }
+    100% { box-shadow: 0 0 0 1px var(--cyan), 0 0 8px rgba(6, 182, 212, 0.2); border-left-color: var(--cyan); }
+}
+
 .kanban-card.smart-focus {
     border-left-color: var(--cyan) !important;
-    box-shadow: 0 0 0 1px var(--cyan), 0 8px 16px rgba(6, 182, 212, 0.2);
+    animation: smartFocusBreathe 2s infinite ease-in-out;
     transform: translateY(-2px);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
 }
 .kanban-card.smart-focus::before {
     content: '';

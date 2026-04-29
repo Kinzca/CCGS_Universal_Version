@@ -232,6 +232,24 @@ def gather_data():
         if len(sprint_files) == 0:
             return {"command": "/sprint-plan new", "desc": "建议执行 /sprint-plan 规划冲刺"}
             
+        # 冲刺已开始，查找可以开发的 Story
+        ready_stories = []
+        for sf in story_files:
+            try:
+                fm = extract_markdown_fields(sf)
+                st = normalize_status(fm.get('status', 'todo')).lower()
+                if st in ['ready', 'todo']:
+                    ready_stories.append((sf, st))
+            except Exception:
+                pass
+                
+        if ready_stories:
+            # 优先推荐 ready 状态的
+            ready_stories.sort(key=lambda x: 0 if x[1] == 'ready' else 1)
+            best_story = ready_stories[0][0]
+            rel_path = best_story[best_story.find('CCGS-Data'):] if 'CCGS-Data' in best_story else best_story
+            return {"command": f"/dev-story {rel_path}", "desc": "当前冲刺进行中，建议优先开发就绪的 Story"}
+            
         return {"command": "/gate-check [next-phase]", "desc": "当前阶段交付物推进中，可随时验证闸门"}
         
     data["suggested_action"] = get_suggested_action()
