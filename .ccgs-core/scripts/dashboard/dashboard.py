@@ -560,6 +560,19 @@ def gather_data():
         "files": adr_files,
         "total": len(adr_files)
     }
+    
+    # 8.1 反向索引：为每个 GDD 附加所有引用了它的 ADR 信息
+    for gdd in gdd_files:
+        related_adrs = []
+        for adr in adr_files:
+            if gdd["filename"] in adr.get("associated_gdds", []):
+                related_adrs.append({
+                    "filename": adr["filename"],
+                    "title": adr["title"],
+                    "status": adr["status"]
+                })
+        gdd["associated_adrs"] = related_adrs
+        gdd["adr_count"] = len(related_adrs)
         
     coverage_report = os.path.join(DATA_DIR, "production", "qa", "coverage.txt")
     if os.path.exists(coverage_report):

@@ -331,9 +331,15 @@
                                     const chaptersHtml = f.chapters && f.chapters.length > 0 
                                         ? `<div class="gdd-chapters">${f.chapters.map(c => `<div class="gdd-chapter-item"><svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> <span>${c}</span></div>`).join('')}</div>`
                                         : '';
+                                    
+                                    // D-016: ADR 关联徽章
+                                    const adrBadgeHtml = f.adr_count > 0
+                                        ? `<span class="adr-badge"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>×${f.adr_count}</span>`
+                                        : '';
                                         
                                     return `
                                         <div class="gdd-card" onclick="window.openGddModal(${i})" style="cursor: pointer;">
+                                            ${adrBadgeHtml}
                                             <div class="gdd-header">
                                                 <div>
                                                     <h3 class="gdd-title">${f.title}</h3>
@@ -1519,6 +1525,25 @@ window.openGddModal = function(index) {
         chapterList.innerHTML = '<span style="color: var(--text-muted);">No chapters extracted.</span>';
     }
     
+    // D-016: 渲染关联 ADR 列表（反向追溯）
+    const adrListEl = document.getElementById('gdd-sp-adr-list');
+    if (adrListEl) {
+        if (gdd.associated_adrs && gdd.associated_adrs.length > 0) {
+            adrListEl.innerHTML = gdd.associated_adrs.map(adr => {
+                // 查找该 ADR 在 currentAdrFiles 中的索引以支持点击跳转
+                const adrIndex = (window.currentAdrFiles || []).findIndex(a => a.filename === adr.filename);
+                const statusColor = adr.status === 'Accepted' ? '#10b981' : adr.status === 'Deprecated' ? '#ef4444' : '#fbbf24';
+                const clickAttr = adrIndex >= 0 ? `onclick="window.openAdrPanel(${adrIndex})" style="cursor: pointer;"` : '';
+                return `<div ${clickAttr} class="sp-link-item" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; transition: background 0.15s;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; flex-shrink: 0;"></span>
+                    <span style="color: var(--cyan); font-size: 0.9rem;">${adr.title}</span>
+                </div>`;
+            }).join('');
+        } else {
+            adrListEl.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">此 GDD 暂无关联 ADR</span>';
+        }
+    }
+    
     // Show panel
     document.getElementById('gdd-panel-overlay').style.display = 'block';
     document.getElementById('gdd-side-panel').style.display = 'flex';
@@ -1560,9 +1585,12 @@ window.openAdrPanel = function(index) {
     const gddList = document.getElementById('adr-sp-gdd-list');
     if (adr.associated_gdds && adr.associated_gdds.length > 0) {
         gddList.innerHTML = adr.associated_gdds.map(g => {
-            return `<div style="display: flex; align-items: center; gap: 8px;">
+            // D-016: 查找该 GDD 在 currentGddFiles 中的索引以支持点击跳转
+            const gddIndex = (window.currentGddFiles || []).findIndex(f => f.filename === g);
+            const clickAttr = gddIndex >= 0 ? `onclick="window.openGddModal(${gddIndex})" style="cursor: pointer;"` : '';
+            return `<div ${clickAttr} class="sp-link-item" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; transition: background 0.15s;">
                 <svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                <span>${g}</span>
+                <span style="color: var(--cyan); font-size: 0.9rem;">${g}</span>
             </div>`;
         }).join('');
     } else {

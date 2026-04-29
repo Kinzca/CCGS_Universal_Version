@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CCGS QuantumFlow Dashboard</title>
-    <link rel="stylesheet" href="styles.css?v=18">
+    <link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body>
     
@@ -196,8 +196,6 @@
 
         <!-- DESIGN VIEW -->
         <div class="view-section" id="design-view">
-            <div class="empty-tab" id="empty-design">
-                <svg width="64" height="64" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
             <!-- Segmented Control for GDD / ADR -->
             <div class="design-segmented-control" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
                 <button class="tab-btn active" id="btn-gdd-view" style="padding: 6px 16px; border-radius: 20px; font-size: 0.9rem;">GDD 文档库</button>
@@ -231,7 +229,7 @@
                     </div>
                 </div>
 
-                <div class="adr-kanban" id="adr-kanban" style="display: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start;">
+                <div class="adr-kanban" id="adr-kanban" style="display: none;">
                     <!-- Proposed Column -->
                     <div class="adr-column">
                         <div class="adr-column-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: bold; color: #fbbf24;">
@@ -460,6 +458,13 @@
                     <!-- Chapters injected by JS -->
                 </div>
             </div>
+            
+            <div class="sp-actions" style="margin-top: 1.5rem;">
+                <h3 class="sp-section-title">📎 关联 ADR</h3>
+                <div id="gdd-sp-adr-list" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 0.9rem; color: var(--text-main);">
+                    <!-- ADRs injected by JS (D-016) -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -544,6 +549,6 @@
             </div>
         </div>
     <!-- Scripts -->
-    <script src="app.js?v=20"></script>
+    <script src="app.js?v=21"></script>
 </body>
 </html>

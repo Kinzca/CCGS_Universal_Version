@@ -218,12 +218,44 @@
             border-radius: 12px;
             padding: 1.5rem;
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
         }
         
         .gdd-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 24px -4px var(--shadow-color);
             border-color: var(--purple);
+        }
+
+        /* ADR 关联徽章 - 显示在 GDD 卡片右上角 */
+        .adr-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--purple);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .adr-badge svg { flex-shrink: 0; }
+
+        /* 侧边面板内可点击链接项的 hover 效果 */
+        .sp-link-item:hover {
+            background: var(--bg-hover) !important;
+        }
+
+        /* ADR Kanban 三列布局（§6.2 F2） */
+        .adr-kanban {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            align-items: start;
         }
 
         .gdd-header {
