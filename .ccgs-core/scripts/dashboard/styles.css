@@ -383,7 +383,7 @@
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%);
             font-size: 2.8rem; font-weight: 800;
             background: linear-gradient(135deg, var(--cyan), var(--purple));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .progress-ring-container { position: relative; display: inline-flex; }
         .progress-ring-meta {
@@ -480,6 +480,7 @@
             min-height: 2.8em;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -647,9 +648,6 @@
             transition: background 0.2s;
         }
         /* kb-pending: 仅用于内部状态追踪，不产生视觉差异 */
-        .kanban-card.kb-pending {
-            /* 无额外样式 */
-        }
 
         /* Story D-034: Epic Separator */
         .epic-separator {
