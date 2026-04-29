@@ -144,13 +144,7 @@
             overflow-y: auto;
             height: 100vh;
             box-sizing: border-box;
-            transition: max-width 0.2s ease-out, padding-right 0.2s ease-out;
-        }
-        
-        .main-content.with-panel {
-            max-width: calc((100vw - 280px) * 0.6666);
-            /* Add some extra right padding so content doesn't stick directly to the panel border */
-            padding-right: 4rem;
+            transition: padding-right 0.2s ease-out;
         }
 
         .header {
@@ -1035,23 +1029,26 @@
         }
 
 /* === Story Side Panel === */
-/* Panel overlay is no longer a visible blur layer, but a transparent click-catcher */
 .panel-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
 }
 .panel-overlay.show {
     display: block;
+    opacity: 1;
 }
 
 .side-panel {
     position: fixed;
     top: 0; right: 0; bottom: 0;
-    width: calc((100vw - 280px) * 0.3334);
-    min-width: 320px;
+    width: 450px;
     max-width: 90vw;
     background: var(--glass-bg);
     border-left: 1px solid var(--glass-border);
@@ -1060,7 +1057,7 @@
     z-index: 1001;
     box-shadow: -10px 0 30px rgba(0,0,0,0.5);
     transform: translateX(100%);
-    transition: transform 0.2s ease-out;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     flex-direction: column;
 }

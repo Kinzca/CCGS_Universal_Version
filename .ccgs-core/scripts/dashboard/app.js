@@ -1479,11 +1479,15 @@ document.addEventListener('keydown', (e) => {
 
 window.closeUnifiedPanel = function() {
     window._panelHistory = [];
+    const overlay = document.getElementById('unified-panel-overlay');
     const panel = document.getElementById('unified-side-panel');
-    const main = document.querySelector('.main-content');
     
+    if (overlay) overlay.classList.remove('show');
     if (panel) panel.classList.remove('show');
-    if (main) main.classList.remove('with-panel');
+    
+    setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+    }, 300);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1529,10 +1533,16 @@ window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
         _renderStoryContent(payload);
     }
     
+    const overlay = document.getElementById('unified-panel-overlay');
     const panel = document.getElementById('unified-side-panel');
-    const main = document.querySelector('.main-content');
+    
+    if (overlay) {
+        overlay.style.display = 'block';
+        // Trigger reflow for transition
+        void overlay.offsetWidth;
+        overlay.classList.add('show');
+    }
     if (panel) panel.classList.add('show');
-    if (main) main.classList.add('with-panel');
 };
 
 window.goBackPanel = function(index) {
