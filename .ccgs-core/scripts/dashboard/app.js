@@ -271,13 +271,7 @@
                     // Story D-041: Sprint Selector Injection
                     window._lastData = data;
                     if (typeof window._selectedSprint === 'undefined') {
-                        let defaultSprint = data.sprint.name;
-                        if (data.sprint_history && data.sprint_history.length > 0) {
-                            const targetName = String(data.sprint.name).replace(/[^0-9a-z]/ig, '').toLowerCase();
-                            const match = data.sprint_history.find(s => String(s.name).replace(/[^0-9a-z]/ig, '').toLowerCase() === targetName);
-                            if (match) defaultSprint = match.name;
-                        }
-                        window._selectedSprint = defaultSprint; // 默认选中当前活跃冲刺（格式化后的名称）
+                        window._selectedSprint = data.sprint.name; // 默认选中当前活跃冲刺
                     }
 
                     const selOverview = document.getElementById('sprint-selector-overview');
@@ -408,12 +402,21 @@
                         }
                     }
                     
-                    
-                    if (typeof window._renderSprintDependentViews === 'function') {
-                        window._renderSprintDependentViews();
-                    }
-                    
+                    const percent = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
+                    // Sprint Progress Ring — 诚实的完成百分比
+                    const progressPercent = data.sprint.progress_percent || 0;
                     const circumference = 2 * Math.PI * 85; // r=85
+                    const ring = document.getElementById('progress-ring');
+                    const ringVal = document.getElementById('progress-ring-val');
+                    const ringMeta = document.getElementById('progress-ring-meta');
+                    if (ring) {
+                        const offset = circumference - (progressPercent / 100) * circumference;
+                        setTimeout(() => {
+                            ring.style.strokeDashoffset = offset;
+                            ringVal.textContent = progressPercent + '%';
+                        }, 200);
+                        ringMeta.innerHTML = `<strong>${data.sprint.completed_points}</strong> / ${data.sprint.total_points} pts`;
+                    }
                     
                     if(data.gdd_coverage) {
                         const gddOffset = circumference - (data.gdd_coverage.percent / 100) * circumference;
@@ -1516,118 +1519,6 @@
             });
             
             _applyEpicFilter();
-        };
-
-        window._renderSprintDependentViews = function() {
-            if (!window._lastData) return;
-            const data = window._lastData;
-            
-            // 1. 找到当前全局选中的 Sprint 数据
-            let targetSprint = null;
-            if (window._selectedSprint && data.sprint_history) {
-                targetSprint = data.sprint_history.find(s => s.name === window._selectedSprint);
-            }
-            if (!targetSprint) {
-                targetSprint = data.sprint; // 兜底为真实活跃 Sprint
-            }
-            if (!targetSprint) return;
-            
-            // 2. 计算进度环百分比
-            let percent = 0;
-            if (targetSprint.total_points > 0) {
-                percent = (targetSprint.completed_points / targetSprint.total_points) * 100;
-            }
-            // 优先使用后端的 progress_percent 兜底
-            let progressPercent = targetSprint.progress_percent !== undefined ? targetSprint.progress_percent : Math.round(percent);
-            
-            // 3. 计算摘要卡指标：Story 数和 WIP 数
-            let storyCount = 0;
-            let completedStories = 0;
-            let wipCount = 0;
-            
-            if (data.stories) {
-                // 提取纯数字匹配，以便兼容 'Sprint 5' 和 'sprint-5'
-                const matchTarget = String(targetSprint.name).match(/\d+/);
-                data.stories.forEach(st => {
-                    const matchSt = String(st.sprint).match(/\d+/);
-                    if (matchSt && matchTarget && matchSt[0] === matchTarget[0]) {
-                        storyCount++;
-                        if (st.status) {
-                            const statusLower = st.status.toLowerCase();
-                            if (statusLower === 'done' || statusLower === 'complete') {
-                                completedStories++;
-                            } else if (statusLower === 'in-progress' || statusLower === 'in progress' || statusLower === 'review') {
-                                wipCount++;
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // 4. 计算速率趋势：历史均速与当期效率
-            let velocityStr = 'N/A';
-            let trendStr = 'N/A';
-            
-            if (data.sprint_history && data.sprint_history.length > 0) {
-                let totalPts = 0;
-                let numSprints = 0;
-                data.sprint_history.forEach(s => {
-                    // 只统计除当前活跃冲刺外的历史冲刺
-                    if (s.name !== data.sprint.name && s.total_points > 0) {
-                        totalPts += s.completed_points;
-                        numSprints++;
-                    }
-                });
-                
-                if (numSprints > 0) {
-                    const avg = Math.round(totalPts / numSprints);
-                    velocityStr = avg + ' SP/Sprint';
-                    
-                    if (avg > 0) {
-                        const trendVal = ((targetSprint.completed_points / avg) * 100).toFixed(0);
-                        trendStr = trendVal + '%';
-                    }
-                }
-            }
-            
-            // 5. 渲染 DOM
-            const elStoryProgress = document.getElementById('metric-story-progress');
-            if (elStoryProgress) elStoryProgress.textContent = `${completedStories} / ${storyCount}`;
-            
-            const elWip = document.getElementById('metric-story-wip');
-            if (elWip) elWip.textContent = wipCount;
-            
-            const elVel = document.getElementById('metric-velocity');
-            if (elVel) elVel.textContent = velocityStr;
-            
-            const elTrend = document.getElementById('metric-trend');
-            if (elTrend) {
-                elTrend.textContent = trendStr;
-                // 添加简单的颜色倾向
-                const trendNum = parseInt(trendStr);
-                if (!isNaN(trendNum)) {
-                    if (trendNum >= 100) elTrend.style.color = 'var(--cyan)';
-                    else if (trendNum < 50) elTrend.style.color = '#ef4444';
-                    else elTrend.style.color = 'var(--text-primary)';
-                }
-            }
-            
-            // 6. 渲染右侧进度环
-            const circumference = 2 * Math.PI * 85;
-            const ring = document.getElementById('progress-ring');
-            const ringVal = document.getElementById('progress-ring-val');
-            const ringMeta = document.getElementById('progress-ring-meta');
-            
-            if (ring) {
-                const offset = circumference - (progressPercent / 100) * circumference;
-                setTimeout(() => {
-                    ring.style.strokeDashoffset = offset;
-                    if (ringVal) ringVal.textContent = progressPercent + '%';
-                }, 200);
-                if (ringMeta) {
-                    ringMeta.innerHTML = `<strong>${targetSprint.completed_points}</strong> / ${targetSprint.total_points} SP`;
-                }
-            }
         };
 
         function _getEpicColor(eName) {
