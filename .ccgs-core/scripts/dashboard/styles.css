@@ -1890,6 +1890,10 @@ body.style-glass.light-mode .triage-row.keyboard-focus {
 #pi-epic-rows {
     overflow: hidden;
     transition: max-height 0.4s ease;
+    max-height: 1000px;
+}
+#pi-epic-rows.collapsed {
+    max-height: 0;
 }
 .pi-epic-row {
     display: flex;

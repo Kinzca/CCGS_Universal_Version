@@ -1476,7 +1476,7 @@
                 if (banner) banner.style.display = 'none';
             }
 
-            // Show/Hide cards
+            // Show/Hide cards and separators
             if(cards.length > 0) {
                 cards.forEach(card => {
                     if (!_currentEpicFilter) {
@@ -1489,6 +1489,13 @@
                             card.style.display = 'none';
                         }
                     }
+                });
+            }
+            
+            const separators = document.querySelectorAll('.epic-separator');
+            if (separators.length > 0) {
+                separators.forEach(sep => {
+                    sep.style.display = _currentEpicFilter ? 'none' : 'block';
                 });
             }
 
