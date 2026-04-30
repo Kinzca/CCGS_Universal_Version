@@ -1574,7 +1574,7 @@ window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
     document.getElementById('unified-sp-title').textContent = title;
     
     // Hide all templates
-    const templates = ['gdd', 'adr', 'story', 'bug'];
+    const templates = ['gdd', 'adr', 'story', 'bug', 'shockwave'];
     templates.forEach(t => {
         const el = document.getElementById(`sp-content-${t}`);
         if (el) el.style.display = 'none';
@@ -1592,6 +1592,9 @@ window.openUnifiedPanel = function(type, payload, title, pushHistory = true) {
     } else if (type === 'bug') {
         document.getElementById('sp-content-bug').style.display = 'block';
         _renderBugContent(payload);
+    } else if (type === 'shockwave') {
+        document.getElementById('sp-content-shockwave').style.display = 'block';
+        _renderShockwaveContent(payload);
     }
     
     const overlay = document.getElementById('unified-panel-overlay');
@@ -2010,7 +2013,10 @@ window.showShockwavePanel = function(e) {
     if(e) e.stopPropagation();
     if (!window._currentShockwaves || window._currentShockwaves.length === 0) return;
     const sw = window._currentShockwaves[0]; 
-    
+    window.openUnifiedPanel('shockwave', sw, '设计变更影响 (Shockwave)');
+};
+
+function _renderShockwaveContent(sw) {
     document.getElementById('sw-source-gdd').textContent = sw.source_gdd;
     
     const adrsContainer = document.getElementById('sw-affected-adrs');
@@ -2044,16 +2050,7 @@ window.showShockwavePanel = function(e) {
             });
         };
     }
-    
-    const panels = document.querySelectorAll('.panel-body');
-    panels.forEach(p => p.style.display = 'none');
-    
-    const swPanel = document.getElementById('sp-content-shockwave');
-    if (swPanel) swPanel.style.display = 'block';
-    
-    const sidePanel = document.getElementById('side-panel');
-    if (sidePanel) sidePanel.classList.add('open');
-};
+}
 
 window.openAdrPanel = function(index) {
     if (!window.currentAdrFiles || !window.currentAdrFiles[index]) return;
