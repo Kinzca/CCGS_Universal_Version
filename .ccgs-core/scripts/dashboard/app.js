@@ -1299,11 +1299,14 @@
 
             // Ensure live sprint data is represented if retrospective missing
             if (historyData && historyData.length > 0) {
-                const lastD = historyData[historyData.length - 1];
-                if (lastD.name === sprintData.name && lastD.total_points === 0) {
-                    lastD.total_points = sprintData.total_points || 0;
-                    lastD.completed_points = sprintData.completed_points || 0;
-                }
+                historyData.forEach(d => {
+                    if (String(d.name).trim().toLowerCase() === String(sprintData.name).trim().toLowerCase()) {
+                        if (!d.total_points) {
+                            d.total_points = sprintData.total_points || 0;
+                            d.completed_points = sprintData.completed_points || 0;
+                        }
+                    }
+                });
             }
 
             // 1. Sprint Velocity Calculations
@@ -1344,7 +1347,7 @@
             const pad = 20;
             const padBottom = 25; // Space for x-axis
             const padLeft = 45; // Space for y-axis
-            const w = 400;
+            const w = 1000;
             const h = 180;
             const pointsCount = historyData ? historyData.length : 0;
             const gap = pointsCount > 1 ? (w - padLeft - pad) / (pointsCount - 1) : 0;
@@ -1381,8 +1384,8 @@
                     linePoints.push(pointStr);
                     
                     const rectW = pointsCount > 1 ? gap : 40;
-                    const rectX = pointsCount > 1 ? (i === 0 ? x : x - gap/2) : x - 20;
-                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${rectX}" y="${pad}" width="${rectW}" height="${h-pad-padBottom}" fill="transparent" style="cursor:crosshair;"></rect>`;
+                    const rectX = pointsCount > 1 ? x - gap/2 : x - 20;
+                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" data-cx="${x}" x="${rectX}" y="${pad}" width="${rectW}" height="${h-pad-padBottom}" fill="transparent" style="cursor:crosshair;"></rect>`;
                     svgStr += `<circle cx="${x}" cy="${y}" r="3" fill="var(--bg-glass)" stroke="var(--cyan)" stroke-width="2" style="pointer-events:none;" />`;
                     svgStr += `<text x="${x}" y="${h - padBottom + 15}" fill="var(--text-main)" font-size="10" text-anchor="middle" opacity="0.8">${d.name}</text>`;
                 });
@@ -1512,7 +1515,7 @@
                         const name = bar.getAttribute('data-name');
                         const total = bar.getAttribute('data-total');
                         const comp = bar.getAttribute('data-comp');
-                        const x = parseFloat(bar.getAttribute('x')) + parseFloat(bar.getAttribute('width'))/2;
+                        const cx = parseFloat(bar.getAttribute('data-cx'));
                         
                         tooltip.innerHTML = `<strong style="color:var(--cyan)">${name}</strong><br/>计划: ${total} SP<br/>交付: ${comp} SP`;
                         tooltip.style.display = 'block';
@@ -1521,7 +1524,7 @@
                         const svgRect = svgSvg.getBoundingClientRect();
                         
                         // Convert SVG x to percentage then to pixel relative to accordion container
-                        const pctX = x / 400; // viewBox width is 400
+                        const pctX = cx / 1000; // viewBox width is 1000
                         const pixelX = pctX * svgRect.width;
                         
                         // Crosshair absolute pos
