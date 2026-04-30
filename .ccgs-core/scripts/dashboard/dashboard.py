@@ -317,6 +317,7 @@ def gather_data():
             "owner": fm.get('owner', 'Unassigned'),
             "estimate": fm.get('estimate', 'N/A'),
             "phase": fm.get('phase', 'N/A'),
+            "sprint": fm.get('sprint', ''),
             "dependencies": deps,
             "path": sf,
             "ac_list": ac_list,

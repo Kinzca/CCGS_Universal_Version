@@ -919,11 +919,9 @@
                         if(sprintsEmpty) sprintsEmpty.style.display = 'flex';
                     }
                     
-                    if (data.sprint_history && typeof window._renderHistoryDrawer === 'function') {
-                        window._renderHistoryDrawer(data.sprint_history, data.sprint);
-                    }
-                    if (data.stories && typeof window._renderEpicSummary === 'function') {
-                        window._renderEpicSummary(data.stories);
+                    // Story D-040: 统一生产力洞察面板渲染
+                    if (typeof window._renderProductionInsights === 'function') {
+                        window._renderProductionInsights(data.sprint, data.sprint_history, data.stories);
                     }
                     
                     // Active Bugs Triage
@@ -1249,256 +1247,272 @@
             window.openUnifiedPanel('story', story, `Story: ${story.title}`);
         };
 
-        // History Drawer Implementation (Story D-013)
-        window._renderHistoryDrawer = function(historyData, currentSprintData) {
-            const container = document.getElementById('history-drawer-content');
-            if (!container) return;
-            
-            // Fallback: Big Metric for insufficient historical data
-            if (!historyData || historyData.length < 2) {
-                const pct = currentSprintData.total_points > 0 
-                    ? Math.round((currentSprintData.completed_points / currentSprintData.total_points) * 100)
-                    : 0;
-                container.innerHTML = `
-                    <div class="big-metric-card">
-                        <div class="bm-title" data-i18n="bm_completion">当期冲刺完成率</div>
-                        <div class="bm-value">${pct}%</div>
-                        <div class="bm-sub">${currentSprintData.completed_points} / ${currentSprintData.total_points} SP</div>
-                        <div class="bm-sub" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.5;">
-                            需要至少 2 个历史冲刺数据才能生成速率趋势图。
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Render SVG Velocity Chart
-            const pad = 40;
-            const w = 600;
-            const h = 240;
-            const maxPts = Math.max(...historyData.map(d => Math.max(d.total_points, d.completed_points, 1))) * 1.2;
-            const barW = Math.min(40, (w - pad * 2) / historyData.length * 0.6);
-            const gap = ((w - pad * 2) - barW * historyData.length) / (historyData.length + 1);
-            
-            let svgStr = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible; font-family: inherit;">`;
-            
-            // Background lines & Y-axis labels
-            [0, 0.5, 1].forEach(tick => {
-                const y = h - pad - tick * (h - pad * 2);
-                svgStr += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="currentColor" stroke-dasharray="4" opacity="0.15"/>`;
-                svgStr += `<text x="${pad-10}" y="${y+4}" fill="var(--text-color)" font-size="12" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
-            });
-            
-            // Bars & X-axis labels
-            historyData.forEach((d, i) => {
-                const x = pad + gap * (i + 1) + barW * i;
-                const totH = (d.total_points / maxPts) * (h - pad * 2);
-                const compH = (d.completed_points / maxPts) * (h - pad * 2);
-                
-                // Background bar (Total)
-                svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" 
-                    x="${x}" y="${h - pad - totH}" width="${barW}" height="${totH}" 
-                    fill="var(--border-color)" rx="4" opacity="0.3"></rect>`;
-                    
-                // Foreground bar (Completed)
-                svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" 
-                    x="${x}" y="${h - pad - compH}" width="${barW}" height="${compH}" 
-                    fill="var(--cyan)" rx="4"></rect>`;
-                    
-                // Label (Sprint Name)
-                svgStr += `<text x="${x + barW/2}" y="${h - pad + 20}" fill="var(--text-color)" font-size="12" text-anchor="middle" opacity="0.8">${d.name}</text>`;
-            });
-            
-            svgStr += `</svg>`;
-            container.innerHTML = svgStr;
-            
-            // Tooltip setup
-            let tooltip = document.getElementById('svg-tooltip');
-            if (!tooltip) {
-                tooltip = document.createElement('div');
-                tooltip.id = 'svg-tooltip';
-                document.body.appendChild(tooltip);
-            }
-            
-            const bars = container.querySelectorAll('.svg-bar');
-            bars.forEach(b => {
-                b.addEventListener('mouseenter', () => {
-                    const name = b.getAttribute('data-name');
-                    const comp = b.getAttribute('data-comp');
-                    const tot = b.getAttribute('data-total');
-                    tooltip.innerHTML = `<strong>${name}</strong><br/>已完成: <span style="color:var(--cyan)">${comp}</span> / ${tot} SP`;
-                    tooltip.style.opacity = '1';
-                });
-                b.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = (e.pageX + 15) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                });
-                b.addEventListener('mouseleave', () => {
-                    tooltip.style.opacity = '0';
-                });
-            });
-        };
-        
-        // Story D-031: Epic Progress Summary
+        // Story D-040: Unified Production Insights
         let _currentEpicFilter = null;
-
-        window._renderEpicSummary = function(stories) {
-            const container = document.getElementById('epic-summary-container');
-            const body = document.getElementById('epic-summary-body');
-            if (!container || !body) return;
-
-            if (!stories || stories.length === 0) {
-                container.style.display = 'none';
-                return;
+        
+        window.toggleVelocityAccordion = function() {
+            const acc = document.getElementById('pi-velocity-accordion');
+            if (acc) {
+                acc.classList.toggle('open');
             }
-            container.style.display = 'block';
+        };
 
-            // Group by Epic
-            const epics = {};
-            stories.forEach(s => {
-                const eName = s.epic || 'N/A';
-                if (!epics[eName]) epics[eName] = { total: 0, done: 0, wip: 0 };
-                epics[eName].total += s.points;
-                const st = s.status;
-                if (['done', 'completed', 'closed', 'verified'].includes(st)) {
-                    epics[eName].done += s.points;
-                } else if (['in progress', 'doing', 'wip', 'review'].includes(st)) {
-                    epics[eName].wip += s.points;
+        window._renderProductionInsights = function(sprintData, historyData, stories) {
+            const container = document.getElementById('production-insights');
+            if (!container) return;
+
+            // 1. Sprint Velocity Calculations
+            const maxPts = historyData && historyData.length > 0 
+                ? Math.max(...historyData.map(d => Math.max(d.total_points, d.completed_points, 1))) * 1.2
+                : 1;
+            
+            let avgVelocity = 0;
+            let trendText = "首个冲刺";
+            let trendClass = "";
+            let trendIcon = "—";
+            let trendValue = "";
+            
+            if (historyData && historyData.length > 0) {
+                const totalHist = historyData.reduce((acc, d) => acc + d.completed_points, 0);
+                avgVelocity = Math.round(totalHist / historyData.length);
+                const lastHist = historyData[historyData.length - 1].completed_points;
+                const diff = sprintData.completed_points - lastHist;
+                if (diff > 0) {
+                    trendClass = "pi-trend-up";
+                    trendIcon = "▲";
+                    trendValue = `+${Math.round((diff/lastHist)*100)}%`;
+                } else if (diff < 0) {
+                    trendClass = "pi-trend-down";
+                    trendIcon = "▼";
+                    trendValue = `${Math.round((diff/lastHist)*100)}%`;
+                } else {
+                    trendIcon = "—";
+                    trendValue = "持平";
                 }
-            });
+                trendText = `${trendValue}`;
+            }
 
-            // Generate HTML
-            let html = '';
+            const sprintPct = sprintData.total_points > 0 ? Math.round((sprintData.completed_points / sprintData.total_points) * 100) : 0;
+            
+            // Generate SVG Chart
+            const pad = 20;
+            const w = 400;
+            const h = 180;
+            const barW = historyData ? Math.min(30, (w - pad * 2) / Math.max(historyData.length, 1) * 0.6) : 30;
+            const gap = historyData ? ((w - pad * 2) - barW * historyData.length) / (historyData.length + 1) : 0;
+            
+            let svgStr = "";
+            if (historyData && historyData.length >= 2) {
+                svgStr = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible; font-family: inherit;">`;
+                [0, 0.5, 1].forEach(tick => {
+                    const y = h - pad - tick * (h - pad * 2);
+                    svgStr += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="currentColor" stroke-dasharray="4" opacity="0.15"/>`;
+                    svgStr += `<text x="${pad-10}" y="${y+4}" fill="var(--text-main)" font-size="10" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
+                });
+                historyData.forEach((d, i) => {
+                    const x = pad + gap * (i + 1) + barW * i;
+                    const totH = (d.total_points / maxPts) * (h - pad * 2);
+                    const compH = (d.completed_points / maxPts) * (h - pad * 2);
+                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${x}" y="${h - pad - totH}" width="${barW}" height="${totH}" fill="var(--glass-border)" rx="4"></rect>`;
+                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${x}" y="${h - pad - compH}" width="${barW}" height="${compH}" fill="var(--cyan)" rx="4"></rect>`;
+                    svgStr += `<text x="${x + barW/2}" y="${h - pad + 15}" fill="var(--text-main)" font-size="10" text-anchor="middle" opacity="0.8">${d.name}</text>`;
+                });
+                svgStr += `</svg>`;
+            } else {
+                svgStr = `<div style="text-align:center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;">需要至少 2 个历史冲刺数据才能生成速率趋势图。</div>`;
+            }
+
+            // 2. Epic Data Processing
+            const epics = {};
+            const currentSprintName = sprintData.name;
+            
+            if (stories && stories.length > 0) {
+                stories.forEach(s => {
+                    const eName = s.epic || 'N/A';
+                    if (!epics[eName]) epics[eName] = { total: 0, done_curr: 0, done_hist: 0, wip: 0, tagColor: _getEpicColor(eName) };
+                    epics[eName].total += s.points;
+                    
+                    const st = s.status ? s.status.toLowerCase() : 'todo';
+                    const isDone = ['done', 'completed', 'closed', 'verified'].includes(st);
+                    
+                    if (isDone) {
+                        if (s.sprint === currentSprintName) {
+                            epics[eName].done_curr += s.points;
+                        } else {
+                            epics[eName].done_hist += s.points;
+                        }
+                    } else if (['in progress', 'doing', 'wip', 'review', 'in_progress'].includes(st)) {
+                        epics[eName].wip += s.points;
+                    }
+                });
+            }
+            
+            let epicsHtml = '';
             const epicKeys = Object.keys(epics).sort();
             epicKeys.forEach(eName => {
                 const stats = epics[eName];
-                const pctDone = stats.total > 0 ? (stats.done / stats.total) * 100 : 0;
-                const pctWip = stats.total > 0 ? (stats.wip / stats.total) * 100 : 0;
+                const pctHist = stats.total > 0 ? (stats.done_hist / stats.total) * 100 : 0;
+                const pctCurr = stats.total > 0 ? (stats.done_curr / stats.total) * 100 : 0;
                 const isActive = _currentEpicFilter === eName ? 'active' : '';
-
-                html += `
-                    <div class="epic-row ${isActive}" data-epic="${eName}">
-                        <div class="epic-name">
-                            <svg class="epic-filter-icon" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                            ${eName}
+                const color = stats.tagColor;
+                
+                epicsHtml += `
+                    <div class="pi-epic-row ${isActive}" data-epic="${eName}" title="${eName} / 历史: ${stats.done_hist} SP / 本Sprint: ${stats.done_curr} SP / 总计: ${stats.total} SP">
+                        <div class="pi-epic-name" style="${isActive ? 'color: var(--cyan); font-weight: bold;' : ''}">${eName}</div>
+                        <div class="pi-epic-track">
+                            <div class="pi-epic-seg-hist" style="width: ${pctHist}%;"></div>
+                            <div class="pi-epic-seg-curr" style="width: ${pctCurr}%; background-color: ${color}; box-shadow: 0 0 8px ${color}80;"></div>
                         </div>
-                        <div class="epic-bar-wrapper">
-                            <div class="epic-bar-done" style="width: ${pctDone}%"></div>
-                            <div class="epic-bar-wip" style="width: ${pctWip}%"></div>
-                        </div>
-                        <div class="epic-stats">
-                            ${stats.done} / ${stats.total}
+                        <div class="pi-epic-stats">
+                            历史: ${stats.done_hist} 本Sprint: ${stats.done_curr}
                         </div>
                     </div>
                 `;
             });
-            body.innerHTML = html;
 
-            // Bind click events
-            body.querySelectorAll('.epic-row').forEach(row => {
+            // 3. Render HTML
+            container.innerHTML = `
+                <div class="pi-sprint-bar">
+                    <div class="pi-sprint-name">${currentSprintName}</div>
+                    <div class="pi-sprint-track">
+                        <div class="pi-sprint-fill" style="width: ${sprintPct}%;"></div>
+                    </div>
+                    <div class="pi-sprint-text">
+                        ${sprintPct}% <span class="pi-sprint-subtext">${sprintData.completed_points}/${sprintData.total_points} SP</span>
+                    </div>
+                </div>
+                <div class="pi-velocity-row" onclick="window.toggleVelocityAccordion()">
+                    <span class="pi-trend-icon">${trendIcon}</span> 历史均速: ${avgVelocity > 0 ? avgVelocity + ' SP/Sprint' : '—'} <span style="margin: 0 8px;">|</span> 当期趋势: <span class="${trendClass}">${trendText}</span>
+                </div>
+                <div id="pi-velocity-accordion">
+                    ${svgStr}
+                </div>
+                
+                <div class="pi-epic-list">
+                    <div class="pi-epic-header" onclick="document.getElementById('pi-epic-rows').classList.toggle('collapsed'); this.querySelector('.pi-epic-toggle').classList.toggle('collapsed')">
+                        <div class="pi-epic-title">
+                            <svg width="14" height="14" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            Epic 进度与贡献度拆解
+                        </div>
+                        <div class="pi-epic-toggle">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                    <div id="pi-epic-rows">
+                        ${epicsHtml}
+                    </div>
+                </div>
+            `;
+            
+            // 4. Bind Epic click events
+            const rows = container.querySelectorAll('.pi-epic-row');
+            rows.forEach(row => {
                 row.addEventListener('click', () => {
                     const eName = row.getAttribute('data-epic');
                     if (_currentEpicFilter === eName) {
-                        _currentEpicFilter = null; // Toggle off
+                        _currentEpicFilter = null;
                     } else {
                         _currentEpicFilter = eName;
                     }
                     _applyEpicFilter();
-                    window._renderEpicSummary(stories); // Re-render to update active classes
+                    window._renderProductionInsights(sprintData, historyData, stories);
                 });
             });
-
+            
             _applyEpicFilter();
         };
 
+        function _getEpicColor(eName) {
+            const eLower = eName.toLowerCase();
+            if (eLower.includes('wp-1') || eLower.includes('wp1')) return 'var(--epic-color-wp1)';
+            if (eLower.includes('wp-2') || eLower.includes('wp2')) return 'var(--epic-color-wp2)';
+            if (eLower.includes('wp-3') || eLower.includes('wp3')) return 'var(--epic-color-wp3)';
+            if (eLower.includes('wp-4') || eLower.includes('wp4')) return 'var(--epic-color-wp4)';
+            if (eLower.includes('wp-5') || eLower.includes('wp5')) return 'var(--epic-color-wp5)';
+            if (eLower.includes('numerical') || eLower.includes('balance')) return 'var(--epic-color-numerical)';
+            return 'var(--epic-color-foundation)';
+        }
+
         function _applyEpicFilter() {
             const cards = document.querySelectorAll('.kanban-card');
-            const banner = document.getElementById('epic-filter-banner');
+            
+            // Create or update filter banner
+            let banner = document.getElementById('epic-filter-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'epic-filter-banner';
+                banner.className = 'epic-filter-banner';
+                banner.innerHTML = `<span data-i18n="filtering_by">过滤:</span> <strong id="epic-filter-name" style="color: var(--cyan); margin: 0 8px;"></strong>
+                            <button id="epic-filter-clear" class="clear-filter-btn" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><span data-i18n="clear">清除</span> ✖</button>`;
+                const kb = document.getElementById('kanban-board');
+                if (kb) kb.parentNode.insertBefore(banner, kb);
+                
+                document.getElementById('epic-filter-clear').addEventListener('click', () => {
+                    _currentEpicFilter = null;
+                    _applyEpicFilter();
+                    const pi = document.getElementById('production-insights');
+                    if(pi) {
+                        const rows = pi.querySelectorAll('.pi-epic-row');
+                        rows.forEach(r => r.classList.remove('active'));
+                        rows.forEach(r => r.querySelector('.pi-epic-name').style.color = '');
+                    }
+                });
+            }
+            
             const filterName = document.getElementById('epic-filter-name');
 
             if (_currentEpicFilter) {
-                if (banner) banner.style.display = 'flex';
+                if (banner) {
+                    banner.style.display = 'flex';
+                    banner.style.alignItems = 'center';
+                    banner.style.padding = '8px 16px';
+                    banner.style.marginBottom = '16px';
+                    banner.style.background = 'var(--glass-bg)';
+                    banner.style.borderRadius = '8px';
+                    banner.style.border = '1px solid var(--glass-border)';
+                }
                 if (filterName) filterName.textContent = _currentEpicFilter;
             } else {
                 if (banner) banner.style.display = 'none';
             }
 
             // Show/Hide cards
-            cards.forEach(card => {
-                if (!_currentEpicFilter) {
-                    card.style.display = 'block';
-                } else {
-                    const eName = card.dataset.epic || '';
-                    if (eName === _currentEpicFilter) {
+            if(cards.length > 0) {
+                cards.forEach(card => {
+                    if (!_currentEpicFilter) {
                         card.style.display = 'block';
                     } else {
-                        card.style.display = 'none';
+                        const eName = card.dataset.epic || '';
+                        if (eName === _currentEpicFilter) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
                     }
-                }
-            });
-
-            // Show/Hide separators (Story D-034)
-            const separators = document.querySelectorAll('.epic-separator');
-            separators.forEach(sep => {
-                if (_currentEpicFilter) {
-                    sep.style.display = 'none'; // When filtered, hide all separators
-                } else {
-                    sep.style.display = 'block';
-                }
-            });
+                });
+            }
 
             // Update columns empty state
             ['backlog', 'inprogress', 'done'].forEach(colId => {
                 const colBody = document.getElementById('col-' + colId);
                 if (colBody) {
-                    // Remove existing empty message if any
                     const existingMsg = colBody.querySelector('.kanban-col-empty-msg');
                     if (existingMsg) existingMsg.remove();
 
-                    // Check visible cards
                     const visibleCards = Array.from(colBody.querySelectorAll('.kanban-card')).filter(c => c.style.display !== 'none');
                     if (visibleCards.length === 0 && _currentEpicFilter) {
                         const msg = document.createElement('div');
                         msg.className = 'kanban-col-empty-msg';
                         msg.textContent = '该 Epic 在此列暂无 Story';
+                        msg.style.padding = '20px';
+                        msg.style.textAlign = 'center';
+                        msg.style.color = 'var(--text-muted)';
                         colBody.appendChild(msg);
                     }
                 }
             });
         }
 
-        // Setup toggle button event
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('toggle-history-btn');
-            const drawer = document.getElementById('history-drawer');
-            if (btn && drawer) {
-                if (sessionStorage.getItem('ccgs_history_open') === 'true') {
-                    drawer.classList.add('open');
-                }
-                btn.addEventListener('click', () => {
-                    drawer.classList.toggle('open');
-                    sessionStorage.setItem('ccgs_history_open', drawer.classList.contains('open'));
-                });
-            }
-
-            // D-031 UI Bindings
-            const toggleEpicBtn = document.getElementById('toggle-epic-btn');
-            const epicContainer = document.getElementById('epic-summary-container');
-            if (toggleEpicBtn && epicContainer) {
-                toggleEpicBtn.addEventListener('click', () => {
-                    epicContainer.classList.toggle('collapsed');
-                });
-            }
-
-            const clearFilterBtn = document.getElementById('epic-filter-clear');
-            if (clearFilterBtn) {
-                clearFilterBtn.addEventListener('click', () => {
-                    _currentEpicFilter = null;
-                    _applyEpicFilter();
-                    document.querySelectorAll('.epic-row').forEach(r => r.classList.remove('active'));
-                });
-            }
-        });
 
         // （已移除 D-032 连线交互 — 依赖信息统一在侧边栏展示）
 

@@ -14,6 +14,16 @@
             --cyan: #06B6D4;
             --cyan-glow: rgba(6, 182, 212, 0.4);
             --purple: #8B5CF6;
+            
+            /* Epic Theme Colors */
+            --epic-color-foundation: #94a3b8;
+            --epic-color-numerical: #a78bfa;
+            --epic-color-wp1: #f87171;
+            --epic-color-wp2: #fbbf24;
+            --epic-color-wp3: #60a5fa;
+            --epic-color-wp4: #34d399;
+            --epic-color-wp5: #06b6d4;
+            --epic-color-wp5v: #e879f9;
         }
 
         body.light-mode {
@@ -1760,4 +1770,173 @@ body.style-glass.light-mode .triage-row.keyboard-focus {
 #col-done .kanban-card.ac-complete::before {
     animation: none;
     box-shadow: none;
+}
+
+/* Production Insights (Story D-040) */
+.production-insights {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+.pi-sprint-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.pi-sprint-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+    color: var(--text-main);
+}
+.pi-sprint-track {
+    flex: 1;
+    height: 14px;
+    background: var(--ring-empty);
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+}
+.pi-sprint-fill {
+    height: 100%;
+    background: var(--cyan);
+    border-radius: 7px;
+    transition: width 0.8s ease-out;
+    box-shadow: 0 0 10px var(--cyan-glow);
+}
+.pi-sprint-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    width: 130px;
+    flex-shrink: 0;
+}
+.pi-sprint-subtext {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.85rem;
+    margin-left: 6px;
+}
+.pi-velocity-row {
+    margin-top: 8px;
+    padding-left: 106px; /* align with track */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.pi-velocity-row:hover {
+    color: var(--text-main);
+}
+.pi-trend-up { color: #10b981; }
+.pi-trend-down { color: #f59e0b; }
+.pi-trend-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--card-hover);
+}
+#pi-velocity-accordion {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    padding-left: 106px;
+}
+#pi-velocity-accordion.open {
+    max-height: 240px;
+    opacity: 1;
+    padding-top: 16px;
+}
+.pi-epic-list {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.pi-epic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding-bottom: 8px;
+}
+.pi-epic-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.pi-epic-toggle {
+    transition: transform 0.3s ease;
+}
+.pi-epic-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+#pi-epic-rows {
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+.pi-epic-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 0;
+    position: relative;
+    cursor: pointer;
+}
+.pi-epic-row:hover .pi-epic-name {
+    color: var(--cyan);
+}
+.pi-epic-name {
+    width: 90px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+.pi-epic-track {
+    flex: 1;
+    height: 10px;
+    background: var(--ring-empty);
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    position: relative;
+}
+.pi-epic-seg-hist {
+    height: 100%;
+    background: var(--text-muted); /* gray */
+    opacity: 0.4;
+    transition: width 0.6s ease;
+}
+.pi-epic-seg-curr {
+    height: 100%;
+    opacity: 1.0;
+    transition: width 0.6s ease;
+}
+.pi-epic-stats {
+    width: 130px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
 }
