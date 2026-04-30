@@ -40,7 +40,10 @@
         <div class="sidebar-stats">
             <h3 data-i18n="side_project">Project Details</h3>
             <div class="stat-row">
-                <span data-i18n="side_active">Active Sprint</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 6px #10b981;" title="Live Status"></span>
+                    <span data-i18n="side_active">Active Sprint</span>
+                </div>
                 <span class="stat-value" id="sprint-name">...</span>
             </div>
             <div class="stat-row">
@@ -274,11 +277,6 @@
 
         <!-- SPRINTS VIEW -->
         <div class="view-section" id="sprints-view">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sprint Tracker</h2>
-                <select class="sprint-selector" id="sprint-selector-sprints"></select>
-            </div>
 
             <!-- Production Insights (Story D-040) -->
             <div class="production-insights" id="production-insights" style="margin-bottom: 24px;">

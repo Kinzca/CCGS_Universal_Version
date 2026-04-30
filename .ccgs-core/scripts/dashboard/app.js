@@ -275,30 +275,27 @@
                     }
 
                     const selOverview = document.getElementById('sprint-selector-overview');
-                    const selSprints = document.getElementById('sprint-selector-sprints');
                     
                     if (data.sprint_history && data.sprint_history.length > 0) {
                         // 构建选项，优先当前活跃，然后按时间倒序或原样
                         const optsHtml = data.sprint_history.map(s => 
-                            `<option value="${s.sprint}" ${s.sprint === window._selectedSprint ? 'selected' : ''}>${s.sprint}</option>`
+                            `<option value="${s.name}" ${s.name === window._selectedSprint ? 'selected' : ''}>${s.name}</option>`
                         ).join('');
                         
                         if (selOverview && selOverview.innerHTML !== optsHtml) {
                             selOverview.innerHTML = optsHtml;
-                            selSprints.innerHTML = optsHtml;
                             
-                            const changeHandler = (e) => {
+                            selOverview.onchange = (e) => {
                                 window._selectedSprint = e.target.value;
-                                // 同步两个选择器的状态
-                                selOverview.value = window._selectedSprint;
-                                selSprints.value = window._selectedSprint;
+                                // 同步选择器状态（此时 Sprint 视图内可能已经有另一个）
+                                const selSprints = document.getElementById('sprint-selector-sprints');
+                                if (selSprints) selSprints.value = window._selectedSprint;
+                                
                                 // 触发全局视图重绘（将在后续 Story 中完善具体实现）
                                 if (typeof window._renderSprintDependentViews === 'function') {
                                     window._renderSprintDependentViews();
                                 }
                             };
-                            selOverview.onchange = changeHandler;
-                            selSprints.onchange = changeHandler;
                         }
                     }
                     
@@ -1405,9 +1402,20 @@
             });
 
             // 3. Render HTML
+            let sprintOptsHtml = '';
+            if (historyData && historyData.length > 0) {
+                sprintOptsHtml = historyData.map(s => 
+                    `<option value="${s.name}" ${s.name === (window._selectedSprint || currentSprintName) ? 'selected' : ''}>${s.name}</option>`
+                ).join('');
+            }
+            
             container.innerHTML = `
                 <div class="pi-sprint-bar">
-                    <div class="pi-sprint-name">${currentSprintName}</div>
+                    <div class="pi-sprint-name">
+                        <select class="sprint-selector" id="sprint-selector-sprints" style="background: transparent; border: none; color: inherit; font-size: inherit; font-weight: inherit; outline: none; cursor: pointer; padding-right: 16px;">
+                            ${sprintOptsHtml}
+                        </select>
+                    </div>
                     <div class="pi-sprint-track">
                         <div class="pi-sprint-fill" style="width: ${sprintPct}%;"></div>
                     </div>
@@ -1438,7 +1446,21 @@
                 </div>
             `;
             
-            // 4. Bind Epic click events
+            // 4. Bind Sprint Selector
+            const selSprints = container.querySelector('#sprint-selector-sprints');
+            if (selSprints) {
+                selSprints.addEventListener('change', (e) => {
+                    window._selectedSprint = e.target.value;
+                    const selOverview = document.getElementById('sprint-selector-overview');
+                    if (selOverview) selOverview.value = window._selectedSprint;
+                    
+                    if (typeof window._renderSprintDependentViews === 'function') {
+                        window._renderSprintDependentViews();
+                    }
+                });
+            }
+            
+            // 5. Bind Epic click events
             const rows = container.querySelectorAll('.pi-epic-row');
             rows.forEach(row => {
                 row.addEventListener('click', () => {
