@@ -1348,7 +1348,7 @@
             const padBottom = 25; // Space for x-axis
             const padLeft = 45; // Space for y-axis
             const w = 1000;
-            const h = 260;
+            const h = 320;
             const pointsCount = historyData ? historyData.length : 0;
             const gap = pointsCount > 1 ? (w - padLeft - pad) / (pointsCount - 1) : 0;
             
@@ -1383,10 +1383,8 @@
                     polyPoints.push(pointStr);
                     linePoints.push(pointStr);
                     
-                    const rectW = pointsCount > 1 ? gap : 40;
-                    const rectX = pointsCount > 1 ? x - gap/2 : x - 20;
-                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" data-cx="${x}" x="${rectX}" y="${pad}" width="${rectW}" height="${h-pad-padBottom}" fill="transparent" style="cursor:crosshair;"></rect>`;
-                    svgStr += `<circle cx="${x}" cy="${y}" r="3" fill="var(--bg-glass)" stroke="var(--cyan)" stroke-width="2" style="pointer-events:none;" />`;
+                    svgStr += `<circle class="svg-point-vis" id="point-vis-${i}" cx="${x}" cy="${y}" r="4" fill="var(--bg-glass)" stroke="var(--cyan)" stroke-width="2" style="pointer-events:none; transition: all 0.2s ease;" />`;
+                    svgStr += `<circle class="svg-point-hit" data-index="${i}" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" data-cx="${x}" cx="${x}" cy="${y}" r="25" fill="transparent" style="cursor:pointer;" />`;
                     svgStr += `<text x="${x}" y="${h - padBottom + 15}" fill="var(--text-main)" font-size="10" text-anchor="middle" opacity="0.8">${d.name}</text>`;
                 });
                 
@@ -1483,8 +1481,7 @@
                 </div>
                 <div id="pi-velocity-accordion" style="position: relative;">
                     ${svgStr}
-                    <div id="pi-chart-tooltip" style="position: absolute; display: none; background: rgba(15,23,42,0.95); border: 1px solid var(--cyan); padding: 8px 12px; border-radius: 6px; pointer-events: none; color: white; font-size: 0.8rem; z-index: 10; white-space: nowrap; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></div>
-                    <div id="pi-chart-crosshair" style="position: absolute; display: none; width: 1px; background: var(--cyan); opacity: 0.5; top: 0; bottom: 25px; pointer-events: none; z-index: 5;"></div>
+                    <div id="pi-chart-tooltip" style="position: absolute; display: none; background: rgba(15,23,42,0.95); border: 1px solid var(--cyan); padding: 8px 12px; border-radius: 6px; pointer-events: none; color: white; font-size: 0.8rem; z-index: 10; white-space: nowrap; backdrop-filter: blur(4px); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); transform: translate(-50%, -100%);"></div>
                 </div>
                 
                 <div class="pi-epic-list">
@@ -1505,21 +1502,21 @@
             
             // 3.5 Bind SVG Interactions
             const tooltip = document.getElementById('pi-chart-tooltip');
-            const crosshair = document.getElementById('pi-chart-crosshair');
-            const bars = container.querySelectorAll('.svg-bar');
+            const hitPoints = container.querySelectorAll('.svg-point-hit');
             const svgSvg = container.querySelector('svg');
             
-            if (bars.length > 0 && tooltip && crosshair && svgSvg) {
-                bars.forEach(bar => {
-                    bar.addEventListener('mouseenter', () => {
-                        const name = bar.getAttribute('data-name');
-                        const total = bar.getAttribute('data-total');
-                        const comp = bar.getAttribute('data-comp');
-                        const cx = parseFloat(bar.getAttribute('data-cx'));
+            if (hitPoints.length > 0 && tooltip && svgSvg) {
+                hitPoints.forEach(hit => {
+                    hit.addEventListener('mouseenter', () => {
+                        const name = hit.getAttribute('data-name');
+                        const total = hit.getAttribute('data-total');
+                        const comp = hit.getAttribute('data-comp');
+                        const cx = parseFloat(hit.getAttribute('data-cx'));
+                        const index = hit.getAttribute('data-index');
                         
+                        // Update and show tooltip
                         tooltip.innerHTML = `<strong style="color:var(--cyan)">${name}</strong><br/>计划: ${total} SP<br/>交付: ${comp} SP`;
                         tooltip.style.display = 'block';
-                        crosshair.style.display = 'block';
                         
                         const svgRect = svgSvg.getBoundingClientRect();
                         
@@ -1527,18 +1524,30 @@
                         const pctX = cx / 1000; // viewBox width is 1000
                         const pixelX = pctX * svgRect.width;
                         
-                        // Crosshair absolute pos
-                        crosshair.style.left = pixelX + 'px';
-                        
                         // Tooltip pos with centering
                         tooltip.style.left = pixelX + 'px';
-                        tooltip.style.transform = 'translate(-50%, -100%)';
                         tooltip.style.top = '30px';
+                        
+                        // Highlight visual circle
+                        const vis = document.getElementById('point-vis-' + index);
+                        if (vis) {
+                            vis.setAttribute('r', '7');
+                            vis.setAttribute('stroke-width', '3');
+                            vis.style.filter = 'drop-shadow(0 0 8px var(--cyan))';
+                        }
                     });
                     
-                    bar.addEventListener('mouseleave', () => {
+                    hit.addEventListener('mouseleave', () => {
                         tooltip.style.display = 'none';
-                        crosshair.style.display = 'none';
+                        
+                        // Reset visual circle
+                        const index = hit.getAttribute('data-index');
+                        const vis = document.getElementById('point-vis-' + index);
+                        if (vis) {
+                            vis.setAttribute('r', '4');
+                            vis.setAttribute('stroke-width', '2');
+                            vis.style.filter = 'none';
+                        }
                     });
                 });
             }

@@ -1855,7 +1855,7 @@ body.style-glass.light-mode .triage-row.keyboard-focus {
     padding-left: 106px;
 }
 #pi-velocity-accordion.open {
-    max-height: 320px;
+    max-height: 420px;
     opacity: 1;
     padding-top: 16px;
 }
