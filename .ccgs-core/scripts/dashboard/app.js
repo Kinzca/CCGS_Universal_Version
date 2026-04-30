@@ -1520,13 +1520,17 @@
                         
                         const svgRect = svgSvg.getBoundingClientRect();
                         
-                        // Convert SVG x to percentage then to pixel relative to accordion container
-                        const pctX = cx / 1000; // viewBox width is 1000
-                        const pixelX = pctX * svgRect.width;
+                        const cy = parseFloat(hit.getAttribute('cy'));
                         
-                        // Tooltip pos with centering
+                        // Convert SVG coords to percentage then to pixel relative to accordion container
+                        const pctX = cx / 1000; // viewBox width is 1000
+                        const pctY = cy / 320;  // viewBox height is 320
+                        const pixelX = pctX * svgRect.width;
+                        const pixelY = pctY * svgRect.height;
+                        
+                        // Tooltip pos with centering (shifted slightly above the point)
                         tooltip.style.left = pixelX + 'px';
-                        tooltip.style.top = '30px';
+                        tooltip.style.top = (pixelY - 12) + 'px';
                         
                         // Highlight visual circle
                         const vis = document.getElementById('point-vis-' + index);
