@@ -268,6 +268,40 @@
                     document.getElementById('sprint-pts').textContent = data.sprint.completed_points;
                     document.getElementById('sprint-total').textContent = data.sprint.total_points;
                     
+                    // Story D-041: Sprint Selector Injection
+                    window._lastData = data;
+                    if (typeof window._selectedSprint === 'undefined') {
+                        window._selectedSprint = data.sprint.name; // 默认选中当前活跃冲刺
+                    }
+
+                    const selOverview = document.getElementById('sprint-selector-overview');
+                    const selSprints = document.getElementById('sprint-selector-sprints');
+                    
+                    if (data.sprint_history && data.sprint_history.length > 0) {
+                        // 构建选项，优先当前活跃，然后按时间倒序或原样
+                        const optsHtml = data.sprint_history.map(s => 
+                            `<option value="${s.sprint}" ${s.sprint === window._selectedSprint ? 'selected' : ''}>${s.sprint}</option>`
+                        ).join('');
+                        
+                        if (selOverview && selOverview.innerHTML !== optsHtml) {
+                            selOverview.innerHTML = optsHtml;
+                            selSprints.innerHTML = optsHtml;
+                            
+                            const changeHandler = (e) => {
+                                window._selectedSprint = e.target.value;
+                                // 同步两个选择器的状态
+                                selOverview.value = window._selectedSprint;
+                                selSprints.value = window._selectedSprint;
+                                // 触发全局视图重绘（将在后续 Story 中完善具体实现）
+                                if (typeof window._renderSprintDependentViews === 'function') {
+                                    window._renderSprintDependentViews();
+                                }
+                            };
+                            selOverview.onchange = changeHandler;
+                            selSprints.onchange = changeHandler;
+                        }
+                    }
+                    
                     // Gate Check Status Light
                     const gateLight = document.getElementById('gate-status-light');
                     if (data.gate_check && data.gate_check.status !== 'unknown') {

@@ -116,8 +116,11 @@
             </div>
             
         <div class="dashboard-grid">
-            <div class="card card-sprint" onclick="window.switchView('sprints-view')" style="cursor: pointer;">
-                <h2 data-i18n="chart_title">Sprint Progress</h2>
+            <div class="card card-sprint" onclick="window.switchView('sprints-view')" style="cursor: pointer; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 data-i18n="chart_title" style="margin: 0;">Sprint Progress</h2>
+                    <select class="sprint-selector" id="sprint-selector-overview" onclick="event.stopPropagation()"></select>
+                </div>
                 <div class="chart-container" id="chart">
                     <div class="progress-ring-wrap">
                         <div class="progress-ring-container">
@@ -272,6 +275,11 @@
         <!-- SPRINTS VIEW -->
         <div class="view-section" id="sprints-view">
             
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sprint Tracker</h2>
+                <select class="sprint-selector" id="sprint-selector-sprints"></select>
+            </div>
+
             <!-- Production Insights (Story D-040) -->
             <div class="production-insights" id="production-insights" style="margin-bottom: 24px;">
                 <!-- JS generated content here -->
