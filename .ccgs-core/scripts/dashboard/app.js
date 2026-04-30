@@ -1348,7 +1348,7 @@
             const padBottom = 25; // Space for x-axis
             const padLeft = 45; // Space for y-axis
             const w = 1000;
-            const h = 180;
+            const h = 260;
             const pointsCount = historyData ? historyData.length : 0;
             const gap = pointsCount > 1 ? (w - padLeft - pad) / (pointsCount - 1) : 0;
             
