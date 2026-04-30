@@ -1297,6 +1297,15 @@
             const container = document.getElementById('production-insights');
             if (!container) return;
 
+            // Ensure live sprint data is represented if retrospective missing
+            if (historyData && historyData.length > 0) {
+                const lastD = historyData[historyData.length - 1];
+                if (lastD.name === sprintData.name && lastD.total_points === 0) {
+                    lastD.total_points = sprintData.total_points || 0;
+                    lastD.completed_points = sprintData.completed_points || 0;
+                }
+            }
+
             // 1. Sprint Velocity Calculations
             const maxPts = historyData && historyData.length > 0 
                 ? Math.max(...historyData.map(d => Math.max(d.total_points, d.completed_points, 1))) * 1.2
@@ -1337,8 +1346,8 @@
             const padLeft = 30; // Space for y-axis
             const w = 400;
             const h = 180;
-            const pointsCount = historyData ? Math.max(historyData.length, 1) : 1;
-            const gap = (w - padLeft - pad) / pointsCount;
+            const pointsCount = historyData ? historyData.length : 0;
+            const gap = pointsCount > 1 ? (w - padLeft - pad) / (pointsCount - 1) : 0;
             
             let svgStr = "";
             if (historyData && historyData.length >= 2) {
@@ -1360,23 +1369,25 @@
 
                 let polyPoints = [];
                 let linePoints = [];
-                polyPoints.push(`${padLeft + gap * 0.5},${h - padBottom}`);
+                polyPoints.push(`${padLeft},${h - padBottom}`);
                 
                 historyData.forEach((d, i) => {
-                    const x = padLeft + gap * (i + 0.5);
-                    const compH = (d.completed_points / maxPts) * (h - padBottom - pad);
+                    const x = padLeft + gap * i;
+                    const compH = maxPts > 0 ? (d.completed_points / maxPts) * (h - padBottom - pad) : 0;
                     const y = h - padBottom - compH;
                     
                     const pointStr = `${x},${y}`;
                     polyPoints.push(pointStr);
                     linePoints.push(pointStr);
                     
-                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${x - gap/2}" y="${pad}" width="${gap}" height="${h-pad-padBottom}" fill="transparent" style="cursor:crosshair;"></rect>`;
+                    const rectW = pointsCount > 1 ? gap : 40;
+                    const rectX = pointsCount > 1 ? (i === 0 ? x : x - gap/2) : x - 20;
+                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${rectX}" y="${pad}" width="${rectW}" height="${h-pad-padBottom}" fill="transparent" style="cursor:crosshair;"></rect>`;
                     svgStr += `<circle cx="${x}" cy="${y}" r="3" fill="var(--bg-glass)" stroke="var(--cyan)" stroke-width="2" style="pointer-events:none;" />`;
                     svgStr += `<text x="${x}" y="${h - padBottom + 15}" fill="var(--text-main)" font-size="10" text-anchor="middle" opacity="0.8">${d.name}</text>`;
                 });
                 
-                const lastX = padLeft + gap * (historyData.length - 0.5);
+                const lastX = padLeft + gap * (pointsCount - 1);
                 polyPoints.push(`${lastX},${h - padBottom}`);
                 
                 svgStr += `<polygon points="${polyPoints.join(' ')}" fill="url(#areaGradient)" style="pointer-events:none;" />`;
