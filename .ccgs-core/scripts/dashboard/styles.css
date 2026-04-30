@@ -1585,7 +1585,8 @@ body.style-glass .card[onclick]:hover {
 
 /* Kanban 卡片 — 高对比度坚实背景 */
 body.style-glass .kanban-card {
-    background: rgba(30, 41, 59, 0.8) !important;
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    background-image: none;
     backdrop-filter: none !important;
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
@@ -1593,6 +1594,25 @@ body.style-glass .kanban-card {
 body.style-glass .kanban-card:hover {
     border-color: rgba(6, 182, 212, 0.3);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 修复被覆盖的状态样式 */
+body.style-glass .kanban-card.kb-locked {
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.04),
+        rgba(255, 255, 255, 0.04) 10px,
+        transparent 10px,
+        transparent 20px
+    ) !important;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.style-glass .kanban-card.keyboard-focus,
+body.style-glass .triage-row.keyboard-focus {
+    border-left: 3px solid var(--cyan) !important;
+    background-color: rgba(6, 182, 212, 0.15) !important;
+    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.3) !important;
 }
 
 /* Smart Banner — 毛玻璃（悬浮层，允许 blur） */
@@ -1623,6 +1643,13 @@ body.style-glass .smart-btn:hover,
 body.style-glass .sp-action-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+}
+
+/* 修复推荐按钮动画 */
+body.style-glass .sp-action-btn.recommended {
+    border-color: var(--cyan) !important;
+    background-color: rgba(6, 182, 212, 0.15) !important;
+    animation: recommendPulse 2s ease-in-out infinite !important;
 }
 
 /* Sidebar Stats — 毛玻璃 */
@@ -1664,8 +1691,17 @@ body.style-glass.light-mode .card {
     border: 1px solid rgba(0, 0, 0, 0.06);
 }
 body.style-glass.light-mode .kanban-card {
-    background: rgba(255, 255, 255, 0.8) !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
     border: 1px solid rgba(0, 0, 0, 0.06);
+}
+body.style-glass.light-mode .kanban-card.kb-locked {
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(0, 0, 0, 0.04),
+        rgba(0, 0, 0, 0.04) 10px,
+        transparent 10px,
+        transparent 20px
+    ) !important;
 }
 body.style-glass.light-mode .smart-banner {
     background: linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
@@ -1673,4 +1709,55 @@ body.style-glass.light-mode .smart-banner {
 body.style-glass.light-mode .modal-content {
     background: rgba(255, 255, 255, 0.85);
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+}
+
+/* 彻底修复：J/K 选中卡片高亮（确保在任意模式和背景下均可清晰辨识） */
+body.style-glass .kanban-card.keyboard-focus,
+body.style-glass .triage-row.keyboard-focus,
+body.style-glass.light-mode .kanban-card.keyboard-focus,
+body.style-glass.light-mode .triage-row.keyboard-focus {
+    border: 2px solid var(--cyan) !important;
+    background-color: rgba(6, 182, 212, 0.15) !important;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.4), inset 0 0 0 1px rgba(6, 182, 212, 0.2) !important;
+    transform: translateY(-2px);
+    transition: all 0.15s ease-in-out;
+}
+
+/* Story D-035: AC 底部进度条 —— 卡片身体的一部分（::before 伪元素，避开 ::after 被 IN PROGRESS 沙漏占用） */
+
+/* 为各列定义专属的 AC 进度条主题色变量 */
+#col-backlog .kanban-card { --ac-theme: var(--cyan); --ac-glow: rgba(6, 182, 212, 0.4); --ac-glow-strong: rgba(6, 182, 212, 0.9); }
+#col-inprogress .kanban-card { --ac-theme: var(--purple); --ac-glow: rgba(139, 92, 246, 0.4); --ac-glow-strong: rgba(139, 92, 246, 0.9); }
+#col-done .kanban-card { --ac-theme: #10b981; --ac-glow: rgba(16, 185, 129, 0.4); --ac-glow-strong: rgba(16, 185, 129, 0.9); }
+
+/* 进度条：贴合卡片最底部边缘，与 border-radius 完全吻合 */
+.kanban-card.has-ac::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: var(--ac-pct, 0%);
+    height: 3px;
+    background: var(--ac-theme, var(--cyan));
+    border-radius: 0 0 0 12px;
+    transition: width 0.4s ease-out, background-color 0.3s ease;
+    z-index: 1; /* 确保在卡片内容之上 */
+    pointer-events: none; /* 不影响点击和拖拽 */
+}
+
+/* 100% 满状态时：填满底部，双侧圆角，采用对应列的主题色呼吸光晕 */
+@keyframes acReadyPulseTheme {
+    0%   { box-shadow: 0 0 4px var(--ac-glow); }
+    50%  { box-shadow: 0 0 12px var(--ac-glow-strong), 0 0 24px var(--ac-glow); }
+    100% { box-shadow: 0 0 4px var(--ac-glow); }
+}
+.kanban-card.ac-complete::before {
+    border-radius: 0 0 12px 12px;
+    animation: acReadyPulseTheme 2.5s infinite ease-in-out;
+}
+
+/* 如果已经被放到了正确的 DONE 列，则不需要呼吸灯提示 */
+#col-done .kanban-card.ac-complete::before {
+    animation: none;
+    box-shadow: none;
 }

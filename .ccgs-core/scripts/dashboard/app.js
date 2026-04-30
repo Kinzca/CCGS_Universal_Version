@@ -767,6 +767,17 @@
                                 }
                             }
                             
+                            // Story D-035: 通过 CSS 自定义属性驱动底部边缘进度条（::after 伪元素，零额外 DOM）
+                            if (story.ac_total > 0) {
+                                const pct = Math.round((story.ac_done / story.ac_total) * 100);
+                                card.style.setProperty('--ac-pct', pct + '%');
+                                card.classList.add('has-ac');
+                                card.title = (card.title ? card.title + ' | ' : '') + `AC: ${story.ac_done}/${story.ac_total}`;
+                                if (story.ac_done === story.ac_total) {
+                                    card.classList.add('ac-complete');
+                                }
+                            }
+                            
                             card.innerHTML = `
                                 ${shockwaveBadge}
                                 <div class="kb-header">
