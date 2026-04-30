@@ -119,28 +119,59 @@
             </div>
             
         <div class="dashboard-grid">
-            <div class="card card-sprint" onclick="window.switchView('sprints-view')" style="cursor: pointer; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="card card-sprint" onclick="window.switchView('sprints-view')" style="cursor: pointer; position: relative; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h2 data-i18n="chart_title" style="margin: 0;">Sprint Progress</h2>
                     <select class="sprint-selector" id="sprint-selector-overview" onclick="event.stopPropagation()"></select>
                 </div>
-                <div class="chart-container" id="chart">
-                    <div class="progress-ring-wrap">
-                        <div class="progress-ring-container">
-                            <svg class="progress-ring-svg" viewBox="0 0 200 200">
-                                <defs>
-                                    <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="var(--cyan)" />
-                                        <stop offset="100%" stop-color="var(--purple)" />
-                                    </linearGradient>
-                                </defs>
-                                <circle class="progress-ring-bg" cx="100" cy="100" r="85" />
-                                <circle class="progress-ring-fg" id="progress-ring" cx="100" cy="100" r="85"
-                                    stroke-dasharray="534" stroke-dashoffset="534" />
-                            </svg>
-                            <span class="progress-ring-label" id="progress-ring-val">0%</span>
+                
+                <div class="sprint-layout" style="display: flex; gap: 1.5rem; align-items: stretch; flex: 1;">
+                    <div class="sprint-metrics-summary" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--glass-border);">
+                        
+                        <!-- Top Zone: Execution -->
+                        <div class="metrics-top" style="display: flex; flex-direction: column; gap: 1rem; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 1.5rem;">
+                            <div class="metric-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="metric-label" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Story Progress</span>
+                                <div class="metric-val" id="metric-story-progress" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">0 / 0</div>
+                            </div>
+                            <div class="metric-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="metric-label" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">WIP (In Progress)</span>
+                                <div class="metric-val" id="metric-story-wip" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">0</div>
+                            </div>
                         </div>
-                        <div class="progress-ring-meta" id="progress-ring-meta"></div>
+
+                        <!-- Bottom Zone: Velocity -->
+                        <div class="metrics-bottom" style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0.5rem;">
+                            <div class="metric-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="metric-label" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Historical Velocity</span>
+                                <div class="metric-val" id="metric-velocity" style="font-size: 1.1rem; font-weight: 600; color: var(--cyan);">N/A</div>
+                            </div>
+                            <div class="metric-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="metric-label" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Current Trend</span>
+                                <div class="metric-val" id="metric-trend" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">N/A</div>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <div class="chart-container" id="chart" style="flex: 1; padding: 0;">
+                        <div class="progress-ring-wrap">
+                            <div class="progress-ring-container">
+                                <svg class="progress-ring-svg" viewBox="0 0 200 200">
+                                    <defs>
+                                        <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="var(--cyan)" />
+                                            <stop offset="100%" stop-color="var(--purple)" />
+                                        </linearGradient>
+                                    </defs>
+                                    <circle class="progress-ring-bg" cx="100" cy="100" r="85" />
+                                    <circle class="progress-ring-fg" id="progress-ring" cx="100" cy="100" r="85"
+                                        stroke-dasharray="534" stroke-dashoffset="534" />
+                                </svg>
+                                <div class="progress-ring-label" id="progress-ring-val">0%</div>
+                            </div>
+                            <div class="progress-ring-meta" id="progress-ring-meta"><strong>0</strong> / 0 pts</div>
+                        </div>
                     </div>
                 </div>
             </div>
