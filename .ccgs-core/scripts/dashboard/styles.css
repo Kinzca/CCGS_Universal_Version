@@ -462,7 +462,7 @@
             border-radius: 12px;
             padding: 1.2rem;
             cursor: grab;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, opacity 0.2s ease;
             position: relative;
         }
         .kanban-card:hover {
@@ -1896,6 +1896,7 @@ body.style-glass.light-mode .triage-row.keyboard-focus {
     max-height: 0;
 }
 .pi-epic-row {
+    transition: opacity 0.2s ease;
     display: flex;
     align-items: center;
     gap: 16px;

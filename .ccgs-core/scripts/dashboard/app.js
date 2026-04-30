@@ -703,6 +703,7 @@
                             card.className = 'kanban-card';
                             card.draggable = true;
                             card.dataset.storyId = story.id;
+                            card.dataset.sprint = story.sprint || '';
                             card.dataset.realStatus = story.status;
                             card.dataset.epic = story.epic || 'N/A';
                             card.dataset.sortWeight = idx;
@@ -1323,28 +1324,57 @@
             const sprintPct = sprintData.total_points > 0 ? Math.round((sprintData.completed_points / sprintData.total_points) * 100) : 0;
             
             // Generate SVG Chart
+            // Generate SVG Area Chart
             const pad = 20;
+            const padBottom = 25; // Space for x-axis
+            const padLeft = 30; // Space for y-axis
             const w = 400;
             const h = 180;
-            const barW = historyData ? Math.min(30, (w - pad * 2) / Math.max(historyData.length, 1) * 0.6) : 30;
-            const gap = historyData ? ((w - pad * 2) - barW * historyData.length) / (historyData.length + 1) : 0;
+            const pointsCount = historyData ? Math.max(historyData.length, 1) : 1;
+            const gap = (w - padLeft - pad) / pointsCount;
             
             let svgStr = "";
             if (historyData && historyData.length >= 2) {
                 svgStr = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible; font-family: inherit;">`;
+                
+                svgStr += `
+                <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.6" />
+                        <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0.0" />
+                    </linearGradient>
+                </defs>`;
+
                 [0, 0.5, 1].forEach(tick => {
-                    const y = h - pad - tick * (h - pad * 2);
-                    svgStr += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="currentColor" stroke-dasharray="4" opacity="0.15"/>`;
-                    svgStr += `<text x="${pad-10}" y="${y+4}" fill="var(--text-main)" font-size="10" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
+                    const y = h - padBottom - tick * (h - padBottom - pad);
+                    svgStr += `<line x1="${padLeft}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="currentColor" stroke-dasharray="4" opacity="0.15"/>`;
+                    svgStr += `<text x="${padLeft-10}" y="${y+4}" fill="var(--text-main)" font-size="10" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
                 });
+
+                let polyPoints = [];
+                let linePoints = [];
+                polyPoints.push(`${padLeft + gap * 0.5},${h - padBottom}`);
+                
                 historyData.forEach((d, i) => {
-                    const x = pad + gap * (i + 1) + barW * i;
-                    const totH = (d.total_points / maxPts) * (h - pad * 2);
-                    const compH = (d.completed_points / maxPts) * (h - pad * 2);
-                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${x}" y="${h - pad - totH}" width="${barW}" height="${totH}" fill="var(--glass-border)" rx="4"></rect>`;
-                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${x}" y="${h - pad - compH}" width="${barW}" height="${compH}" fill="var(--cyan)" rx="4"></rect>`;
-                    svgStr += `<text x="${x + barW/2}" y="${h - pad + 15}" fill="var(--text-main)" font-size="10" text-anchor="middle" opacity="0.8">${d.name}</text>`;
+                    const x = padLeft + gap * (i + 0.5);
+                    const compH = (d.completed_points / maxPts) * (h - padBottom - pad);
+                    const y = h - padBottom - compH;
+                    
+                    const pointStr = `${x},${y}`;
+                    polyPoints.push(pointStr);
+                    linePoints.push(pointStr);
+                    
+                    svgStr += `<rect class="svg-bar" data-name="${d.name}" data-total="${d.total_points}" data-comp="${d.completed_points}" x="${x - gap/2}" y="${pad}" width="${gap}" height="${h-pad-padBottom}" fill="transparent" style="cursor:crosshair;"></rect>`;
+                    svgStr += `<circle cx="${x}" cy="${y}" r="3" fill="var(--bg-glass)" stroke="var(--cyan)" stroke-width="2" style="pointer-events:none;" />`;
+                    svgStr += `<text x="${x}" y="${h - padBottom + 15}" fill="var(--text-main)" font-size="10" text-anchor="middle" opacity="0.8">${d.name}</text>`;
                 });
+                
+                const lastX = padLeft + gap * (historyData.length - 0.5);
+                polyPoints.push(`${lastX},${h - padBottom}`);
+                
+                svgStr += `<polygon points="${polyPoints.join(' ')}" fill="url(#areaGradient)" style="pointer-events:none;" />`;
+                svgStr += `<polyline points="${linePoints.join(' ')}" fill="none" stroke="var(--cyan)" stroke-width="2" style="pointer-events:none;" />`;
+                
                 svgStr += `</svg>`;
             } else {
                 svgStr = `<div style="text-align:center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;">需要至少 2 个历史冲刺数据才能生成速率趋势图。</div>`;
@@ -1352,19 +1382,25 @@
 
             // 2. Epic Data Processing
             const epics = {};
-            const currentSprintName = sprintData.name;
+            const currentSprintName = window._selectedSprint || sprintData.name;
+            const targetNameMatcher = String(currentSprintName).replace(/[^0-9a-z]/ig, '').toLowerCase();
             
             if (stories && stories.length > 0) {
                 stories.forEach(s => {
                     const eName = s.epic || 'N/A';
-                    if (!epics[eName]) epics[eName] = { total: 0, done_curr: 0, done_hist: 0, wip: 0, tagColor: _getEpicColor(eName) };
+                    if (!epics[eName]) epics[eName] = { total: 0, done_curr: 0, done_hist: 0, wip: 0, tagColor: _getEpicColor(eName), inCurrentSprint: false };
                     epics[eName].total += s.points;
+                    
+                    const storySprintMatch = String(s.sprint || '').replace(/[^0-9a-z]/ig, '').toLowerCase();
+                    if (storySprintMatch === targetNameMatcher) {
+                        epics[eName].inCurrentSprint = true;
+                    }
                     
                     const st = s.status ? s.status.toLowerCase() : 'todo';
                     const isDone = ['done', 'completed', 'closed', 'verified'].includes(st);
                     
                     if (isDone) {
-                        if (s.sprint === currentSprintName) {
+                        if (storySprintMatch === targetNameMatcher) {
                             epics[eName].done_curr += s.points;
                         } else {
                             epics[eName].done_hist += s.points;
@@ -1378,6 +1414,7 @@
             let epicsHtml = '';
             const epicKeys = Object.keys(epics).sort();
             epicKeys.forEach(eName => {
+                if (!epics[eName].inCurrentSprint) return;
                 const stats = epics[eName];
                 const pctHist = stats.total > 0 ? (stats.done_hist / stats.total) * 100 : 0;
                 const pctCurr = stats.total > 0 ? (stats.done_curr / stats.total) * 100 : 0;
@@ -1643,16 +1680,20 @@
 
             // Show/Hide cards and separators
             if(cards.length > 0) {
+                const targetSprintMatch = String(window._selectedSprint || '').replace(/[^0-9a-z]/ig, '').toLowerCase();
                 cards.forEach(card => {
-                    if (!_currentEpicFilter) {
+                    const eName = card.dataset.epic || '';
+                    const sprintMatch = String(card.dataset.sprint || '').replace(/[^0-9a-z]/ig, '').toLowerCase();
+                    
+                    const passesEpicFilter = !_currentEpicFilter || eName === _currentEpicFilter;
+                    const passesSprintFilter = !window._selectedSprint || sprintMatch === targetSprintMatch;
+                    
+                    if (passesEpicFilter && passesSprintFilter) {
                         card.style.display = 'block';
+                        setTimeout(() => card.style.opacity = '1', 10);
                     } else {
-                        const eName = card.dataset.epic || '';
-                        if (eName === _currentEpicFilter) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
+                        card.style.opacity = '0';
+                        setTimeout(() => card.style.display = 'none', 200);
                     }
                 });
             }
@@ -1671,11 +1712,11 @@
                     const existingMsg = colBody.querySelector('.kanban-col-empty-msg');
                     if (existingMsg) existingMsg.remove();
 
-                    const visibleCards = Array.from(colBody.querySelectorAll('.kanban-card')).filter(c => c.style.display !== 'none');
-                    if (visibleCards.length === 0 && _currentEpicFilter) {
+                    const visibleCards = Array.from(colBody.querySelectorAll('.kanban-card')).filter(c => c.style.display !== 'none' && c.style.opacity !== '0');
+                    if (visibleCards.length === 0 && (_currentEpicFilter || window._selectedSprint)) {
                         const msg = document.createElement('div');
                         msg.className = 'kanban-col-empty-msg';
-                        msg.textContent = '该 Epic 在此列暂无 Story';
+                        msg.textContent = '此过滤条件下暂无 Story';
                         msg.style.padding = '20px';
                         msg.style.textAlign = 'center';
                         msg.style.color = 'var(--text-muted)';
