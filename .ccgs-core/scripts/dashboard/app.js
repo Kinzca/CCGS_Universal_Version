@@ -297,9 +297,13 @@
                                 const selSprints = document.getElementById('sprint-selector-sprints');
                                 if (selSprints) selSprints.value = window._selectedSprint;
                                 
-                                // 触发全局视图重绘（将在后续 Story 中完善具体实现）
+                                // 触发全局视图重绘
                                 if (typeof window._renderSprintDependentViews === 'function') {
                                     window._renderSprintDependentViews();
+                                }
+                                // 立即刷新看板卡片的 Sprint 过滤状态
+                                if (typeof _applyEpicFilter === 'function') {
+                                    _applyEpicFilter();
                                 }
                             };
                         }
@@ -1491,6 +1495,8 @@
                     if (typeof window._renderSprintDependentViews === 'function') {
                         window._renderSprintDependentViews();
                     }
+                    // 立即刷新看板卡片的 Sprint 过滤状态
+                    _applyEpicFilter();
                 });
             }
             
@@ -1693,7 +1699,7 @@
                         setTimeout(() => card.style.opacity = '1', 10);
                     } else {
                         card.style.opacity = '0';
-                        setTimeout(() => card.style.display = 'none', 200);
+                        card.style.display = 'none';
                     }
                 });
             }
@@ -1701,7 +1707,20 @@
             const separators = document.querySelectorAll('.epic-separator');
             if (separators.length > 0) {
                 separators.forEach(sep => {
-                    sep.style.display = _currentEpicFilter ? 'none' : 'block';
+                    if (_currentEpicFilter) {
+                        sep.style.display = 'none';
+                        return;
+                    }
+                    let nextEl = sep.nextElementSibling;
+                    let hasVisibleCards = false;
+                    while (nextEl && !nextEl.classList.contains('epic-separator')) {
+                        if (nextEl.classList.contains('kanban-card') && nextEl.style.display !== 'none') {
+                            hasVisibleCards = true;
+                            break;
+                        }
+                        nextEl = nextEl.nextElementSibling;
+                    }
+                    sep.style.display = hasVisibleCards ? 'block' : 'none';
                 });
             }
 
