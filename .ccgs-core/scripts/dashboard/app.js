@@ -1534,6 +1534,15 @@
                         tooltip.style.left = pixelX + 'px';
                         tooltip.style.top = (pixelY - 12) + 'px';
                         
+                        // Prevent edge overflow by dynamically adjusting the anchor point
+                        if (pctX > 0.8) {
+                            tooltip.style.transform = 'translate(-100%, -100%)';
+                        } else if (pctX < 0.2) {
+                            tooltip.style.transform = 'translate(0%, -100%)';
+                        } else {
+                            tooltip.style.transform = 'translate(-50%, -100%)';
+                        }
+                        
                         // Highlight visual circle
                         const vis = document.getElementById('point-vis-' + index);
                         if (vis) {
