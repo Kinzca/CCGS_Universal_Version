@@ -1479,9 +1479,11 @@
                 <div class="pi-velocity-row" onclick="window.toggleVelocityAccordion()">
                     <span class="pi-trend-icon">${trendIcon}</span> 历史均速: ${avgVelocity > 0 ? avgVelocity + ' SP/Sprint' : '—'} <span style="margin: 0 8px;">|</span> 当期趋势: <span class="${trendClass}">${trendText}</span>
                 </div>
-                <div id="pi-velocity-accordion" style="position: relative;">
-                    ${svgStr}
-                    <div id="pi-chart-tooltip" style="position: absolute; display: none; background: rgba(15,23,42,0.95); border: 1px solid var(--cyan); padding: 8px 12px; border-radius: 6px; pointer-events: none; color: white; font-size: 0.8rem; z-index: 10; white-space: nowrap; backdrop-filter: blur(4px); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); transform: translate(-50%, -100%);"></div>
+                <div id="pi-velocity-accordion">
+                    <div style="position: relative; width: 100%; height: 100%;">
+                        ${svgStr}
+                        <div id="pi-chart-tooltip" style="position: absolute; display: none; background: rgba(15,23,42,0.95); border: 1px solid var(--cyan); padding: 8px 12px; border-radius: 6px; pointer-events: none; color: white; font-size: 0.8rem; z-index: 10; white-space: nowrap; backdrop-filter: blur(4px); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); transform: translate(-50%, -100%);"></div>
+                    </div>
                 </div>
                 
                 <div class="pi-epic-list">
