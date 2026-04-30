@@ -1343,7 +1343,7 @@
             // Generate SVG Area Chart
             const pad = 20;
             const padBottom = 25; // Space for x-axis
-            const padLeft = 30; // Space for y-axis
+            const padLeft = 45; // Space for y-axis
             const w = 400;
             const h = 180;
             const pointsCount = historyData ? historyData.length : 0;
@@ -1364,7 +1364,7 @@
                 [0, 0.5, 1].forEach(tick => {
                     const y = h - padBottom - tick * (h - padBottom - pad);
                     svgStr += `<line x1="${padLeft}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="currentColor" stroke-dasharray="4" opacity="0.15"/>`;
-                    svgStr += `<text x="${padLeft-10}" y="${y+4}" fill="var(--text-main)" font-size="10" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)}</text>`;
+                    svgStr += `<text x="${padLeft-10}" y="${y+4}" fill="var(--text-main)" font-size="10" text-anchor="end" opacity="0.7">${Math.round(maxPts * tick)} SP</text>`;
                 });
 
                 let polyPoints = [];
@@ -1478,8 +1478,10 @@
                 <div class="pi-velocity-row" onclick="window.toggleVelocityAccordion()">
                     <span class="pi-trend-icon">${trendIcon}</span> 历史均速: ${avgVelocity > 0 ? avgVelocity + ' SP/Sprint' : '—'} <span style="margin: 0 8px;">|</span> 当期趋势: <span class="${trendClass}">${trendText}</span>
                 </div>
-                <div id="pi-velocity-accordion">
+                <div id="pi-velocity-accordion" style="position: relative;">
                     ${svgStr}
+                    <div id="pi-chart-tooltip" style="position: absolute; display: none; background: rgba(15,23,42,0.95); border: 1px solid var(--cyan); padding: 8px 12px; border-radius: 6px; pointer-events: none; color: white; font-size: 0.8rem; z-index: 10; white-space: nowrap; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></div>
+                    <div id="pi-chart-crosshair" style="position: absolute; display: none; width: 1px; background: var(--cyan); opacity: 0.5; top: 0; bottom: 25px; pointer-events: none; z-index: 5;"></div>
                 </div>
                 
                 <div class="pi-epic-list">
@@ -1497,6 +1499,46 @@
                     </div>
                 </div>
             `;
+            
+            // 3.5 Bind SVG Interactions
+            const tooltip = document.getElementById('pi-chart-tooltip');
+            const crosshair = document.getElementById('pi-chart-crosshair');
+            const bars = container.querySelectorAll('.svg-bar');
+            const svgSvg = container.querySelector('svg');
+            
+            if (bars.length > 0 && tooltip && crosshair && svgSvg) {
+                bars.forEach(bar => {
+                    bar.addEventListener('mouseenter', () => {
+                        const name = bar.getAttribute('data-name');
+                        const total = bar.getAttribute('data-total');
+                        const comp = bar.getAttribute('data-comp');
+                        const x = parseFloat(bar.getAttribute('x')) + parseFloat(bar.getAttribute('width'))/2;
+                        
+                        tooltip.innerHTML = `<strong style="color:var(--cyan)">${name}</strong><br/>计划: ${total} SP<br/>交付: ${comp} SP`;
+                        tooltip.style.display = 'block';
+                        crosshair.style.display = 'block';
+                        
+                        const svgRect = svgSvg.getBoundingClientRect();
+                        
+                        // Convert SVG x to percentage then to pixel relative to accordion container
+                        const pctX = x / 400; // viewBox width is 400
+                        const pixelX = pctX * svgRect.width;
+                        
+                        // Crosshair absolute pos
+                        crosshair.style.left = pixelX + 'px';
+                        
+                        // Tooltip pos with centering
+                        tooltip.style.left = pixelX + 'px';
+                        tooltip.style.transform = 'translate(-50%, -100%)';
+                        tooltip.style.top = '30px';
+                    });
+                    
+                    bar.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                        crosshair.style.display = 'none';
+                    });
+                });
+            }
             
             // 4. Bind Sprint Selector
             const selSprints = container.querySelector('#sprint-selector-sprints');
