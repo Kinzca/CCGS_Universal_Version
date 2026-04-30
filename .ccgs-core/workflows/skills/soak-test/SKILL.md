@@ -24,7 +24,7 @@ minutes to several hours** to surface:
 **This skill generates the observation protocol and analysis harness — the
 human does the actual playing.**
 
-**Output:** `CCGS-Data/production/qa/soak-test-[date]-[duration].md`
+**Output:** `CCGS-Data/production/qa/reports/soak-test-[date]-[duration].md`
 
 **When to run:**
 - Polish phase — before `/gate-check release`
@@ -58,7 +58,7 @@ Read:
   soak duration), core loop description
 - Most recent file in `CCGS-Data/production/playtests/` — prior playtest findings
   (to avoid re-documenting known issues)
-- Most recent file in `CCGS-Data/production/qa/qa-plan-*.md` — current sprint test coverage
+- Most recent file in `CCGS-Data/production/qa/plans/qa-plan-*.md` — current sprint test coverage
   (to understand what has been formally tested vs. what the soak covers)
 
 Note any performance budget targets from technical-preferences.md:
@@ -255,7 +255,7 @@ Markdown 编号列表`
 Present the protocol summary in conversation, then ask:
 
 "May I write this soak test protocol to
-`CCGS-Data/production/qa/soak-test-[date]-[duration].md`?"
+`CCGS-Data/production/qa/reports/soak-test-[date]-[duration].md`?"
 
 Write only after approval.
 

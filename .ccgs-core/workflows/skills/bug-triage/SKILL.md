@@ -13,7 +13,7 @@ action list. It distinguishes between **severity** (how bad is the impact?) and
 **priority** (how urgently must we fix it?), detects systemic trends, and
 ensures no critical bug is lost between sprints.
 
-**Output:** `CCGS-Data/production/qa/bug-triage-[date].md`
+**Output:** `CCGS-Data/production/qa/triage/bug-triage-[date].md`
 
 **When to run:**
 - Sprint start — assign open bugs to the new sprint or backlog
@@ -40,7 +40,7 @@ ensures no critical bug is lost between sprints.
 Glob for bug reports in priority order:
 1. `CCGS-Data/production/qa/bugs/*.md` — individual bug report files (preferred format)
 2. `CCGS-Data/production/qa/bugs.md` — single consolidated bug log (fallback)
-3. Any `CCGS-Data/production/qa/qa-plan-*.md` "Bugs Found" table (last resort)
+3. Any `CCGS-Data/production/qa/plans/qa-plan-*.md` "Bugs Found" table (last resort)
 
 If no bug files found:
 > "No bug files found in `CCGS-Data/production/qa/bugs/`. If bugs are tracked in a
@@ -216,7 +216,7 @@ Markdown 编号列表`
 
 Present the report in conversation, then ask:
 
-"May I write this triage report to `CCGS-Data/production/qa/bug-triage-[date].md`?"
+"May I write this triage report to `CCGS-Data/production/qa/triage/bug-triage-[date].md`?"
 
 Write only after approval.
 

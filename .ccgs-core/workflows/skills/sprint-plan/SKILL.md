@@ -90,7 +90,7 @@ stories: []
 ## Definition of Done for this Sprint
 - [ ] All Must Have tasks completed
 - [ ] All tasks pass acceptance criteria
-- [ ] QA plan exists (`CCGS-Data/production/qa/qa-plan-sprint-[N].md`)
+- [ ] QA plan exists (`CCGS-Data/production/qa/plans/qa-plan-sprint-[N].md`)
 - [ ] All Logic/Integration stories have passing unit/integration tests
 - [ ] Smoke check passed (`/smoke-check sprint`)
 - [ ] QA sign-off report: APPROVED or APPROVED WITH CONDITIONS (`/team-qa sprint`)
@@ -203,7 +203,7 @@ After writing, add:
 
 Before closing the sprint plan, check whether a QA plan exists for this sprint.
 
-Use `Glob` to look for `CCGS-Data/production/qa/qa-plan-sprint-[N].md` or any file in `CCGS-Data/production/qa/` referencing this sprint number.
+Use `Glob` to look for `CCGS-Data/production/qa/plans/qa-plan-sprint-[N].md` or any file in `CCGS-Data/production/qa/plans/` referencing this sprint number.
 
 **If a QA plan is found**: note it in the sprint plan output — "QA Plan: `[path]`" — and proceed.
 

@@ -16,7 +16,7 @@ report.
 The rule is simple: **a build that fails smoke check does not go to QA.**
 Handing a broken build to QA wastes their time and demoralises the team.
 
-**Output:** `CCGS-Data/production/qa/smoke-[date].md`
+**Output:** `CCGS-Data/production/qa/smoke/smoke-[date].md`
 
 ---
 
@@ -57,12 +57,12 @@ Before running anything, understand the environment:
    extract the `Engine:` value. Store this for test command selection in
    Phase 2.
 
-4. **Smoke test list**: check whether `CCGS-Data/production/qa/smoke-tests.md` or
+4. **Smoke test list**: check whether `CCGS-Data/production/qa/smoke/smoke-tests.md` or
    `tests/smoke/` exists. If a smoke test list is found, load it for use in
    Phase 4. If neither exists, smoke tests will be drawn from the current QA
    plan (Phase 4 fallback).
 
-5. **QA plan check**: glob `CCGS-Data/production/qa/qa-plan-*.md` and take the most
+5. **QA plan check**: glob `CCGS-Data/production/qa/plans/qa-plan-*.md` and take the most
    recently modified file. If found, note the path — it will be used in
    Phase 3 and Phase 4. If not found, note: "No QA plan found. Run
    `/qa-plan sprint` before smoke-checking for best results."
@@ -169,7 +169,7 @@ fully close those stories.
 
 Draw the smoke test checklist from, in priority order:
 1. The QA plan's "Smoke Test Scope" section (if QA plan was found in Phase 1)
-2. `CCGS-Data/production/qa/smoke-tests.md` (if it exists)
+2. `CCGS-Data/production/qa/smoke/smoke-tests.md` (if it exists)
 3. `tests/smoke/` directory contents (if it exists)
 4. The standard fallback list below (used only when none of the above exist)
 
@@ -367,7 +367,7 @@ Markdown 编号列表Markdown 编号列表
 
 Present the full report in conversation, then ask:
 
-"May I write this smoke check report to `CCGS-Data/production/qa/smoke-[date].md`?"
+"May I write this smoke check report to `CCGS-Data/production/qa/smoke/smoke-[date].md`?"
 
 Write only after approval.
 
@@ -389,14 +389,14 @@ Fix the failures and run `/smoke-check` again to re-gate before QA hand-off."
 Advisory items to resolve before running `/story-done` on affected stories:
 [list MISSING test evidence entries]
 
-QA hand-off: share `CCGS-Data/production/qa/qa-plan-[sprint].md` with the qa-tester
+QA hand-off: share `CCGS-Data/production/qa/plans/qa-plan-[sprint].md` with the qa-tester
 agent to begin manual verification."
 
 **If verdict is PASS:**
 
 "Smoke check passed cleanly. The build is ready for manual QA.
 
-QA hand-off: share `CCGS-Data/production/qa/qa-plan-[sprint].md` with the qa-tester
+QA hand-off: share `CCGS-Data/production/qa/plans/qa-plan-[sprint].md` with the qa-tester
 agent to begin manual verification."
 
 ---

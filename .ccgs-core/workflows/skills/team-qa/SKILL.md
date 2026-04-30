@@ -92,7 +92,7 @@ The test plan should cover:
 - **Entry Criteria**: what must be true before QA can begin (smoke check pass, build stable)
 - **Exit Criteria**: what constitutes a completed QA cycle (all stories PASS or FAIL with bugs filed)
 
-Ask: "May I write the QA plan to `CCGS-Data/production/qa/qa-plan-[sprint]-[date].md`?"
+Ask: "May I write the QA plan to `CCGS-Data/production/qa/plans/qa-plan-[sprint]-[date].md`?"
 
 Write only after receiving approval.
 
@@ -192,7 +192,7 @@ Next step guidance by verdict:
 - APPROVED WITH CONDITIONS: "Resolve conditions before advancing. S3/S4 bugs may be deferred to polish."
 - NOT APPROVED: "Resolve S1/S2 bugs and re-run `/team-qa` or targeted manual QA before advancing."
 
-Ask: "May I write this QA sign-off report to `CCGS-Data/production/qa/qa-signoff-[sprint]-[date].md`?"
+Ask: "May I write this QA sign-off report to `CCGS-Data/production/qa/signoffs/qa-signoff-[sprint]-[date].md`?"
 
 Write only after receiving approval.
 

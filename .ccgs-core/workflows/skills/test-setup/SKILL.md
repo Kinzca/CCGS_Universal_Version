@@ -119,7 +119,7 @@ Markdown 编号列表`
 | Integration | Integration test OR playtest doc | `tests/integration/[system]/` |
 | Visual/Feel | Screenshot + lead sign-off | `tests/evidence/` |
 | UI | Manual walkthrough OR interaction test | `tests/evidence/` |
-| Config/Data | Smoke check pass | `CCGS-Data/production/qa/smoke-*.md` |
+| Config/Data | Smoke check pass | `CCGS-Data/production/qa/smoke/smoke-*.md` |
 
 ## CI
 

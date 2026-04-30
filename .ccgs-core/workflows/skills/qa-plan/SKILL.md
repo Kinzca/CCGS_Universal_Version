@@ -19,7 +19,7 @@ Run this before a sprint begins so the team knows upfront what testing work
 is required. A test plan written after implementation is a post-mortem, not a
 plan.
 
-**Output:** `CCGS-Data/production/qa/qa-plan-[sprint-slug]-[date].md`
+**Output:** `CCGS-Data/production/qa/plans/qa-plan-[sprint-slug]-[date].md`
 
 ---
 
@@ -228,13 +228,13 @@ test entry should reflect the real requirements of these specific stories.
 Show the complete plan in conversation (or a summary if the plan is very long),
 then ask:
 
-"May I write this QA plan to `CCGS-Data/production/qa/qa-plan-[sprint-slug]-[date].md`?"
+"May I write this QA plan to `CCGS-Data/production/qa/plans/qa-plan-[sprint-slug]-[date].md`?"
 
 Write the plan exactly as generated — do not truncate.
 
 After writing:
 
-"QA plan written to `CCGS-Data/production/qa/qa-plan-[sprint-slug]-[date].md`.
+"QA plan written to `CCGS-Data/production/qa/plans/qa-plan-[sprint-slug]-[date].md`.
 
 Next steps:
 - Share this plan with the team before sprint implementation begins

@@ -259,7 +259,7 @@ change meaning. This is what the programmer reads instead of the ADR.]
 - Integration: `tests/integration/[system]/[story-slug]_test.[ext]` OR playtest doc
 - Visual/Feel: `CCGS-Data/production/qa/evidence/[story-slug]-evidence.md` + sign-off
 - UI: `CCGS-Data/production/qa/evidence/[story-slug]-evidence.md` or interaction test
-- Config/Data: smoke check pass (`CCGS-Data/production/qa/smoke-*.md`)
+- Config/Data: smoke check pass (`CCGS-Data/production/qa/smoke/smoke-*.md`)
 
 **Status**: [ ] Not yet created
 

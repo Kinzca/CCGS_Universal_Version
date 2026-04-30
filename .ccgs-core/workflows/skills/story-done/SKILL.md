@@ -151,7 +151,7 @@ Based on the Story Type extracted in Phase 2, check for required evidence:
 | **Integration** | Integration test in `tests/integration/[system]/` OR playtest doc | BLOCKING |
 | **Visual/Feel** | Screenshot + sign-off in `CCGS-Data/production/qa/evidence/` | ADVISORY |
 | **UI** | Manual walkthrough doc OR interaction test in `CCGS-Data/production/qa/evidence/` | ADVISORY |
-| **Config/Data** | Smoke check pass report in `CCGS-Data/production/qa/smoke-*.md` | ADVISORY |
+| **Config/Data** | Smoke check pass report in `CCGS-Data/production/qa/smoke/smoke-*.md` | ADVISORY |
 
 **For Logic stories**: first read the story's **Test Evidence** section to extract the
 exact required file path. Use `Glob` to check that exact path. If the exact path is not
@@ -172,7 +172,7 @@ referencing this story. If none: flag as **ADVISORY** —
 "No manual test evidence found. Create `CCGS-Data/production/qa/evidence/[story-slug]-evidence.md`
 using the test-evidence template and obtain sign-off before final closure."
 
-**For Config/Data stories**: check for any `CCGS-Data/production/qa/smoke-*.md` file.
+**For Config/Data stories**: check for any `CCGS-Data/production/qa/smoke/smoke-*.md` file.
 If none: flag as **ADVISORY** — "No smoke check report found. Run `/smoke-check`."
 
 **If no Story Type is set**: flag as **ADVISORY** —
