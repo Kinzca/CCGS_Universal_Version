@@ -1683,19 +1683,12 @@
             });
 
             // 3. Render HTML
-            let sprintOptsHtml = '';
-            if (historyData && historyData.length > 0) {
-                sprintOptsHtml = historyData.map(s => 
-                    `<option value="${s.name}" ${s.name === (window._selectedSprint || currentSprintName) ? 'selected' : ''}>${s.name}</option>`
-                ).join('');
-            }
+            const displaySprintName = window._selectedSprint || currentSprintName || sprintData.name;
             
             container.innerHTML = `
                 <div class="pi-sprint-bar">
                     <div class="pi-sprint-name">
-                        <select class="sprint-selector" id="sprint-selector-sprints" style="background: transparent; border: none; color: inherit; font-size: inherit; font-weight: inherit; outline: none; cursor: pointer; padding-right: 16px;">
-                            ${sprintOptsHtml}
-                        </select>
+                        ${displaySprintName}
                     </div>
                     <div class="pi-sprint-track">
                         <div class="pi-sprint-fill" style="width: ${sprintPct}%;"></div>
@@ -1795,21 +1788,7 @@
                 });
             }
             
-            // 4. Bind Sprint Selector
-            const selSprints = container.querySelector('#sprint-selector-sprints');
-            if (selSprints) {
-                selSprints.addEventListener('change', (e) => {
-                    window._selectedSprint = e.target.value;
-                    const selOverview = document.getElementById('sprint-selector-overview');
-                    if (selOverview) selOverview.value = window._selectedSprint;
-                    
-                    if (typeof window._renderSprintDependentViews === 'function') {
-                        window._renderSprintDependentViews();
-                    }
-                    // 立即刷新看板卡片的 Sprint 过滤状态
-                    _applyEpicFilter();
-                });
-            }
+            // 4. Sprint Selector logic removed in favor of global dashboard settings.
             
             // 5. Bind Epic click events
             const rows = container.querySelectorAll('.pi-epic-row');
