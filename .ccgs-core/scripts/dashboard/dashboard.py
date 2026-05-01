@@ -647,7 +647,7 @@ def gather_data():
     
     if os.path.exists(adr_dir):
         for filename in os.listdir(adr_dir):
-            if filename.startswith("adr-") and filename.endswith(".md"):
+            if filename.lower().startswith("adr-") and filename.endswith(".md"):
                 file_path = os.path.join(adr_dir, filename)
                 title = filename.replace(".md", "")
                 status = "Unknown"
