@@ -727,7 +727,7 @@
                                 let acceptedHtml = '';
                                 let deprecatedHtml = '';
                                 
-                                try {
+
                                     data.adr_coverage.files.forEach((adr, i) => {
                                     const adrNumMatch = adr.filename.match(/adr-(\d+)/i);
                                     const adrNum = adrNumMatch ? adrNumMatch[1] : '';
