@@ -352,9 +352,11 @@ def gather_data():
             "ac_done": sum(1 for ac in ac_list if ac["done"])
         })
         
-        total_pts += pts
-        if status == 'done':
-            completed_pts += pts
+        story_sprint = fm.get('sprint', '')
+        if story_sprint == data["sprint"]["name"]:
+            total_pts += pts
+            if status == 'done':
+                completed_pts += pts
 
         # History tracking (all stories)
         if status == 'done':
