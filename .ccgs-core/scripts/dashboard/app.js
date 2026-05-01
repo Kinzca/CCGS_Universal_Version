@@ -169,6 +169,165 @@
             }
         };
 
+        // --- Goals & Chart State ---
+        window._currentGoals = { sprint: 0, daily: 0 };
+        window._chartMode = 'goal'; // 'goal', 'daily', 'monthly'
+        window._chartData = { daily: [], monthly: [] };
+        
+        window.saveGoalSprint = function(sprintName) {
+            window._currentGoals.active_sprint = sprintName;
+            
+            fetch('/api/save_goals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(window._currentGoals)
+            }).then(() => {
+                window.location.reload();
+            });
+        };
+        
+        window.switchChartMode = function(mode) {
+            window._chartMode = mode;
+            document.querySelectorAll('#history-chart-card .segment-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-chart-' + mode).classList.add('active');
+            window.renderHistoryChart();
+        };
+        
+        window.renderHistoryChart = function() {
+            const container = document.getElementById('history-chart-container');
+            const emptyState = document.getElementById('chart-empty-state');
+            
+            if (window._chartMode === 'goal' && (!window._lastData || !window._lastData.sprint || window._lastData.sprint.total_points <= 0)) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
+            
+            let dataset = [];
+            if (window._chartMode === 'monthly') {
+                dataset = window._chartData.monthly.map(item => ({ label: item.month, val: item.sp }));
+            } else {
+                dataset = window._chartData.daily.map(item => ({ label: item.date, val: item.sp }));
+                if (window._chartMode === 'goal') {
+                    dataset = dataset.slice(-14);
+                }
+            }
+            
+            if (dataset.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted); padding: 20px;">No data available.</div>';
+                return;
+            }
+        
+            let targetVal = null;
+            if (window._chartMode === 'goal' && window._lastData && window._lastData.sprint) {
+                targetVal = Math.ceil((window._lastData.sprint.total_points || 0) / 14);
+            }
+        
+            const width = Math.max(container.clientWidth, dataset.length * 40);
+            const height = 260;
+            const padding = { top: 20, right: 30, bottom: 40, left: 40 };
+            
+            const maxVal = Math.max(...dataset.map(d => d.val), targetVal || 0) || 10;
+            
+            const scaleX = i => padding.left + (i / Math.max(1, dataset.length - 1)) * (width - padding.left - padding.right);
+            const scaleY = v => height - padding.bottom - (v / maxVal) * (height - padding.top - padding.bottom);
+            
+            let points = dataset.map((d, i) => `${scaleX(i)},${scaleY(d.val)}`).join(' ');
+            let polygonPoints = `${scaleX(0)},${height - padding.bottom} ${points} ${scaleX(dataset.length - 1)},${height - padding.bottom}`;
+            
+            let targetLineHtml = '';
+            if (targetVal !== null) {
+                const y = scaleY(targetVal);
+                targetLineHtml = `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="var(--orange)" stroke-width="2" stroke-dasharray="6,4" />
+                                  <text x="${width - padding.right + 5}" y="${y+4}" fill="var(--orange)" font-size="10">${targetVal}</text>`;
+            }
+        
+            let nodesHtml = dataset.map((d, i) => {
+                const cx = scaleX(i);
+                const cy = scaleY(d.val);
+                const reachRate = targetVal ? Math.round((d.val / targetVal) * 100) : null;
+                let tooltipExtra = '';
+                if (reachRate !== null) {
+                    tooltipExtra = `Rate: ${reachRate}% ` + (reachRate >= 100 ? '🔥' : '💪');
+                }
+                return `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--bg-dark)" stroke="var(--cyan)" stroke-width="2" 
+                            onmouseover="window.showChartTooltip(event, '${d.label}', ${d.val}, '${tooltipExtra}')"
+                            onmouseout="window.hideChartTooltip()"
+                            style="cursor: pointer; transition: r 0.2s;"></circle>
+                        <circle cx="${cx}" cy="${cy}" r="12" fill="transparent"
+                            onmouseover="window.showChartTooltip(event, '${d.label}', ${d.val}, '${tooltipExtra}'); this.previousElementSibling.setAttribute('r', '6');"
+                            onmouseout="window.hideChartTooltip(); this.previousElementSibling.setAttribute('r', '4');"
+                            style="cursor: pointer;"></circle>`;
+            }).join('');
+        
+            let labelsHtml = dataset.map((d, i) => {
+                if (dataset.length > 15 && i % Math.ceil(dataset.length / 10) !== 0 && i !== dataset.length - 1) return '';
+                const cx = scaleX(i);
+                let displayLabel = d.label;
+                if (window._chartMode !== 'monthly') {
+                    displayLabel = d.label.substring(5); // MM-DD
+                }
+                return `<text x="${cx}" y="${height - Math.max(5, padding.bottom - 15)}" fill="var(--text-muted)" font-size="10" text-anchor="middle">${displayLabel}</text>`;
+            }).join('');
+        
+            let yLabelsHtml = [0, maxVal/2, maxVal].map(v => {
+                const cy = scaleY(v);
+                return `<text x="${padding.left - 10}" y="${cy + 4}" fill="var(--text-muted)" font-size="10" text-anchor="end">${Math.round(v)}</text>
+                        <line x1="${padding.left}" y1="${cy}" x2="${width - padding.right}" y2="${cy}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="2,4" />`;
+            }).join('');
+        
+            const svg = `
+                <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow: visible;">
+                    <defs>
+                        <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.3" />
+                            <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    ${yLabelsHtml}
+                    ${targetLineHtml}
+                    <polygon points="${polygonPoints}" fill="url(#areaGrad)" />
+                    <polyline points="${points}" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                    ${labelsHtml}
+                    ${nodesHtml}
+                </svg>
+            `;
+            
+            container.innerHTML = svg;
+        };
+        
+        window.showChartTooltip = function(e, label, val, extra) {
+            const tt = document.getElementById('chart-tooltip');
+            document.getElementById('chart-tooltip-title').textContent = label;
+            document.getElementById('chart-tooltip-val').textContent = val;
+            const extraEl = document.getElementById('chart-tooltip-extra');
+            if (extra && extra !== 'null') {
+                extraEl.style.display = 'block';
+                extraEl.textContent = extra;
+            } else {
+                extraEl.style.display = 'none';
+            }
+            
+            tt.style.display = 'block';
+            
+            const containerRect = document.getElementById('history-chart-card').getBoundingClientRect();
+            let left = e.clientX - containerRect.left + 15;
+            let top = e.clientY - containerRect.top - 40;
+            
+            if (left + tt.offsetWidth > containerRect.width) {
+                left = e.clientX - containerRect.left - tt.offsetWidth - 15;
+            }
+            
+            tt.style.left = left + 'px';
+            tt.style.top = top + 'px';
+        };
+        
+        window.hideChartTooltip = function() {
+            document.getElementById('chart-tooltip').style.display = 'none';
+        };
+
         // Theme Toggle Logic
         const themeToggle = document.getElementById('theme-toggle');
         const themeBtns = themeToggle.querySelectorAll('span');
@@ -416,6 +575,75 @@
                             ringVal.textContent = progressPercent + '%';
                         }, 200);
                         ringMeta.innerHTML = `<strong>${data.sprint.completed_points}</strong> / ${data.sprint.total_points} pts`;
+                    }
+                    
+                    // --- Goals & Charts (Story D-044 Timeline) ---
+                    window._currentGoals = data.goals || {};
+                    const sprintName = data.sprint.name;
+                    
+                    // Populate Sprint Timeline
+                    const timelineContainer = document.getElementById('sprint-timeline');
+                    if (timelineContainer && data.all_sprints) {
+                        timelineContainer.innerHTML = '';
+                        data.all_sprints.forEach(sp => {
+                            const node = document.createElement('div');
+                            node.className = 'timeline-node' + (sp === sprintName ? ' active' : '');
+                            node.onclick = () => window.saveGoalSprint(sp);
+                            
+                            const dot = document.createElement('div');
+                            dot.className = 'node-dot';
+                            
+                            const label = document.createElement('div');
+                            label.className = 'node-label';
+                            label.textContent = sp.replace('-', ' ');
+                            
+                            node.appendChild(dot);
+                            node.appendChild(label);
+                            timelineContainer.appendChild(node);
+                        });
+                    }
+                    
+                    // Populate Sprint Vitals
+                    const velocityEl = document.getElementById('vital-velocity');
+                    const statusEl = document.getElementById('vital-status');
+                    if (velocityEl) {
+                        const requiredVelocity = Math.ceil((data.sprint.total_points || 0) / 14);
+                        velocityEl.textContent = `${requiredVelocity} SP / Day`;
+                        
+                        if (statusEl) {
+                            if (progressPercent >= 100) {
+                                statusEl.innerHTML = '✨ Completed';
+                                statusEl.style.color = '#8b5cf6';
+                                statusEl.style.background = 'rgba(139, 92, 246, 0.15)';
+                                statusEl.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                            } else if (progressPercent < 20 && requiredVelocity > 10) {
+                                statusEl.innerHTML = '🔴 At Risk';
+                                statusEl.style.color = '#ef4444';
+                                statusEl.style.background = 'rgba(239, 68, 68, 0.15)';
+                                statusEl.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                            } else {
+                                statusEl.innerHTML = '🟢 On Track';
+                                statusEl.style.color = '#10b981';
+                                statusEl.style.background = 'rgba(16, 185, 129, 0.15)';
+                                statusEl.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            }
+                        }
+                    }
+
+                    if (data.daily_history || data.monthly_history) {
+                        window._chartData.daily = data.daily_history || [];
+                        window._chartData.monthly = data.monthly_history || [];
+                        window.renderHistoryChart();
+                    }
+                    
+                    // Hide loading spinner and show the correct tab
+                    const designLoading = document.getElementById('design-loading');
+                    if (designLoading) designLoading.style.display = 'none';
+                    const btnAdrView = document.getElementById('btn-adr-view');
+                    if (btnAdrView && btnAdrView.classList.contains('active')) {
+                        document.getElementById('adr-container').style.display = 'block';
+                    } else {
+                        document.getElementById('gdd-container').style.display = 'block';
                     }
                     
                     if(data.gdd_coverage) {
@@ -2428,6 +2656,22 @@ window._renderStoryMatrix = function(forcedEpic) {
                 }
             } else if (e.key === 'Enter') {
                 e.preventDefault();
+                const query = input.value.trim();
+                if (query.startsWith('/')) {
+                    const cmdMatch = query.match(/^\/feedback\s+(.+)$/);
+                    if (cmdMatch) {
+                        fetch('/api/feedback', {
+                            method: 'POST',
+                            body: JSON.stringify({ context: 'Global Command Bar', text: cmdMatch[1].trim(), timestamp: new Date().toISOString() })
+                        }).then(() => {
+                            closeModal();
+                            window.showToast ? window.showToast('反馈已发送，感谢！') : alert('反馈已发送，感谢！');
+                        });
+                    } else if (query.startsWith('/feedback')) {
+                        window.showToast ? window.showToast('请在 /feedback 后加上空格和想吐槽的内容再按回车哦！') : alert('请在 /feedback 后加上空格和想吐槽的内容再按回车哦！');
+                    }
+                    return;
+                }
                 executeSearchAction(e.metaKey || e.ctrlKey);
             } else if (['1','2','3','4'].includes(e.key)) {
                 // Prevent global tab switching when typing numbers in search
@@ -2444,8 +2688,14 @@ window._renderStoryMatrix = function(forcedEpic) {
         const query = e.target.value;
         // Feature isolation: skip commands
         if (query.trim().startsWith('/')) {
-            resultsUl.innerHTML = '';
+            resultsUl.innerHTML = `
+                <li class="active">
+                    <div class="title" style="color:var(--orange)">💡 提交体验反馈</div>
+                    <div class="snippet" style="font-family: monospace; margin-top: 4px;">格式: /feedback [想吐槽的内容] 然后按回车立刻发送。当前: ${query}</div>
+                </li>
+            `;
             emptyState.style.display = 'none';
+            spinner.style.display = 'none';
             return;
         }
 
@@ -2825,6 +3075,9 @@ window._renderStoryMatrix = function(forcedEpic) {
             // Handle '/' to focus
             document.addEventListener('keydown', (e) => {
                 if (e.key === '/' && document.activeElement !== inputElem) {
+                    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                        return;
+                    }
                     const banner = document.getElementById('smart-banner');
                     if (banner && banner.style.display !== 'none') {
                         inputElem.focus();
@@ -2870,3 +3123,73 @@ window._renderStoryMatrix = function(forcedEpic) {
         });
     })();
 })();
+// Expose generic toast if available or simple alert
+window.showToast = function(msg) {
+    const container = document.getElementById('toast-container');
+    if (!container) { alert(msg); return; }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    toast.style.background = 'var(--cyan)';
+    toast.style.color = '#000';
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+};
+
+// ==========================================
+// UX Feedback System
+// ==========================================
+window.openFeedbackModal = function(context) {
+    const modal = document.getElementById('ux-feedback-modal');
+    const ctxLabel = document.getElementById('ux-feedback-context');
+    const input = document.getElementById('ux-feedback-input');
+    if (modal && ctxLabel && input) {
+        ctxLabel.textContent = context || 'Global';
+        input.value = '';
+        modal.style.display = 'flex';
+        setTimeout(() => input.focus(), 50);
+    }
+};
+
+window.closeFeedbackModal = function() {
+    const modal = document.getElementById('ux-feedback-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.submitFeedbackModal = function() {
+    const ctxLabel = document.getElementById('ux-feedback-context');
+    const input = document.getElementById('ux-feedback-input');
+    const text = input.value.trim();
+    if (text) {
+        fetch('/api/feedback', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                context: ctxLabel.textContent, 
+                text: text, 
+                timestamp: new Date().toISOString() 
+            })
+        }).then(() => {
+            window.closeFeedbackModal();
+            window.showToast('反馈已发送，感谢！');
+        });
+    }
+};
+
+// Cmd+Enter inside feedback textarea
+document.addEventListener('DOMContentLoaded', () => {
+    const fbInput = document.getElementById('ux-feedback-input');
+    if (fbInput) {
+        fbInput.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                window.submitFeedbackModal();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                window.closeFeedbackModal();
+            }
+        });
+    }
+});

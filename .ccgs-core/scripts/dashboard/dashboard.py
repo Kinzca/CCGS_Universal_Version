@@ -9,6 +9,7 @@ import webbrowser
 import subprocess
 from threading import Timer
 import time
+from datetime import datetime
 
 PORT = 8080
 CACHE_TTL = 5
@@ -19,12 +20,22 @@ _shockwave_cache = {
     'active': [],
     'last_head': None
 }
+_git_date_cache = {}
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 CWD = os.getcwd()
 if os.path.exists(os.path.join(CWD, "CCGS-Data")):
     PROJECT_ROOT = CWD
 else:
     PROJECT_ROOT = os.path.abspath(os.path.join(DIRECTORY, "../../../"))
+
+# Load persistent cache
+_cache_file = os.path.join(PROJECT_ROOT, "CCGS-Data", "production", "tracking", ".git_date_cache.json")
+try:
+    if os.path.exists(_cache_file):
+        with open(_cache_file, 'r', encoding='utf-8') as f:
+            _git_date_cache = json.load(f)
+except Exception:
+    _git_date_cache = {}
 
 def parse_ccgs_env(project_root):
     """解析 ccgs.env 文件，返回 {key: value} 字典
@@ -266,15 +277,31 @@ def gather_data():
         f for f in sprint_files
         if not any(os.path.basename(f).replace('.md', '').endswith(suffix) for suffix in SPRINT_SUFFIX_BLACKLIST)
     ]
+    data["all_sprints"] = []
     if sprint_files:
-        latest = sorted(sprint_files)[-1]
+        sprints_sorted = sorted(sprint_files)
+        data["all_sprints"] = [os.path.basename(f).replace('.md', '') for f in sprints_sorted]
+        latest = sprints_sorted[-1]
         data["sprint"]["name"] = os.path.basename(latest).replace('.md', '')
+    
+    # --- Read Goals (Story D-044) ---
+    goals_path = os.path.join(DATA_DIR, "production", "tracking", "goals.json")
+    if os.path.exists(goals_path):
+        try:
+            with open(goals_path, 'r', encoding='utf-8') as f:
+                data["goals"] = json.load(f)
+                if data["goals"].get("active_sprint") and data["goals"]["active_sprint"] in data["all_sprints"]:
+                    data["sprint"]["name"] = data["goals"]["active_sprint"]
+        except Exception:
+            pass
     
     # 2. Parse Stories for Real Velocity and Kanban
     story_files = glob.glob(os.path.join(DATA_DIR, "production", "epics", "**", "story-*.md"), recursive=True)
     data["stories"] = []
     total_pts = 0
     completed_pts = 0
+    daily_sp = {}
+    monthly_sp = {}
     for sf in story_files:
         fm = extract_markdown_fields(sf)
         pts_str = str(fm.get('points', '1'))
@@ -328,9 +355,57 @@ def gather_data():
         total_pts += pts
         if status == 'done':
             completed_pts += pts
+
+        # History tracking (all stories)
+        if status == 'done':
+            # Extract completion date via git log or file mtime (cached)
+            global _git_date_cache
+            mtime = os.path.getmtime(sf)
+            sf_rel = os.path.relpath(sf, PROJECT_ROOT)
+            cached = _git_date_cache.get(sf_rel)
+            
+            if cached and cached[0] == mtime:
+                date_str = cached[1]
+            else:
+                date_str = None
+                try:
+                    date_str = subprocess.check_output(['git', 'log', '-1', '--format=%aI', '--', sf]).decode('utf-8').strip()
+                except Exception:
+                    pass
+                if not date_str:
+                    date_str = datetime.fromtimestamp(mtime).isoformat()
+                _git_date_cache[sf_rel] = [mtime, date_str]
+                
+                # Save cache to disk
+                try:
+                    os.makedirs(os.path.dirname(_cache_file), exist_ok=True)
+                    with open(_cache_file, 'w', encoding='utf-8') as f:
+                        json.dump(_git_date_cache, f)
+                except Exception:
+                    pass
+            
+            if date_str and len(date_str) >= 10:
+                day_key = date_str[:10]  # YYYY-MM-DD
+                month_key = date_str[:7] # YYYY-MM
+                daily_sp[day_key] = daily_sp.get(day_key, 0) + pts
+                monthly_sp[month_key] = monthly_sp.get(month_key, 0) + pts
             
     data["sprint"]["total_points"] = total_pts
     data["sprint"]["completed_points"] = completed_pts
+    
+    # Load goals
+    data["goals"] = {"sprint": 0, "daily": 0}
+    goals_path = os.path.join(DATA_DIR, "production", "tracking", "goals.json")
+    if os.path.exists(goals_path):
+        try:
+            with open(goals_path, 'r', encoding='utf-8') as f:
+                data["goals"] = json.load(f)
+        except Exception:
+            pass
+            
+    # Compile daily and monthly history
+    data["daily_history"] = [{"date": k, "sp": v} for k, v in sorted(daily_sp.items())]
+    data["monthly_history"] = [{"month": k, "sp": v} for k, v in sorted(monthly_sp.items())]
     
     # Sprint Progress — 诚实的完成百分比（方案 A: 替代伪燃尽图）
     # 不再生成伪历史趋势线，仅输出真实的当前完成率
@@ -688,18 +763,18 @@ def gather_data():
                     changed_gdds.append((filename, gdd))
             
             if changed_gdds:
+                diff_res = subprocess.run(
+                    ['git', 'diff', '--name-only', 'HEAD'],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT
+                )
+                changed_files = [f.strip() for f in diff_res.stdout.split('\n') if f.strip()]
                 print(f"[Shockwave] changed_gdds: {[f for f,_ in changed_gdds]}")
                     
             for filename, filepath in changed_gdds:
-                diff_res = subprocess.run(
-                    ['git', 'diff', 'HEAD', '--', filepath],
-                    capture_output=True, text=True, cwd=PROJECT_ROOT
-                )
-                
                 _shockwave_cache['active'] = [sw for sw in _shockwave_cache['active'] if sw['source_gdd'] != filename]
                 
-                has_diff = bool(diff_res.stdout.strip())
-                print(f"[Shockwave] {filename}: has_diff={has_diff}, diff_len={len(diff_res.stdout)}")
+                has_diff = any(filename in cf for cf in changed_files)
+                print(f"[Shockwave] {filename}: has_diff={has_diff}")
                 
                 if has_diff:
                     affected_adrs = []
@@ -867,6 +942,66 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(search_results).encode('utf-8'))
         else:
             super().do_GET()
+            
+    def do_POST(self):
+        if self.path == '/api/save_goals':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            try:
+                goals = json.loads(post_data.decode('utf-8'))
+                goals_dir = os.path.join(DATA_DIR, "production", "tracking")
+                os.makedirs(goals_dir, exist_ok=True)
+                goals_path = os.path.join(goals_dir, "goals.json")
+                with open(goals_path, 'w', encoding='utf-8') as f:
+                    json.dump(goals, f, indent=4)
+                
+                # force data refresh next time
+                global _last_data_update
+                _last_data_update = 0
+                
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "success"}).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+        elif self.path == '/api/feedback':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            try:
+                feedback = json.loads(post_data.decode('utf-8'))
+                feedback_dir = os.path.join(PROJECT_ROOT, "CCGS-Data", "production", "tracking")
+                os.makedirs(feedback_dir, exist_ok=True)
+                feedback_path = os.path.join(feedback_dir, "ux-feedback.json")
+                
+                feedback_list = []
+                if os.path.exists(feedback_path):
+                    with open(feedback_path, 'r', encoding='utf-8') as f:
+                        try:
+                            feedback_list = json.load(f)
+                        except json.JSONDecodeError:
+                            feedback_list = []
+                            
+                feedback_list.append(feedback)
+                
+                with open(feedback_path, 'w', encoding='utf-8') as f:
+                    json.dump(feedback_list, f, indent=4, ensure_ascii=False)
+                    
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "success"}).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
         
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")

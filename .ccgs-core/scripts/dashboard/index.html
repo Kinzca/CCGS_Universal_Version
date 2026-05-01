@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CCGS QuantumFlow Dashboard</title>
-    <link rel="stylesheet" href="styles.css?v=21">
+    <link rel="stylesheet" href="styles.css?v=23">
+
+    
 </head>
+
 <body>
     
     <aside class="sidebar">
@@ -112,20 +115,26 @@
             
             <!-- Stage Tracker -->
             <div class="card stage-tracker" id="stage-tracker" style="display: none;">
-                <h2 data-i18n="stage_title" style="margin-bottom: 1.5rem;">Project Stage</h2>
+                <h2 data-i18n="stage_title" style="margin-bottom: 1.5rem;">
+                    Project Stage
+                    
+                </h2>
                 <div class="stage-container" id="stage-container">
                     <!-- Stages populated by JS -->
                 </div>
             </div>
             
         <div class="dashboard-grid">
-            <div class="card card-sprint" onclick="window.switchView('sprints-view')" style="cursor: pointer; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2 data-i18n="chart_title" style="margin: 0;">Sprint Progress</h2>
-                    <select class="sprint-selector" id="sprint-selector-overview" onclick="event.stopPropagation()"></select>
+            <div class="card" id="goal-management-card" style="grid-column: 1 / -1; margin-bottom: 0;">
+                <!-- Timeline Slider Header -->
+                <div class="sprint-timeline" id="sprint-timeline">
+                    <!-- Populated by app.js -->
                 </div>
-                <div class="chart-container" id="chart">
-                    <div class="progress-ring-wrap">
+                
+                <!-- 进度环形图与健康体征 -->
+                <div style="display: flex; justify-content: center; align-items: center; padding: 10px 0; gap: 60px;">
+                    <!-- 进度环形图 -->
+                    <div class="progress-ring-wrap" onclick="window.switchView('sprints-view')" style="cursor: pointer;">
                         <div class="progress-ring-container">
                             <svg class="progress-ring-svg" viewBox="0 0 200 200">
                                 <defs>
@@ -142,15 +151,67 @@
                         </div>
                         <div class="progress-ring-meta" id="progress-ring-meta"></div>
                     </div>
+                    
+                    <!-- Sprint Vitals 面板 -->
+                    <div class="sprint-vitals" style="display: flex; flex-direction: column; gap: 15px; border-left: 1px solid var(--glass-border); padding-left: 40px;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Est. Time Remaining</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-main);"><span id="vital-time">14 Days</span></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Required Velocity</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-main);"><span id="vital-velocity">0 SP/Day</span></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Sprint Health</div>
+                            <div id="vital-status" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                🟢 On Track
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进度图表卡片 -->
+            <div class="card" id="history-chart-card" style="grid-column: 1 / -1; margin-bottom: 0;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">
+                        📈 Tracking & Trends
+                        
+                    </h2>
+                    <div class="segmented-control">
+                        <button class="segment-btn active" id="btn-chart-goal" onclick="window.switchChartMode('goal')">Goal</button>
+                        <button class="segment-btn" id="btn-chart-daily" onclick="window.switchChartMode('daily')">Daily</button>
+                        <button class="segment-btn" id="btn-chart-monthly" onclick="window.switchChartMode('monthly')">Monthly</button>
+                    </div>
+                </div>
+                
+                <div id="chart-empty-state" style="display: none; text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-hover); border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🎯</div>
+                    <div style="font-size: 1.1rem; margin-bottom: 5px;">No Goal Set</div>
+                    <div style="font-size: 0.9rem;">Set a goal above to unlock tracking!</div>
+                </div>
+                
+                <div id="history-chart-container" style="position: relative; width: 100%; height: 260px; overflow-x: auto; overflow-y: hidden;">
+                    <!-- Chart rendered by JS -->
+                </div>
+                <div id="chart-tooltip" style="display: none; position: absolute; pointer-events: none; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 12px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+                    <div id="chart-tooltip-title" style="font-weight: 600; margin-bottom: 4px; color: var(--text-muted);"></div>
+                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                        <span id="chart-tooltip-val" style="font-size: 1.5em; font-weight: 700; color: var(--cyan);"></span>
+                        <span style="color: var(--text-muted);">SP</span>
+                    </div>
+                    <div id="chart-tooltip-extra" style="margin-top: 4px; font-size: 0.9em; display: none;"></div>
                 </div>
             </div>
             
-            <div class="card card-bugs" onclick="window.switchView('quality-view')" style="cursor: pointer;">
+            <div class="card card-bugs" style="position:relative;" onclick="window.switchView('quality-view')" style="cursor: pointer;">
                 <h2 data-i18n="bugs_title">Active Bugs</h2>
                 <div class="bug-list" id="bug-list"></div>
             </div>
             
-            <div class="card card-gdd" onclick="window.switchView('design-view')" style="cursor: pointer;">
+            <div class="card card-gdd" style="position:relative;" onclick="window.switchView('design-view')" style="cursor: pointer;">
                 <h2 data-i18n="gdd_coverage_title">GDD Coverage</h2>
                 <div class="chart-container" id="chart-gdd">
                     <div class="progress-ring-wrap">
@@ -173,7 +234,7 @@
                 </div>
             </div>
             
-            <div class="card card-test" onclick="window.switchView('quality-view')" style="cursor: pointer;">
+            <div class="card card-test" style="position:relative;" onclick="window.switchView('quality-view')" style="cursor: pointer;">
                 <h2 data-i18n="test_coverage_title">Test Coverage</h2>
                 <div class="chart-container" id="chart-test">
                     <div class="progress-ring-wrap">
@@ -194,13 +255,19 @@
                     </div>
                 </div>
             </div>
+            <!-- END dashboard grid -->
         </div>
+
             <!-- Activity Timeline -->
             <div class="card activity-timeline-card" id="activity-timeline-card" style="display: none;">
+                
                 <div class="timeline-header">
                     <h2>
-                        <svg width="20" height="20" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Activity Timeline
+                        <span>
+                            <svg width="20" height="20" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Activity Timeline
+                        </span>
+                        
                     </h2>
                 </div>
                 <div class="timeline-list" id="timeline-list">
@@ -212,13 +279,22 @@
         <!-- DESIGN VIEW -->
         <div class="view-section" id="design-view">
             <!-- Segmented Control for GDD / ADR -->
-            <div class="design-segmented-control" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
-                <button class="tab-btn active" id="btn-gdd-view" style="padding: 6px 16px; border-radius: 20px; font-size: 0.9rem;">GDD 文档库</button>
-                <button class="tab-btn" id="btn-adr-view" style="padding: 6px 16px; border-radius: 20px; font-size: 0.9rem;">架构决策 ADR</button>
+            <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                <div class="segmented-control" style="position: relative; display: flex; align-items: center;">
+                    <button class="segment-btn active" id="btn-gdd-view">GDD 文档库</button>
+                    <button class="segment-btn" id="btn-adr-view">架构决策 ADR</button>
+                    
+                </div>
+            </div>
+
+            <!-- Loading State for Design View -->
+            <div id="design-loading" style="display: flex; justify-content: center; align-items: center; padding: 4rem; flex-direction: column; gap: 1rem;">
+                <div class="spinner"></div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">正在加载设计文档与架构数据...</div>
             </div>
 
             <!-- GDD Container -->
-            <div id="gdd-container">
+            <div id="gdd-container" style="display: none;">
                 <div class="empty-tab" id="empty-design">
                     <div class="empty-icon">🎨</div>
                     <h2 data-i18n="design_hub_empty_title">Design Hub Empty</h2>
@@ -687,8 +763,22 @@
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
+    
+    <!-- UX Feedback Modal -->
+    <div id="ux-feedback-modal" class="modal-overlay" style="display: none; z-index: 2000;">
+        <div class="modal-content" style="background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); width: 400px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--cyan); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                💡 记录关于 [<span id="ux-feedback-context">Global</span>] 的体验反馈
+            </h3>
+            <textarea id="ux-feedback-input" placeholder="输入你想吐槽或建议的内容... (支持 Cmd+Enter 快速提交)" style="width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 6px; resize: none; margin-bottom: 15px; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="window.closeFeedbackModal()" style="background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer; padding: 6px 12px; border-radius: 4px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">取消</button>
+                <button onclick="window.submitFeedbackModal()" style="background: var(--cyan); color: #000; border: none; border-radius: 4px; padding: 6px 16px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px rgba(34, 211, 238, 0.3); transition: transform 0.1s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 15px rgba(34, 211, 238, 0.4)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 0 10px rgba(34, 211, 238, 0.3)'">发送反馈</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
-    <script src="app.js?v=36"></script>
+    <script src="app.js?v=38"></script>
 </body>
 </html>
