@@ -427,6 +427,12 @@
                     document.getElementById('sprint-pts').textContent = data.sprint.completed_points;
                     document.getElementById('sprint-total').textContent = data.sprint.total_points;
                     
+                    const progressElem = document.getElementById('progress-bar');
+                    if (progressElem) {
+                        const pct = data.sprint.total_points > 0 ? (data.sprint.completed_points / data.sprint.total_points) * 100 : 0;
+                        progressElem.style.width = pct + '%';
+                    }
+                    
                     // Story D-041: Sprint Selector Injection
                     window._lastData = data;
                     if (typeof window._selectedSprint === 'undefined') {
