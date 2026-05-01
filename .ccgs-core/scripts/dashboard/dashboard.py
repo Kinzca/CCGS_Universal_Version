@@ -666,7 +666,7 @@ def gather_data():
                             if stripped.startswith("# "):
                                 title = stripped[2:]
                                 
-                            if stripped.startswith("## Status"):
+                            if stripped.startswith("## Status") or stripped.startswith("## 状态"):
                                 in_status_section = True
                                 in_gdd_section = False
                                 continue
@@ -680,11 +680,11 @@ def gather_data():
                                 continue
                                 
                             if in_status_section and stripped:
-                                if "Accepted" in stripped or "accepted" in stripped.lower():
+                                if "Accepted" in stripped or "accepted" in stripped.lower() or "已通过" in stripped:
                                     status = "Accepted"
-                                elif "Proposed" in stripped or "proposed" in stripped.lower():
+                                elif "Proposed" in stripped or "proposed" in stripped.lower() or "提议" in stripped:
                                     status = "Proposed"
-                                elif "Deprecated" in stripped or "deprecated" in stripped.lower():
+                                elif "Deprecated" in stripped or "deprecated" in stripped.lower() or "已废弃" in stripped:
                                     status = "Deprecated"
                                     
                             if in_gdd_section and stripped.startswith("|"):

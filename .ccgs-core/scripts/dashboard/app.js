@@ -727,8 +727,9 @@
                                 let acceptedHtml = '';
                                 let deprecatedHtml = '';
                                 
-                                data.adr_coverage.files.forEach((adr, i) => {
-                                    const adrNumMatch = adr.filename.match(/adr-(\d+)/);
+                                try {
+                                    data.adr_coverage.files.forEach((adr, i) => {
+                                    const adrNumMatch = adr.filename.match(/adr-(\d+)/i);
                                     const adrNum = adrNumMatch ? adrNumMatch[1] : '';
                                     
                                     // Story D-025: Shockwave badge
