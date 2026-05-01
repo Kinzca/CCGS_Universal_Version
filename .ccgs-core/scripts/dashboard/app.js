@@ -2665,7 +2665,7 @@ window._renderStoryMatrix = function(forcedEpic) {
                             body: JSON.stringify({ context: 'Global Command Bar', text: cmdMatch[1].trim(), timestamp: new Date().toISOString() })
                         }).then(() => {
                             closeModal();
-                            window.showToast ? window.showToast('反馈已发送，感谢！') : alert('反馈已发送，感谢！');
+                            window.showToast ? window.showToast('反馈已发送，感谢！', 'success') : alert('反馈已发送，感谢！');
                         });
                     } else if (query.startsWith('/feedback')) {
                         window.showToast ? window.showToast('请在 /feedback 后加上空格和想吐槽的内容再按回车哦！') : alert('请在 /feedback 后加上空格和想吐槽的内容再按回车哦！');
@@ -3123,22 +3123,6 @@ window._renderStoryMatrix = function(forcedEpic) {
         });
     })();
 })();
-// Expose generic toast if available or simple alert
-window.showToast = function(msg) {
-    const container = document.getElementById('toast-container');
-    if (!container) { alert(msg); return; }
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = msg;
-    toast.style.background = 'var(--cyan)';
-    toast.style.color = '#000';
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, 2000);
-};
-
 // ==========================================
 // UX Feedback System
 // ==========================================
@@ -3173,7 +3157,7 @@ window.submitFeedbackModal = function() {
             })
         }).then(() => {
             window.closeFeedbackModal();
-            window.showToast('反馈已发送，感谢！');
+            window.showToast('反馈已发送，感谢！', 'success');
         });
     }
 };
