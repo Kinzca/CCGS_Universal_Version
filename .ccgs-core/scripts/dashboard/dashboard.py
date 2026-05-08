@@ -669,6 +669,14 @@ def gather_data():
                             if stripped.startswith("## Status") or stripped.startswith("## 状态"):
                                 in_status_section = True
                                 in_gdd_section = False
+                                # Handle inline status like "## 状态: Accepted"
+                                lower_stripped = stripped.lower()
+                                if "accepted" in lower_stripped or "已通过" in stripped:
+                                    status = "Accepted"
+                                elif "proposed" in lower_stripped or "提议" in stripped:
+                                    status = "Proposed"
+                                elif "deprecated" in lower_stripped or "已废弃" in stripped:
+                                    status = "Deprecated"
                                 continue
                             elif stripped.startswith("## GDD Requirements Addressed"):
                                 in_gdd_section = True
@@ -680,11 +688,12 @@ def gather_data():
                                 continue
                                 
                             if in_status_section and stripped:
-                                if "Accepted" in stripped or "accepted" in stripped.lower() or "已通过" in stripped:
+                                lower_stripped = stripped.lower()
+                                if "accepted" in lower_stripped or "已通过" in stripped:
                                     status = "Accepted"
-                                elif "Proposed" in stripped or "proposed" in stripped.lower() or "提议" in stripped:
+                                elif "proposed" in lower_stripped or "提议" in stripped:
                                     status = "Proposed"
-                                elif "Deprecated" in stripped or "deprecated" in stripped.lower() or "已废弃" in stripped:
+                                elif "deprecated" in lower_stripped or "已废弃" in stripped:
                                     status = "Deprecated"
                                     
                             if in_gdd_section and stripped.startswith("|"):

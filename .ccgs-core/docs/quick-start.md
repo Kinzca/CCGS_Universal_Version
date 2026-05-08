@@ -267,7 +267,7 @@ CLAUDE.md                          -- Master config (read this first, ~60 lines)
 .claude/
   settings.json                    -- Claude Code hooks and project settings
   agents/                          -- 48 agent definitions (YAML frontmatter)
-  skills/                          -- 68 slash command definitions (YAML frontmatter)
+  skills/                          -- 74 slash command definitions (YAML frontmatter)
   hooks/                           -- 12 hook scripts (.sh) wired by settings.json
   rules/                           -- 11 path-specific rule files
   docs/

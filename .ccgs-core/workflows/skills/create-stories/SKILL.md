@@ -176,6 +176,7 @@ phase: "P1"
 owner: "[Role Name]"
 type: "[Logic | Integration | Visual/Feel | UI | Config/Data]"
 estimate: "1天"
+points: ""
 dependencies: []
 group: ""
 sprint: ""

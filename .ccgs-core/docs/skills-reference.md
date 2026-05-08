@@ -1,6 +1,6 @@
 # Available Skills (Slash Commands)
 
-68 slash commands organized by phase. Type `/` in Claude Code to access any of them.
+74 slash commands organized by phase. Type `/` in Claude Code to access any of them.
 
 ## Onboarding & Navigation
 
@@ -11,6 +11,7 @@
 | `/project-stage-detect` | Full project audit — detect phase, identify existence gaps, recommend next steps |
 | `/setup-engine` | Configure engine + version, detect knowledge gaps, populate version-aware reference docs |
 | `/adopt` | Brownfield format audit — checks internal structure of existing GDDs/ADRs/stories, produces migration plan |
+| `/dashboard` | Start a local project status dashboard for global progress, burndown, and health |
 
 ## Game Design
 
@@ -63,6 +64,7 @@
 | `/content-audit` | Audit GDD-specified content counts against implemented content |
 | `/scope-check` | Analyze feature or sprint scope against original plan, flag scope creep |
 | `/perf-profile` | Structured performance profiling with bottleneck identification |
+| `/security-audit` | Audit save, input, network, cheat, and data exposure risks before public release |
 | `/tech-debt` | Scan, track, prioritize, and report on technical debt |
 | `/gate-check` | Validate readiness to advance between development phases (PASS/CONCERNS/FAIL) |
 | `/consistency-check` | Scan all GDDs against the entity registry to detect cross-document inconsistencies (stats, names, rules that contradict each other) |
@@ -80,6 +82,7 @@
 | `/test-evidence-review` | Quality review of test files and manual evidence documents |
 | `/test-flakiness` | Detect non-deterministic (flaky) tests from CI run logs |
 | `/skill-test` | Validate skill files for structural compliance and behavioral correctness |
+| `/skill-improve` | Improve a skill through a test-fix-retest loop |
 
 ## Production
 
@@ -91,6 +94,7 @@
 | `/bug-triage` | Read all open bugs, re-evaluate priority vs. severity, assign owner and label |
 | `/reverse-document` | Generate design or architecture docs from existing implementation |
 | `/playtest-report` | Generate a structured playtest report or analyze existing playtest notes |
+| `/compress-memory` | Compress detailed sprint/story history into a high-level architecture snapshot |
 
 ## Release
 
@@ -101,12 +105,15 @@
 | `/changelog` | Auto-generate changelog from git commits and sprint data |
 | `/patch-notes` | Generate player-facing patch notes from git history and internal data |
 | `/hotfix` | Emergency fix workflow with audit trail, bypassing normal sprint process |
+| `/day-one-patch` | Scope, implement, and QA-gate a focused launch patch |
 
 ## Creative & Content
 
 | Command | Purpose |
 |---------|---------|
 | `/prototype` | Rapid throwaway prototype to validate a mechanic (relaxed standards, isolated worktree) |
+| `/art-bible` | Guided Art Bible authoring for the project's visual identity |
+| `/asset-spec` | Generate per-asset visual specifications and AI generation prompts |
 | `/onboard` | Generate contextual onboarding document for a new contributor or agent |
 | `/localize` | Localization workflow: string extraction, validation, translation readiness |
 

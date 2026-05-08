@@ -17,7 +17,11 @@ bash .ccgs-core/init.sh
 bash .ccgs-core/init.sh --gen-entry claude   # Claude Code
 bash .ccgs-core/init.sh --gen-entry gemini   # Gemini / Antigravity
 bash .ccgs-core/init.sh --gen-entry cursor   # Cursor
+bash .ccgs-core/init.sh --gen-entry codex    # OpenAI Codex
 bash .ccgs-core/init.sh --gen-entry all      # 全部生成
+
+# 3b. （可选）让 Codex 扫描 CCGS workflows 的 124 个 Skill 映射
+bash .ccgs-core/init.sh --link-codex-skills
 
 # 4. 配置引擎与技术栈
 # 编辑 .ccgs-core/docs/technical-preferences.md 填入你的引擎配置
@@ -26,6 +30,24 @@ bash .ccgs-core/init.sh --gen-entry all      # 全部生成
 # 5. （可选）重命名数据层目录
 bash .ccgs-core/init.sh --rename-data GameData  # 将 CCGS-Data 重命名为 GameData
 ```
+
+## 编辑器初始化矩阵
+
+| 编辑器 / AI 工具 | 导入方式 | 初始化命令 | 生成入口 | 日常调用方式 |
+|:---|:---|:---|:---|:---|
+| Claude Code | 打开项目根目录 | `bash .ccgs-core/init.sh --gen-entry claude` | `CLAUDE.md` | 原生 `/skill` 命令 |
+| Gemini / Antigravity | 打开项目根目录 | `bash .ccgs-core/init.sh --gen-entry gemini` | `GEMINI.md` | 按入口文件说明执行 `/skill` 文本工作流 |
+| Cursor | Open Folder 到项目根目录 | `bash .ccgs-core/init.sh --gen-entry cursor` | `.cursorrules` | 按入口文件说明执行 `/skill` 文本工作流 |
+| OpenAI Codex | Open Workspace 到项目根目录 | `bash .ccgs-core/init.sh --gen-entry codex` | `AGENTS.md` | 文本 `/skill` 兼容；可选 `$skill` / `$agent-role` |
+| 多工具并用 | 打开同一项目根目录 | `bash .ccgs-core/init.sh --gen-entry all` | 全部入口文件 | 各 IDE 读取自己的入口文件 |
+
+Codex 若需要把 CCGS workflows 注册为本地 Skills，再运行：
+
+```bash
+bash .ccgs-core/init.sh --link-codex-skills
+```
+
+该命令会映射 124 个 Codex Skill 入口：74 个标准 CCGS Skills、49 个 Agent 角色包装器，以及 `pipeline-core` 工作流包装器。运行后重启 Codex 生效。
 
 ## 架构总览
 
@@ -39,7 +61,7 @@ bash .ccgs-core/init.sh --rename-data GameData  # 将 CCGS-Data 重命名为 Gam
 │   │   ├── Tier1-Directors/       # 导演层（3 个）
 │   │   ├── Tier2-Leads/           # 主管层（8 个）
 │   │   ├── Tier3-Specialists/     # 专家层（38 个）
-│   │   └── skills/                # Skill 库（72 个）
+│   │   └── skills/                # Skill 库（74 个）
 │   ├── rules/                     # 代码规则分发源（11 个）
 │   ├── hooks/                     # 自动化钩子脚本
 │   ├── docs/                      # 框架元文档与配置模板
@@ -52,8 +74,12 @@ bash .ccgs-core/init.sh --rename-data GameData  # 将 CCGS-Data 重命名为 Gam
 │
 ├── CLAUDE.md                      # Claude Code 入口（自动生成）
 ├── GEMINI.md                      # Gemini 入口（自动生成）
-└── .cursorrules                   # Cursor 入口（自动生成）
+├── .cursorrules                   # Cursor 入口（自动生成）
+└── AGENTS.md                      # Codex 入口（自动生成）
 ```
+
+> Codex Skill 映射由 `bash .ccgs-core/init.sh --link-codex-skills` 创建。
+> 它会在 `$CODEX_HOME/skills`（默认 `~/.codex/skills`）创建真实 Skill 目录：74 个标准 CCGS Skills 会复制原始 `SKILL.md`，49 个 Agent 角色与 `pipeline-core.md` 会生成包装 `SKILL.md`，调用时再读取原始 workflow 文档。重启 Codex 后生效；如果上游 workflow 内容更新，请重新运行该命令刷新映射。
 
 ## 与原版的核心差异
 
@@ -61,7 +87,7 @@ bash .ccgs-core/init.sh --rename-data GameData  # 将 CCGS-Data 重命名为 Gam
 |:---|:---|:---|
 | 目录结构 | `.claude/`（平铺） | `.ccgs-core/` + `CCGS-Data/`（双层解耦） |
 | Agent 组织 | 48 个平铺 | 三级分层（Tier1/2/3） |
-| AI 工具绑定 | 仅 Claude Code | 通用（Claude / Gemini / Cursor） |
+| AI 工具绑定 | 仅 Claude Code | 通用（Claude / Gemini / Cursor / Codex） |
 | 流水线 | 无统一定义 | `pipeline-core.md`（Phase 0→4） |
 | 数据层 | 与框架混杂 | 独立目录，可重命名 |
 | 路径配置 | 无 | `ccgs.env` + `init.sh` 一键管理 |

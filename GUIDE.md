@@ -1,13 +1,13 @@
 # CCGS 用户使用指南
 
 > **版本**: Universal v1.0  
-> **适用工具**: Claude Code · Gemini / Antigravity · Cursor · Cline · Windsurf
+> **适用工具**: Claude Code · Gemini / Antigravity · Cursor · OpenAI Codex · Cline · Windsurf
 
 ---
 
 ## 一、30 秒速览
 
-CCGS 是一个**模拟完整游戏工作室**的 AI 开发框架。它将 49 个专业 AI 角色和 72 个标准化技能组织成三层工作室架构，驱动从创意头脑风暴到正式发布的全生命周期管线。
+CCGS 是一个**模拟完整游戏工作室**的 AI 开发框架。它将 49 个专业 AI 角色和 74 个标准化技能组织成三层工作室架构，驱动从创意头脑风暴到正式发布的全生命周期管线。
 
 你只需要做两件事：
 1. **初始化框架**（一次性）
@@ -34,7 +34,11 @@ bash .ccgs-core/init.sh
 bash .ccgs-core/init.sh --gen-entry gemini    # Gemini / Antigravity
 bash .ccgs-core/init.sh --gen-entry claude    # Claude Code
 bash .ccgs-core/init.sh --gen-entry cursor    # Cursor
+bash .ccgs-core/init.sh --gen-entry codex     # OpenAI Codex
 bash .ccgs-core/init.sh --gen-entry all       # 全部生成
+
+# 可选：让 Codex 扫描 CCGS workflows 的 Skill 映射
+bash .ccgs-core/init.sh --link-codex-skills
 ```
 
 ### 2.3 init.sh 命令速查
@@ -42,12 +46,31 @@ bash .ccgs-core/init.sh --gen-entry all       # 全部生成
 | 命令 | 用途 |
 |:---|:---|
 | `bash .ccgs-core/init.sh` | 校验并修复 CCGS-Data 目录骨架 |
-| `bash .ccgs-core/init.sh --gen-entry <工具>` | 生成 AI 工具入口文件 (claude / gemini / cursor / all) |
+| `bash .ccgs-core/init.sh --gen-entry <工具>` | 生成 AI 工具入口文件 (claude / gemini / cursor / codex / all) |
+| `bash .ccgs-core/init.sh --link-codex-skills` | 将 CCGS workflows 映射到 Codex 本地 Skills 目录 |
 | `bash .ccgs-core/init.sh --rename-data <新名称>` | 重命名数据层目录（自动批量替换所有引用） |
 | `bash .ccgs-core/init.sh --all` | 全量初始化（校验 + 生成全部入口文件） |
 | `bash .ccgs-core/init.sh --help` | 显示帮助信息 |
 
-### 2.4 （可选）重命名数据层目录
+### 2.4 按编辑器初始化
+
+| 编辑器 / AI 工具 | 如何导入项目 | 初始化命令 | 入口文件 | 调用方式 |
+|:---|:---|:---|:---|:---|
+| Claude Code | 打开项目根目录 | `bash .ccgs-core/init.sh --gen-entry claude` | `CLAUDE.md` | 原生 `/skill` 命令 |
+| Gemini / Antigravity | 打开项目根目录 | `bash .ccgs-core/init.sh --gen-entry gemini` | `GEMINI.md` | 按入口文件说明执行 `/skill` 文本工作流 |
+| Cursor | Open Folder 到项目根目录 | `bash .ccgs-core/init.sh --gen-entry cursor` | `.cursorrules` | 按入口文件说明执行 `/skill` 文本工作流 |
+| OpenAI Codex | Open Workspace 到项目根目录 | `bash .ccgs-core/init.sh --gen-entry codex` | `AGENTS.md` | 文本 `/skill` 兼容；可选 `$skill` / `$agent-role` |
+| 多工具并用 | 打开同一项目根目录 | `bash .ccgs-core/init.sh --gen-entry all` | 全部入口文件 | 各 IDE 读取自己的入口文件 |
+
+Codex 若需要把 CCGS workflows 注册为本地 Skills，再运行：
+
+```bash
+bash .ccgs-core/init.sh --link-codex-skills
+```
+
+该命令会映射 124 个 Codex Skill 入口：74 个标准 CCGS Skills、49 个 Agent 角色包装器，以及 `pipeline-core` 工作流包装器。运行后重启 Codex 生效。
+
+### 2.5 （可选）重命名数据层目录
 
 如果你不想使用默认的 `CCGS-Data` 目录名：
 
@@ -221,7 +244,7 @@ Concept → Systems Design → Technical Setup → Pre-Production → Production
 │   │   ├── Tier1-Directors/            # 导演层 Agent (3)
 │   │   ├── Tier2-Leads/               # 主管层 Agent (8)
 │   │   ├── Tier3-Specialists/         # 专家层 Agent (38)
-│   │   └── skills/                     # Skill 库 (72)
+│   │   └── skills/                     # Skill 库 (74)
 │   ├── rules/                          # 代码规则分发源 (11)
 │   ├── hooks/                          # 自动化钩子脚本
 │   ├── docs/                           # 框架元文档与配置模板
@@ -253,8 +276,11 @@ Concept → Systems Design → Technical Setup → Pre-Production → Production
 │
 ├── CLAUDE.md                           # Claude Code 入口（自动生成）
 ├── GEMINI.md                           # Gemini 入口（自动生成）
-└── .cursorrules                        # Cursor 入口（自动生成）
+├── .cursorrules                        # Cursor 入口（自动生成）
+└── AGENTS.md                           # Codex 入口（自动生成）
 ```
+
+Codex 可额外运行 `bash .ccgs-core/init.sh --link-codex-skills`，在 `$CODEX_HOME/skills`（默认 `~/.codex/skills`）创建真实 Skill 目录：74 个标准 CCGS Skills 会复制原始 `SKILL.md`，49 个 Agent 角色与 `pipeline-core.md` 会生成包装 `SKILL.md`，调用时再读取原始 workflow 文档。重启 Codex 后生效；如果上游 workflow 内容更新，请重新运行该命令刷新映射。
 
 ---
 
@@ -344,14 +370,14 @@ Concept → Systems Design → Technical Setup → Pre-Production → Production
 |:---|:---|:---|
 | 目录结构 | `.claude/`（平铺） | `.ccgs-core/` + `CCGS-Data/`（双层解耦） |
 | Agent 组织 | 48 个平铺 | 49 个三级分层（Tier1/2/3） |
-| AI 工具绑定 | 仅 Claude Code | 通用（Claude / Gemini / Cursor） |
+| AI 工具绑定 | 仅 Claude Code | 通用（Claude / Gemini / Cursor / Codex） |
 | 流水线 | 无统一定义 | `pipeline-core.md`（Phase 0→4） |
 | 数据层 | 与框架混杂 | 独立目录，可重命名 |
 | 路径配置 | 无 | `ccgs.env` + `init.sh` 一键管理 |
 
 ### Q: 我可以只用部分功能吗？
 
-可以。框架的 72 个 Skill 是完全独立的，你可以只使用你需要的命令。最小可行使用路径是：`/start` → `/brainstorm` → `/design-system` → `/dev-story`。
+可以。框架的 74 个 Skill 是完全独立的，你可以只使用你需要的命令。最小可行使用路径是：`/start` → `/brainstorm` → `/design-system` → `/dev-story`。
 
 ### Q: 如何让 AI 助手感知框架？
 

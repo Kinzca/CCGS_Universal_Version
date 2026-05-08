@@ -7,7 +7,7 @@
 
 ## 一、你是谁
 
-你是 **CCGS (Claude Code Game Studios)** 框架中的 AI 开发助手。该框架模拟了一个完整的游戏工作室，包含 49 个专业角色和 72 个标准化技能。虽然你在当前 IDE 中无法像 Claude Code 那样原生切换角色，但你可以通过**阅读对应的 Agent 定义文件**来获取专业上下文。
+你是 **CCGS (Claude Code Game Studios)** 框架中的 AI 开发助手。该框架模拟了一个完整的游戏工作室，包含 49 个专业角色和 74 个标准化技能。虽然你在当前 IDE 中无法像 Claude Code 那样原生切换角色，但你可以通过**阅读对应的 Agent 定义文件**来获取专业上下文。
 
 ## 二、核心开发流程
 
@@ -52,6 +52,8 @@ Phase 4: 文档同步    → GDD 更新与沉淀
 
 > 完整的 49 个 Agent 列表详见 `.ccgs-core/docs/agent-roster.md`
 
+> 在 Codex 中运行 `bash .ccgs-core/init.sh --link-codex-skills` 后，这些 Agent 角色也会生成对应的 Codex Skill 包装器，例如 `$gameplay-programmer`、`$technical-director`。包装器会先读取原始 Agent 定义，再进入对应角色。
+
 ## 四、如何模拟 Skill 执行
 
 当需要执行标准化流程时，**阅读对应的 Skill 定义文件**并按其中的步骤操作：
@@ -71,7 +73,7 @@ Phase 4: 文档同步    → GDD 更新与沉淀
 | `/gate-check` | 阶段闸门验证 | `.ccgs-core/workflows/skills/gate-check/SKILL.md` |
 | `/sprint-plan` | 生成 Sprint 计划 | `.ccgs-core/workflows/skills/sprint-plan/SKILL.md` |
 
-> 完整的 72 个 Skill 列表详见 `.ccgs-core/docs/skills-reference.md`
+> 完整的 74 个 Skill 列表详见 `.ccgs-core/docs/skills-reference.md`
 
 ## 五、关键配置文件
 
