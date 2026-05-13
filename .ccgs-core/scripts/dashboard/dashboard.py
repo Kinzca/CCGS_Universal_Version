@@ -11,6 +11,9 @@ from threading import Timer
 import time
 from datetime import datetime
 
+from dashboard_data import build_production_snapshot
+from dashboard_data.schema import snapshot_to_legacy_payload
+
 PORT = 8080
 CACHE_TTL = 5
 _last_data_update = 0
@@ -285,13 +288,14 @@ def gather_data():
         data["sprint"]["name"] = os.path.basename(latest).replace('.md', '')
     
     # --- Read Goals (Story D-044) ---
+    # DCC-002: goals.json is UI preference data only. It must not override the
+    # active sprint, which is sourced from production/sprint-status.yaml via
+    # ProductionSnapshot at the end of gather_data().
     goals_path = os.path.join(DATA_DIR, "production", "tracking", "goals.json")
     if os.path.exists(goals_path):
         try:
             with open(goals_path, 'r', encoding='utf-8') as f:
                 data["goals"] = json.load(f)
-                if data["goals"].get("active_sprint") and data["goals"]["active_sprint"] in data["all_sprints"]:
-                    data["sprint"]["name"] = data["goals"]["active_sprint"]
         except Exception:
             pass
     
@@ -862,6 +866,9 @@ def gather_data():
 
     data["activity_timeline"] = collect_activity_timeline()
 
+    production_snapshot = build_production_snapshot(PROJECT_ROOT)
+    data = snapshot_to_legacy_payload(production_snapshot, data)
+
     global _last_data_update, _cached_data
     with open(os.path.join(DIRECTORY, "data.json"), "w") as f:
         json.dump(data, f)
@@ -941,6 +948,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             self.wfile.write(_cached_data.encode('utf-8'))
+        elif self.path == '/api/snapshot':
+            snapshot = build_production_snapshot(PROJECT_ROOT)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(json.dumps(snapshot).encode('utf-8'))
         elif self.path.startswith('/api/search'):
             from urllib.parse import urlparse, parse_qs
             query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
